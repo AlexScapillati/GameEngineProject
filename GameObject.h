@@ -14,7 +14,6 @@
 #include "Mesh.h"
 #include <stdexcept>
 
-
 class CMesh;
 
 class CGameObject

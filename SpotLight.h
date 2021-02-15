@@ -19,6 +19,8 @@ public:
 
 	void SetShadowMapsSize(int value);
 
+	int getShadowMapSize() { return mShadowMapSize; }
+
 	void SetConeAngle(float value);
 
 	float GetConeAngle() const
@@ -29,6 +31,11 @@ public:
 	CVector3 GetFacing() const
 	{
 		return mFacing;
+	}
+
+	void SetFacing(CVector3 v)
+	{
+		mFacing = v;
 	}
 	
 	~CSpotLight();

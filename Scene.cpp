@@ -82,7 +82,7 @@ void DisplayObjects(CGameObjectManager* GOM)
 			selectedObj = it;
 		}
 	}
-	
+
 	for (auto it : GOM->mDirLights)
 	{
 		//if a butto is pressed
@@ -111,7 +111,7 @@ void DisplayObjects(CGameObjectManager* GOM)
 		ImGui::Text("Transform");
 
 		//get the direct access to the position of the model and display it 
-		ImGui::InputFloat3("Position", selectedObj->DirectPosition());
+		ImGui::DragFloat3("Position", selectedObj->DirectPosition());
 
 		//acquire the rotation array
 		float* rot = selectedObj->Rotation().GetValuesArray();
@@ -123,7 +123,7 @@ void DisplayObjects(CGameObjectManager* GOM)
 		}
 
 		//display the rotation
-		if (ImGui::InputFloat3("Rotation", rot))
+		if (ImGui::DragFloat3("Rotation", rot))
 		{
 			//if the value is changed 
 			//get back to radians
@@ -140,19 +140,89 @@ void DisplayObjects(CGameObjectManager* GOM)
 		float* scale = selectedObj->Scale().GetValuesArray();
 
 		//display the scale array
-		if (ImGui::InputFloat3("Scale", scale))
+		if (ImGui::DragFloat3("Scale", scale))
 		{
 			//if it has changed set the scale
 			selectedObj->SetScale(scale);
 		}
 
-		//display the texture WIP
-		ImGui::NewLine();
-		ImGui::Text("Texture");
+		//if it is a spotlight let it modify few things
+		if (auto light = dynamic_cast<CSpotLight*>(selectedObj))
+		{
+			//light colour edit
 
-		ImTextureID texId = selectedObj->GetTextureSRV();
+			static bool colourPickerOpen = false;
 
-		ImGui::Image((void*)texId, { 512, 512 });
+			if (ImGui::Button("Edit Colour"))
+			{
+				colourPickerOpen = !colourPickerOpen;
+			}
+
+			if (colourPickerOpen)
+			{
+				ImGui::Begin("ColourPicker",&colourPickerOpen);
+
+				auto colour = light->GetColour().GetValuesArray();
+
+				if (ImGui::ColorPicker3("Colour", colour))
+				{
+					light->SetColour(colour);
+				}
+				ImGui::End();
+			}
+
+			//modify strength
+			auto st = light->GetStrength();
+
+			if (ImGui::DragFloat("Strength", &st, 1.0f, 0.0f, D3D11_FLOAT32_MAX))
+			{
+				light->SetStrength(st);
+			}
+
+			//modify facing
+
+			auto facingV = light->GetFacing().GetValuesArray();
+
+			if (ImGui::DragFloat3("Facing", facingV, 0.001f, -1.0f, 1.0f))
+			{
+				CVector3 facing = Normalise(facingV);
+				light->SetFacing(facing);
+			}
+
+
+			//modify cone angle
+
+			auto coneAngle = light->GetConeAngle();
+
+			if (ImGui::DragFloat("Cone Angle", &coneAngle, 1.0f, 0.0f, 180.0f))
+			{
+				light->SetConeAngle(coneAngle);
+			}
+
+			//modify shadow map size
+
+			auto size = light->getShadowMapSize();
+
+			if (ImGui::DragInt("ShadowMapsSize", &size, 1.0f, 2, 16384))
+			{
+				if (size < 16384)
+				{
+					light->SetShadowMapsSize(size);
+				}
+				else
+				{
+					std::runtime_error("Number Too big!");
+				}
+			}
+		}
+
+		////display the texture WIP
+		//ImGui::NewLine();
+		//ImGui::Text("Texture");
+
+		//ImTextureID texId = selectedObj->GetTextureSRV();
+
+		//ImGui::Image((void*)texId, { 512, 512 });
 	}
 }
 
