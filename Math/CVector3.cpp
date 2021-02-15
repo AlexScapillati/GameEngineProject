@@ -54,6 +54,22 @@ CVector3& CVector3::operator*= (const float s)
     return *this;
 }
 
+//Direct access with []
+float CVector3::operator[](const int index)
+{
+    if (index == 0)
+    {
+        return x;
+    }
+    if (index == 1)
+    {
+        return y;
+    }
+    if (index == 2)
+    {
+        return z;
+    }
+}
 
 // Vector-vector addition
 CVector3 operator+ (const CVector3& v, const CVector3& w)

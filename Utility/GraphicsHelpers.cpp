@@ -57,3 +57,17 @@ CMatrix4x4 MakeProjectionMatrix(float aspectRatio /*= 4.0f / 3.0f*/, float FOVx 
                          0.0f,   0.0f, scaleZa,   1.0f,
                          0.0f,   0.0f, scaleZb,   0.0f };
 }
+
+CMatrix4x4 MakeOrthogonalMatrix(float width, float height, float nearClip, float farClip)
+{
+
+    auto scaleZa = 1 / (farClip - nearClip);
+    auto scaleZb = nearClip / (nearClip - farClip);
+
+    return CMatrix4x4
+    {
+        2/width, 0.0f,     0.0f,      0.0f,
+        0.0f,    2/height, 0.0f,      0.0f,
+        0.0f,    0.0f,     scaleZa,   1.0f,
+        0.0f,    0.0f,     scaleZb,   0.0f };
+}

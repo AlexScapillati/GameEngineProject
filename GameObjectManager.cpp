@@ -93,7 +93,7 @@ void CGameObjectManager::UpdateDirLightsConstBuffer(PerFrameDirLights* FLB)
 		FLB->dirLights[i].colour = mDirLights[i]->GetColour() * mDirLights[i]->GetStrength();
 		FLB->dirLights[i].facing = mDirLights[i]->GetMesh()->GetNodeDefaultMatrix(0).GetRow(2);
 		FLB->dirLights[i].viewMatrix = InverseAffine(mDirLights[i]->WorldMatrix());
-		FLB->dirLights[i].projMatrix = { 0 }; //TODO
+		FLB->dirLights[i].projMatrix = MakeOrthogonalMatrix(1000.0f, 1000.0f, mDirLights[i]->GetNearClip(), mDirLights[i]->GetFarClip());
 		FLB->dirLights[i].numLights = mCurrNumDirLights;
 	}
 }
@@ -201,7 +201,11 @@ void CGameObjectManager::RenderFromDirLights()
 	}
 }
 
-
+void CGameObjectManager::RenderFromAllLights()
+{
+	RenderFromSpotLights();
+	RenderFromDirLights();
+}
 
 void CGameObjectManager::UpdateObjects(float updateTime)
 {

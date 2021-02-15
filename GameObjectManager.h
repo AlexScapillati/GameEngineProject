@@ -45,6 +45,8 @@ public:
 
 	void RenderFromDirLights();
 
+	void RenderFromAllLights();
+
 	void UpdateObjects(float updateTime);
 
 	~CGameObjectManager();

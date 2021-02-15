@@ -46,7 +46,16 @@ public:
 	CVector3 Scale(int node = 0); // Scale is length of rows 0-2 in matrix
 	CMatrix4x4 WorldMatrix(int node = 0);
 
+	//get the directs access to the position of the model
+	float* DirectPosition();
+
 	CMesh* GetMesh() const;
+
+	auto GetName() { return mName; }
+
+	auto GetTextureSRV() { return mPbrMaps.AlbedoSRV;}
+	
+	auto GetTexture() { return mPbrMaps.Albedo;}
 
 	// Setters - model only stores matricies , so if user sets position, rotation or scale, just update those aspects of the matrix
 	void SetPosition(CVector3 position, int node = 0);
@@ -65,9 +74,11 @@ public:
 
 	virtual ~CGameObject();
 
+	
 	//-------------------------------------
 	// Private data / members
 	//-------------------------------------
+
 
 protected:
 

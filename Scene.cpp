@@ -14,6 +14,11 @@
 #include "SpotLight.h"
 #include "DirLight.h"
 
+#include "External\imgui\imgui.h"
+#include "External\imgui\imgui_impl_dx11.h"
+#include "External\imgui\imgui_impl_win32.h"
+
+
 const float ROTATION_SPEED = 1.5f;
 const float MOVEMENT_SPEED = 50.0f;
 
@@ -39,6 +44,142 @@ ID3D11Buffer* gPerFrameSpotLightsConstBuffer;
 
 PerFrameDirLights gPerFrameDirLightsConstants;
 ID3D11Buffer* gPerFrameDirLightsConstBuffer;
+
+
+void SetupGui()
+{
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	// Setup Platform/Renderer bindings
+	ImGui_ImplDX11_Init(gD3DDevice, gD3DContext);
+	ImGui_ImplWin32_Init(gHWnd);
+	// Setup Dear ImGui style
+	ImGui::StyleColorsDark();
+}
+
+CGameObject* selectedObj = nullptr;
+
+void DisplayObjects(CGameObjectManager* GOM)
+{
+
+	//display for each model a button
+	for (auto it : GOM->mObjects)
+	{
+		//if a butto is pressed
+		if (ImGui::Button(it->GetName().c_str()))
+		{
+			//stor the object pointer
+			selectedObj = it;
+		}
+	}
+
+	for (auto it : GOM->mLights)
+	{
+		//if a butto is pressed
+		if (ImGui::Button(it->GetName().c_str()))
+		{
+			//stor the object pointer
+			selectedObj = it;
+		}
+	}
+	
+	for (auto it : GOM->mDirLights)
+	{
+		//if a butto is pressed
+		if (ImGui::Button(it->GetName().c_str()))
+		{
+			//stor the object pointer
+			selectedObj = it;
+		}
+	}
+
+	for (auto it : GOM->mSpotLights)
+	{
+		//if a butto is pressed
+		if (ImGui::Button(it->GetName().c_str()))
+		{
+			//stor the object pointer
+			selectedObj = it;
+		}
+	}
+
+	//if there is an object selected
+	if (selectedObj)
+	{
+		//display the transform component
+		ImGui::NewLine();
+		ImGui::Text("Transform");
+
+		//get the direct access to the position of the model and display it 
+		ImGui::InputFloat3("Position", selectedObj->DirectPosition());
+
+		//acquire the rotation array
+		float* rot = selectedObj->Rotation().GetValuesArray();
+
+		//convert it to degreese
+		for (int i = 0; i < 2; i++)
+		{
+			rot[i] = ToDegrees(rot[i]);
+		}
+
+		//display the rotation
+		if (ImGui::InputFloat3("Rotation", rot))
+		{
+			//if the value is changed 
+			//get back to radians
+			for (int i = 0; i < 2; i++)
+			{
+				rot[i] = ToRadians(rot[i]);
+			}
+
+			//set the rotation
+			selectedObj->SetRotation(rot);
+		}
+
+		//get the scale array
+		float* scale = selectedObj->Scale().GetValuesArray();
+
+		//display the scale array
+		if (ImGui::InputFloat3("Scale", scale))
+		{
+			//if it has changed set the scale
+			selectedObj->SetScale(scale);
+		}
+
+		//display the texture WIP
+		ImGui::NewLine();
+		ImGui::Text("Texture");
+
+		ImTextureID texId = selectedObj->GetTextureSRV();
+
+		ImGui::Image((void*)texId, { 512, 512 });
+	}
+}
+
+void RenderGui(CGameObjectManager* GOM)
+{
+	ImGui_ImplDX11_NewFrame();
+	ImGui_ImplWin32_NewFrame();
+	ImGui::NewFrame();
+
+	ImGui::Begin("Objects");
+
+	DisplayObjects(GOM);
+
+	ImGui::End();
+
+	ImGui::Render();
+	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+
+}
+
+void ShutdownGui()
+{
+	ImGui_ImplDX11_Shutdown();
+	ImGui_ImplWin32_Shutdown();
+	ImGui::DestroyContext();
+}
+
 
 //--------------------------------------------------------------------------------------
 // Initialise scene geometry, constant buffers and states
@@ -94,6 +235,9 @@ bool CScene::InitScene(std::string fileName)
 	{
 		throw std::runtime_error("Error creating constant buffers");
 	}
+
+	//SetupGui
+	SetupGui();
 
 	return true;
 }
@@ -159,6 +303,7 @@ void CScene::RenderSceneFromCamera(CCamera* camera) const
 // Rendering the scene
 void CScene::RenderScene(float frameTime) const
 {
+
 	//// Common settings ////
 
 	// Set up the light information in the constant buffer
@@ -177,7 +322,7 @@ void CScene::RenderScene(float frameTime) const
 
 	////----- Render form the lights point of view ----------////
 
-	mObjManager->RenderFromSpotLights();
+	mObjManager->RenderFromAllLights();
 
 	////--------------- Main scene rendering ---------------////
 
@@ -203,6 +348,9 @@ void CScene::RenderScene(float frameTime) const
 	RenderSceneFromCamera(mCamera);
 
 
+	//Render the GUI
+	RenderGui(mObjManager);
+
 
 	////--------------- Scene completion ---------------////
 
@@ -215,8 +363,6 @@ void CScene::RenderScene(float frameTime) const
 		throw std::runtime_error("Device Removed");
 	}
 }
-
-
 //--------------------------------------------------------------------------------------
 // Scene Update
 //--------------------------------------------------------------------------------------
@@ -231,7 +377,7 @@ void CScene::UpdateScene(float frameTime)
 
 	//mObjManager->mSpotLights[0]->SetPosition(CVector3(cos(rotating) * offset, 10.0f, sin(rotating) * offset));
 
-	mObjManager->mSpotLights[0]->SetRotation({ 0.0f,rotating,0.0f });
+	//mObjManager->mSpotLights[0]->SetRotation({ 0.0f,rotating,0.0f });
 
 	rotating += frameTime;
 
@@ -764,6 +910,8 @@ bool CScene::ParseEntities(tinyxml2::XMLElement* entitiesEl)
 
 CScene::~CScene()
 {
+
+	ShutdownGui();
 
 	ReleaseStates();
 	if (gPerModelConstantBuffer)  gPerModelConstantBuffer->Release();

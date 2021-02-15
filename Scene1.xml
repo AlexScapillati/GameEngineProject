@@ -30,7 +30,7 @@
     </Entity>
 
     <!-- Lights -->
-    <Entity Type="Light" Name="Light1">
+    <!--<Entity Type="Light" Name="Light1">
       <Geometry Mesh ="Light.x" Diffuse ="Flare.jpg" VS="BasicTransform_vs" PS="TintedTexture_ps"/>
       <Colour   X="0.8" Y="0.8" Z="1.0"/>
       <Strength S="10"/>
@@ -42,9 +42,9 @@
         <Colour X="0.8" Y="0.8" Z="0.8" />
         <Strength S="120" />
         <Position X="-20" Y="10" Z="40" />
-        <Facing X="1.0" Y="0.0" Z="1.0" /> <!--That means it is a spotlight-->
+        <Facing X="1.0" Y="0.0" Z="1.0" /> --><!--That means it is a spotlight--><!--
         <Scale X="0.3" Y="0.3" Z="0.3" />
-      </Entity>
+      </Entity>-->
     <Entity Type="Light" Name="Sun">
       <Geometry Mesh ="Light.x" Diffuse ="Flare.jpg" VS="BasicTransform_vs" PS="TintedTexture_ps"/>
       <Colour   X="1.0" Y="0.8" Z="0.2"/>
@@ -54,7 +54,7 @@
     </Entity>
 
     <!-- PBR Objects -->
-    <Entity Type="GameObject" Name="rock" >
+    <!--<Entity Type="GameObject" Name="rock" >
       <Geometry Mesh="ubrleesiw_LOD0.fbx" VS="PBR_vs" PS="PBR_ps"/>
       <Position X="10.0" Y="2.0" Z="30.0"/>
     </Entity>
@@ -81,7 +81,7 @@
       <Position X="90.0" Y="10.0" Z="0.0"/>
       <Rotation X="0.0" Y="180.0" Z="0.0"/>
       <Scale X="0.1" Y="0.1" Z="0.1"/>
-    </Entity>
+    </Entity>-->
 
       <!-- CAMERA -->
     <Entity Type="Camera">

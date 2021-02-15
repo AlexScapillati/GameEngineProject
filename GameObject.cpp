@@ -500,6 +500,18 @@ inline CVector3 CGameObject::Scale(int node) {
 
 CMatrix4x4 CGameObject::WorldMatrix(int node) { return mWorldMatrices[node]; }
 
+float* CGameObject::DirectPosition()
+{
+	float* pos[] =
+	{
+		&mWorldMatrices[0].e30,
+		&mWorldMatrices[0].e31,
+		&mWorldMatrices[0].e32,
+	};
+	return *pos;
+}
+
+
 CMesh* CGameObject::GetMesh() const { return mMesh; }
 
 // Setters - model only stores matricies , so if user sets position, rotation or scale, just update those aspects of the matrix

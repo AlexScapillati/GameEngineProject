@@ -118,3 +118,5 @@ bool LoadTexture(std::string filename, ID3D11Resource** texture, ID3D11ShaderRes
 CMatrix4x4 MakeProjectionMatrix(float aspectRatio = 4.0f / 3.0f, float FOVx = ToRadians(60),
                                 float nearClip = 0.1f, float farClip = 10000.0f);
 
+
+CMatrix4x4 MakeOrthogonalMatrix(float width, float height, float nearClip, float farClip);

@@ -39,6 +39,12 @@ public:
         z = pfElts[2];
     }
 
+    float* GetValuesArray()
+    {
+        float* out[] = { &x, &y, &z };
+
+        return *out;
+    }
 
     /*-----------------------------------------------------------------------------------------
         Member functions
@@ -60,6 +66,8 @@ public:
 
     // Multiply vector by scalar (scales vector);
     CVector3& operator*= (const float s);
+
+    float operator[](const int index);
 };
 	
 
