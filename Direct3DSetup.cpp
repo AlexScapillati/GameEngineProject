@@ -148,7 +148,7 @@ void ShutdownDirect3D()
 		gD3DContext->ClearState(); // This line is also needed to reset the GPU before shutting down DirectX
 		gD3DContext->Release();
 	}
-	
+
 	if (gDepthShaderView)        gDepthShaderView->Release();
 	if (gDepthStencil)           gDepthStencil->Release();
 	if (gDepthStencilTexture)    gDepthStencilTexture->Release();
@@ -158,4 +158,83 @@ void ShutdownDirect3D()
 
 }
 
+void Resize(UINT w, UINT h)
+{
 
+	HRESULT hr;
+
+	gD3DContext->OMSetRenderTargets(0, 0, 0);
+
+	// Release all outstanding references to the swap chain's buffers.
+	gBackBufferRenderTarget->Release();
+
+	 gDepthShaderView->Release();
+	 gDepthStencil->Release();
+	 gDepthStencilTexture->Release();
+
+	//// Create depth buffer to go along with the back buffer ////
+
+	// First create a texture to hold the depth buffer values
+	D3D11_TEXTURE2D_DESC dbDesc = {};
+	dbDesc.Width = w; // Same size as viewport / back-buffer
+	dbDesc.Height = h;
+	dbDesc.MipLevels = 1;
+	dbDesc.ArraySize = 1;
+	dbDesc.Format = DXGI_FORMAT_R32_TYPELESS; // Each depth value is a single float
+											  // Important point for when using depth buffer as texture, must use the TYPELESS constant shown here
+	dbDesc.SampleDesc.Count = 1;
+	dbDesc.SampleDesc.Quality = 0;
+	dbDesc.Usage = D3D11_USAGE_DEFAULT;
+	dbDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE; // Using this depth buffer in shaders so must say so;
+	dbDesc.CPUAccessFlags = 0;
+	dbDesc.MiscFlags = 0;
+	hr = gD3DDevice->CreateTexture2D(&dbDesc, nullptr, &gDepthStencilTexture);
+	if (FAILED(hr))
+	{
+		gLastError = "Error creating depth buffer texture";
+		return;
+	}
+
+	// Create the depth stencil view - an object to allow us to use the texture
+	// just created as a depth buffer
+	D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+	dsvDesc.Format = DXGI_FORMAT_D32_FLOAT; // Important point for when using depth buffer as texture, ensure you use this setting - different from other labs
+	dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	dsvDesc.Texture2D.MipSlice = 0;
+	hr = gD3DDevice->CreateDepthStencilView(gDepthStencilTexture, &dsvDesc, &gDepthStencil);
+	if (FAILED(hr))
+	{
+		gLastError = "Error creating depth buffer view";
+		return;
+	}
+
+	// Also create a shader resource view for the depth buffer - required when we want to access the depth buffer as a texture (also note the two important comments in above code)
+	// Note the veryt 
+	D3D11_SHADER_RESOURCE_VIEW_DESC descSRV;
+	descSRV.Format = DXGI_FORMAT_R32_FLOAT;
+	descSRV.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	descSRV.Texture2D.MipLevels = 1;
+	descSRV.Texture2D.MostDetailedMip = 0;
+	hr = gD3DDevice->CreateShaderResourceView(gDepthStencilTexture, &descSRV, &gDepthShaderView);
+	if (FAILED(hr))
+	{
+		gLastError = "Error creating depth buffer shader resource view";
+		return;
+	}
+
+	// Preserve the existing buffer count and format.
+	// Automatically choose the width and height to match the client rect for HWNDs.
+	hr = gSwapChain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
+
+	// Perform error handling here!
+
+	// Get buffer and create a render-target-view.
+	ID3D11Texture2D* pBuffer;
+	hr = gSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D),(void**)&pBuffer);
+	// Perform error handling here!
+
+	hr = gD3DDevice->CreateRenderTargetView(pBuffer, NULL, &gBackBufferRenderTarget);
+
+	// Perform error handling here!
+	pBuffer->Release();
+}

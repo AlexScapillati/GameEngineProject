@@ -194,7 +194,6 @@ void CGameObject::Render(bool basicGeometry)
 	if (!mEnabled) return;
 
 	//render the material
-
 	mMaterial->RenderMaterial(basicGeometry);
 
 	//TODO render the the correct mesh according to the camera distance
