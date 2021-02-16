@@ -107,7 +107,7 @@ void DisplayObjects(CGameObjectManager* GOM)
 	if (selectedObj)
 	{
 
-		ImGui::Checkbox("Enabled",selectedObj->Enabled());
+		ImGui::Checkbox("Enabled", selectedObj->Enabled());
 
 		//display the transform component
 		ImGui::NewLine();
@@ -143,7 +143,7 @@ void DisplayObjects(CGameObjectManager* GOM)
 		float* scale = selectedObj->Scale().GetValuesArray();
 
 		//display the scale array
-		if (ImGui::DragFloat3("Scale", scale))
+		if (ImGui::DragFloat3("Scale", scale,0.1f,0.001f,D3D11_FLOAT32_MAX))
 		{
 			//if it has changed set the scale
 			selectedObj->SetScale(scale);
@@ -268,13 +268,13 @@ void DisplayObjects(CGameObjectManager* GOM)
 		}
 
 
-		//display the texture WIP
+		//display the texture
 		ImGui::NewLine();
 		ImGui::Text("Texture");
 
 		ImTextureID texId = selectedObj->GetTextureSRV();
 
-		ImGui::Image((void*)selectedObj->GetTextureSRV(), { 256, 256 });
+		ImGui::Image((void*)texId, { 256,256});
 
 	}
 }
@@ -638,6 +638,7 @@ bool CScene::ParseScene(tinyxml2::XMLElement* sceneEl)
 
 void CScene::LoadObject(tinyxml2::XMLElement* currEntity) const
 {
+	std::string ID;
 	std::string mesh;
 	std::string name;
 	std::string diffuse;
@@ -656,6 +657,9 @@ void CScene::LoadObject(tinyxml2::XMLElement* currEntity) const
 
 	if (geometry)
 	{
+		const auto idAttr = geometry->FindAttribute("ID");
+		if (idAttr) ID = idAttr->Value();
+
 		const auto meshAttr = geometry->FindAttribute("Mesh");
 		if (meshAttr) mesh = meshAttr->Value();
 
@@ -694,9 +698,17 @@ void CScene::LoadObject(tinyxml2::XMLElement* currEntity) const
 
 	try
 	{
-		auto obj = new CGameObject(mesh, name, diffuse, vertexShader, pixelShader, pos, rot, scale);
+		if (ID.empty())
+		{
+			auto obj = new CGameObject(mesh, name, diffuse, vertexShader, pixelShader, pos, rot, scale);
 
-		mObjManager->AddObject(obj);
+			mObjManager->AddObject(obj);
+		}
+		else
+		{
+			auto obj = new CGameObject(ID, name,vertexShader,pixelShader, pos, rot, scale);
+			mObjManager->AddObject(obj);
+		}
 
 	}
 	catch (const std::exception& e)
@@ -885,7 +897,6 @@ void CScene::LoadSky(tinyxml2::XMLElement* currEntity) const
 	{
 		auto obj = new CSky(mesh, name, diffuse, vertexShader, pixelShader, pos, rot, scale);
 
-
 		mObjManager->AddObject(obj);
 
 	}
@@ -941,6 +952,7 @@ void CScene::LoadCamera(tinyxml2::XMLElement* currEntity)
 
 void CScene::LoadPlant(tinyxml2::XMLElement* currEntity) const
 {
+	std::string ID;
 	std::string mesh;
 	std::string name;
 	std::string diffuse;
@@ -959,6 +971,9 @@ void CScene::LoadPlant(tinyxml2::XMLElement* currEntity) const
 
 	if (geometry)
 	{
+		const auto idAttr = geometry->FindAttribute("ID");
+		if (idAttr) ID = idAttr->Value();
+
 		const auto meshAttr = geometry->FindAttribute("Mesh");
 		if (meshAttr) mesh = meshAttr->Value();
 
@@ -997,10 +1012,17 @@ void CScene::LoadPlant(tinyxml2::XMLElement* currEntity) const
 
 	try
 	{
-		auto obj = new CPlant(mesh, name, diffuse, vertexShader, pixelShader, pos, rot, scale);
+		if (ID.empty())
+		{
 
-
-		mObjManager->AddObject(obj);
+			auto obj = new CPlant(mesh, name, diffuse, vertexShader, pixelShader, pos, rot, scale);
+			mObjManager->AddObject(obj);
+		}
+		else
+		{
+			auto obj = new CPlant(ID,name,vertexShader, pixelShader, pos,rot,scale);
+			mObjManager->AddObject(obj);
+		}
 
 	}
 	catch (const std::exception& e)
