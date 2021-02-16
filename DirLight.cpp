@@ -1,7 +1,7 @@
 #include "DirLight.h"
 #include "GraphicsHelpers.h"
 
-CDirLight::CDirLight(std::string mesh, std::string name, const std::string& diffuse, std::string& vertexShader,
+CDirLight::CDirLight(std::string mesh, std::string name, std::string& diffuse, std::string& vertexShader,
 	std::string& pixelShader, CVector3 colour, float strength, CVector3 position, CVector3 rotation, float scale, CVector3 direction)
 	: CLight(mesh, name, diffuse, vertexShader, pixelShader, colour, strength, position, rotation, scale)
 {

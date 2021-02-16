@@ -85,6 +85,7 @@
     <ClCompile Include="External\imgui\imgui_widgets.cpp">
       <Filter>Engine\GUI</Filter>
     </ClCompile>
+    <ClCompile Include="Material.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Utility\ColourRGBA.h">
@@ -195,6 +196,7 @@
     <ClInclude Include="External\imgui\stb_image.h">
       <Filter>Engine\GUI</Filter>
     </ClInclude>
+    <ClInclude Include="Material.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Engine">
