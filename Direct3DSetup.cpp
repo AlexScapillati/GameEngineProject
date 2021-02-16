@@ -224,7 +224,7 @@ void Resize(UINT w, UINT h)
 
 	// Preserve the existing buffer count and format.
 	// Automatically choose the width and height to match the client rect for HWNDs.
-	hr = gSwapChain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
+	hr = gSwapChain->ResizeBuffers(1, w, h, DXGI_FORMAT_R8G8B8A8_UNORM,D3D11_CREATE_DEVICE_DEBUG);
 
 	// Perform error handling here!
 
