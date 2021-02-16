@@ -9,7 +9,7 @@ class CPlant : public CGameObject
 public:
 
 	CPlant(std::string mesh, std::string name,
-	       const std::string& diffuse, std::string& vertexShader, std::string& pixelShader,
+	       std::string& diffuse, std::string& vertexShader, std::string& pixelShader,
 		CVector3 position = { 0,0,0 }, CVector3 rotation = { 0,0,0 }, float scale = 1)
 		: CGameObject(std::move(mesh), std::move(name),diffuse,vertexShader,pixelShader, position, rotation, scale) {}
 

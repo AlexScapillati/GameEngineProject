@@ -2,7 +2,7 @@
 #include "GraphicsHelpers.h"
 
 
-CSpotLight::CSpotLight(std::string mesh, std::string name, const std::string& diffuse, std::string& vertexShader,
+CSpotLight::CSpotLight(std::string mesh, std::string name, std::string& diffuse, std::string& vertexShader,
 	std::string& pixelShader, CVector3 colour, float strength, CVector3 position, CVector3 rotation,
 	float scale, CVector3 facing) :
 	CLight(std::move(mesh), std::move(name), diffuse, vertexShader, pixelShader, colour, strength, position,
