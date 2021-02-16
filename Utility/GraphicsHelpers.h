@@ -107,6 +107,11 @@ inline void UpdateDirLightsBuffer(ID3D11Buffer* buffer, PerFrameDirLights& buffe
 bool LoadTexture(std::string filename, ID3D11Resource** texture, ID3D11ShaderResourceView** textureSRV);
 
 
+//gets the texture dimentions
+CVector3 GetTextureDimentions(ID3D11Resource* texture);
+
+
+
 //--------------------------------------------------------------------------------------
 // Camera helpers
 //--------------------------------------------------------------------------------------

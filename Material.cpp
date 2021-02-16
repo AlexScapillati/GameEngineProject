@@ -183,9 +183,8 @@ CMaterial::CMaterial(std::string& diffuseMap, std::string& vertexShader, std::st
 			else if (fileName[0] == 'L')
 			{
 				//Level of Detail
-
 				//push the all the meshes avaliable in this vector
-
+				//TODO
 			}
 			else
 			{
@@ -209,15 +208,151 @@ CMaterial::CMaterial(std::string& diffuseMap, std::string& vertexShader, std::st
 
 	// load the shaders
 
-
 	if (!(mVertexShader = LoadVertexShader(vertexShader)))
 	{
 		throw std::runtime_error("error loading vertex shader");
 	}
 
-	mPixelShader = LoadPixelShader(pixelShader);
-
 	if (!(mPixelShader = LoadPixelShader(pixelShader)))
+	{
+		throw std::runtime_error("error loading pixel shader");
+	}
+}
+
+CMaterial::CMaterial(std::vector<std::string> fileMaps, std::string& vs, std::string& ps)
+{
+
+	mVertexShader = nullptr;
+	mGeometryShader = nullptr;
+	mPixelShader = nullptr;
+
+	mHasNormals = false;
+
+	mPbrMaps.Albedo = nullptr;
+	mPbrMaps.AlbedoSRV = nullptr;
+	mPbrMaps.AO = nullptr;
+	mPbrMaps.AoSRV = nullptr;
+	mPbrMaps.Displacement = nullptr;
+	mPbrMaps.DisplacementSRV = nullptr;
+	mPbrMaps.Normal = nullptr;
+	mPbrMaps.NormalSRV = nullptr;
+	mPbrMaps.Roughness = nullptr;
+	mPbrMaps.RoughnessSRV = nullptr;
+
+	//Add the folder to the VS and PS fileNames
+
+	ps = "Shaders\\" + ps;
+	vs = "Shaders\\" + vs;
+
+
+	//the model is pbr
+	mIsPbr = true;
+
+	//for each file in the vector with the same name as the mesh one
+	for (auto fileName : fileMaps)
+	{
+		auto originalFileName = fileName;
+
+		//load it
+
+		//get the type or first attribute of the map
+
+		auto arrtPos = fileName.find_first_of('_') + 1;
+
+		fileName = fileName.substr(arrtPos);
+
+		//remove the extenstion
+
+		fileName = fileName.substr(0, fileName.find_first_of('.'));
+
+		if (fileName[0] == '8' || fileName[0] == '4' || fileName[0] == '2')
+		{
+			//map
+			// TODO: ONLY SUPPORTED 8,4,2K MAPS
+			// This should be fine since megascans only gives one resolution typer per model
+			// TODO: include the other resolutions in the /Thumbs folder
+			// TODO: MAKE A DISTINCTION (ARRAY OF TEXTURE TO SCALE) OR TO IMPLEMENT IN QUALITY SETTINGS?
+
+			auto mapTypePos = fileName.find_first_of('_');
+
+			if (mapTypePos != std::string::npos)
+			{
+				//check what type of texture it is
+
+				fileName = fileName.substr(mapTypePos + 1);
+
+				//remove the extenstion
+
+				fileName = fileName.substr(0, fileName.find_last_of('.'));
+
+				if (fileName == "Albedo")
+				{
+					//found albedo map
+					if (!LoadTexture(originalFileName, &mPbrMaps.Albedo, &mPbrMaps.AlbedoSRV))
+					{
+						throw std::runtime_error("Error Loading: " + fileName);
+					}
+				}
+				else if (fileName == "AO")
+				{
+					//ambient occlusion map
+					if (!LoadTexture(originalFileName, &mPbrMaps.AO, &mPbrMaps.AoSRV))
+					{
+						throw std::runtime_error("Error Loading: " + fileName);
+					}
+				}
+				else if (fileName == "Displacement")
+				{
+					//found displacement map
+					//TODO: THERE IS A .EXR FILE THAT I DUNNO WHAT IS IT
+					if (!LoadTexture(originalFileName, &mPbrMaps.Displacement, &mPbrMaps.DisplacementSRV))
+					{
+						throw std::runtime_error("Error Loading: " + fileName);
+					}
+				}
+				//find rather than compare because there could be multiple normal maps because of the LOD
+				else if (fileName.find("Normal") != std::string::npos)
+				{
+					mHasNormals = true;
+
+					//TODO include LOD
+					//
+					//normal map
+					if (!LoadTexture(originalFileName, &mPbrMaps.Normal, &mPbrMaps.NormalSRV))
+					{
+						throw std::runtime_error("Error Loading: " + fileName);
+					}
+				}
+				else if (fileName == "Roughness")
+				{
+					//roughness map
+					if (!LoadTexture(originalFileName, &mPbrMaps.Roughness, &mPbrMaps.RoughnessSRV))
+					{
+						throw std::runtime_error("Error Loading: " + fileName);
+					}
+				}
+			}
+		}
+		else if (fileName[0] == 'L')
+		{
+			//nothing to do, L stands for LOD, the mesh 
+			//in this case the mesh gets handeled by the gameObject constructor
+		}
+		else
+		{
+			//TODO more functionality maybe?
+			throw std::runtime_error("File not recognized");
+		}
+	}
+
+	// load the shaders
+
+	if (!(mVertexShader = LoadVertexShader(vs)))
+	{
+		throw std::runtime_error("error loading vertex shader");
+	}
+
+	if (!(mPixelShader = LoadPixelShader(ps)))
 	{
 		throw std::runtime_error("error loading pixel shader");
 	}
@@ -234,7 +369,7 @@ void CMaterial::RenderMaterial(bool basicGeometry)
 		gD3DContext->VSSetShader(mVertexShader, nullptr, 0);
 
 		//even thought we are not using normals we need to set the correct pixel shader 
-		if (mPbrMaps.Normal)
+		if (mHasNormals)
 		{
 			gD3DContext->PSSetShader(gPbrDepthOnlyPixelShader, nullptr, 0);
 		}
@@ -253,7 +388,6 @@ void CMaterial::RenderMaterial(bool basicGeometry)
 		//check if the current vertex shader is not already set 
 
 		ID3D11VertexShader* VS = nullptr;
-
 
 		gD3DContext->VSGetShader(&VS, nullptr, 0);
 
@@ -284,11 +418,6 @@ void CMaterial::RenderMaterial(bool basicGeometry)
 			gD3DContext->PSSetShaderResources(0, 1, &mPbrMaps.AlbedoSRV);
 		}
 
-		//TODO remove 
-		if (!mPbrMaps.Albedo)
-		{
-			gD3DContext->PSSetShaderResources(0, 1, &mPbrMaps.AlbedoSRV);
-		}
 
 		//************************
 		// Send PBR Maps 
@@ -318,8 +447,8 @@ void CMaterial::RenderMaterial(bool basicGeometry)
 	}
 
 
-	
-	
+
+
 }
 
 CMaterial::~CMaterial()

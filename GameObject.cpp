@@ -97,12 +97,100 @@ CGameObject::CGameObject(std::string mesh, std::string name, std::string& diffus
 }
 
 
+void GetFilesWithID(std::string& dirPath, std::vector<std::string>& fileNames, std::string& id)
+{
+	//iterate through the directory
+	std::filesystem::recursive_directory_iterator iter(dirPath);
+
+	std::filesystem::recursive_directory_iterator end;
+
+	while (iter != end)
+	{
+		if (!is_directory(iter->path()))
+		{
+
+			auto filename = iter->path().filename().string();
+
+			//get the position of the first underscore that is after the name
+			auto currIdPos = filename.find_first_of('_');
+
+			if (currIdPos != std::string::npos)
+			{
+				//get the first name of the file
+				auto fileNameS = filename.substr(0, currIdPos);
+
+				//if this file id is the same as the one in the file to find
+				if (fileNameS == id)
+				{
+					fileNames.push_back(iter->path().filename().string());
+					iter.disable_recursion_pending();
+				}
+			}
+		}
+		std::error_code ec;
+		iter.increment(ec);
+		if (ec)
+		{
+			throw std::runtime_error("Error accessing " + ec.message());
+		}
+	}
+
+}
+
+CGameObject::CGameObject(std::string id, std::string name, std::string vs, std::string ps, CVector3 position /*= { 0,0,0 }*/, CVector3 rotation /*= { 0,0,0 }*/, float scale /*= 1*/)
+{
+	//initialize member variables
+	mName = std::move(name);
+
+	mEnabled = true;
+
+	//search for files with the same id
+	std::vector<std::string>files;
+
+	GetFilesWithID(gMediaFolder, files, id);
+
+	//create the material
+	mMaterial = new CMaterial(files, vs, ps);
+
+	//find meshes trough the files
+	for (auto st : files)
+	{
+		//set the meshes in the vector
+		if (st.find(".fbx") != std::string::npos)
+		{
+			mMeshFiles.push_back(st);
+		}
+	}
+
+	try
+	{
+		//load the most detailed mesh with tangents required
+		mMesh = new CMesh(mMeshFiles.front(), mMaterial->HasNormals());
+
+		// Set default matrices from mesh
+		mWorldMatrices.resize(mMesh->NumberNodes());
+		for (auto i = 0; i < mWorldMatrices.size(); ++i)
+			mWorldMatrices[i] = mMesh->GetNodeDefaultMatrix(i);
+
+	}
+	catch (std::exception& e)
+	{
+		throw std::runtime_error(e.what());
+	}
+
+
+	//geometry loaded, set its position...
+
+	SetPosition(position);
+	SetRotation(rotation);
+	SetScale(scale);
+}
 
 // The render function simply passes this model's matrices over to Mesh:Render.
 // All other per-frame constants must have been set already along with shaders, textures, samplers, states etc.
 void CGameObject::Render(bool basicGeometry)
 {
-
+	//if the model is not enable do not render it
 	if (!mEnabled) return;
 
 	//render the material
@@ -122,7 +210,7 @@ CGameObject::~CGameObject()
 {
 
 	delete mMesh;
-
+	delete mMaterial;
 }
 
 

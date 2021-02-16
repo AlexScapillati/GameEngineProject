@@ -45,39 +45,40 @@
         <Facing X="1.0" Y="0.0" Z="1.0" /> <!--That means it is a spotlight-->
         <Scale X="0.3" Y="0.3" Z="0.3" />
       </Entity>
-    <Entity Type="Light" Name="Sun">
+    <!--<Entity Type="Light" Name="Sun">
       <Geometry Mesh ="Light.x" Diffuse ="Flare.jpg" VS="BasicTransform_vs" PS="TintedTexture_ps"/>
       <Colour   X="1.0" Y="0.8" Z="0.2"/>
       <Strength S="200"/>
-      <Facing   X="-1" Y="0" Z="-1"/> <!--Facing vector but no position, Directional Light!-->
+      <Facing   X="-1" Y="0" Z="-1"/> --><!--Facing vector but no position, Directional Light!--><!--
       <Scale    X="0.7" Y="0.7" Z="0.7"/>
-    </Entity>-->
+    </Entity>-->-->
 
     <!-- PBR Objects -->
     <!--<Entity Type="GameObject" Name="rock" >
-      <Geometry Mesh="ubrleesiw_LOD0.fbx" VS="PBR_vs" PS="PBR_ps"/>
+      <Geometry ID="ubrleesiw" VS="PBR_vs" PS="PBR_ps"/>
       <Position X="10.0" Y="2.0" Z="30.0"/>
-    </Entity>
+    </Entity>-->
+    
     <Entity Type="Plant" Name="plant">
-      <Geometry Mesh="uc0oceo_LOD0.fbx"/>
+      <Geometry ID="uc0oceo"/>
       <Position X="50.0" Y="0.0" Z="30.0"/>
     </Entity>
-    <Entity Type="GameObject" Name="rock2">
-      <Geometry Mesh="ubxgfexiw_LOD0.fbx" VS="PBR_vs" PS="PBR_ps" />
+    <!--<Entity Type="GameObject" Name="rock2">
+      <Geometry ID="ubxgfexiw" VS="PBR_vs" PS="PBR_ps" />
       <Position X="20.0" Y="4.0" Z="10.0"/>
     </Entity>
     <Entity Type="GameObject" Name="Cliff">
-      <Geometry Mesh ="ub3sahcda_LOD0.fbx" VS="PBR_vs" PS="PBR_ps"/>
+      <Geometry ID ="ub3sahcda" VS="PBR_vs" PS="PBR_ps"/>
       <Position X="42.0" Y="5.0" Z="200.0"/>
     </Entity>
     <Entity Type="GameObject" Name="Door">
-      <Geometry Mesh="ugymbhrdw_LOD0.fbx" VS="PBR_vs" PS="PBR_ps"/>
+      <Geometry ID="ugymbhrdw" VS="PBR_vs" PS="PBR_ps"/>
       <Position X="90.0" Y="5.0" Z="30.0"/>
       <Rotation X="0.0" Y="90.0" Z="0.0"/>
       <Scale X="0.1" Y="0.1" Z="0.1"/>
     </Entity>
     <Entity Type="GameObject" Name="FirePlace">
-      <Geometry Mesh="ujjtcjnfa_LOD0.fbx" VS="PBR_vs" PS="PBR_ps"/>
+      <Geometry ID="ujjtcjnfa" VS="PBR_vs" PS="PBR_ps"/>
       <Position X="90.0" Y="10.0" Z="0.0"/>
       <Rotation X="0.0" Y="180.0" Z="0.0"/>
       <Scale X="0.1" Y="0.1" Z="0.1"/>
