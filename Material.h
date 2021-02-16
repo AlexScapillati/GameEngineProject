@@ -11,6 +11,8 @@ public:
 
 	CMaterial(std::string& diffuseMap, std::string&vertexShader, std::string& pixelShader);
 
+	CMaterial(std::vector<std::string> fileMaps, std::string& vs, std::string& ps);
+
 	bool HasNormals() { return mHasNormals; }
 	bool IsPbr() { return mIsPbr; }
 

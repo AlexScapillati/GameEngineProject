@@ -34,6 +34,27 @@ bool LoadTexture(std::string filename, ID3D11Resource** texture, ID3D11ShaderRes
     }
 }
 
+CVector3 GetTextureDimentions(ID3D11Resource* texture)
+{
+    ID3D11Texture2D* tex = nullptr;
+    if (SUCCEEDED(texture->QueryInterface(&tex)))
+    {
+        D3D11_TEXTURE2D_DESC desc;
+        tex->GetDesc(&desc);
+
+        CVector3 dim;
+
+        dim.x = static_cast<float>(desc.Width);
+        dim.y = static_cast<float>(desc.Height);
+        
+        tex->Release();
+
+        return dim;
+    }
+
+    return nullptr;
+}
+
 
 //--------------------------------------------------------------------------------------
 // Camera Helpers
