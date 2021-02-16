@@ -106,6 +106,9 @@ void DisplayObjects(CGameObjectManager* GOM)
 	//if there is an object selected
 	if (selectedObj)
 	{
+
+		ImGui::Checkbox("Enabled",selectedObj->Enabled());
+
 		//display the transform component
 		ImGui::NewLine();
 		ImGui::Text("Transform");
@@ -117,7 +120,7 @@ void DisplayObjects(CGameObjectManager* GOM)
 		float* rot = selectedObj->Rotation().GetValuesArray();
 
 		//convert it to degreese
-		for (int i = 0; i < 2; i++)
+		for (int i = 0; i < 3; i++)
 		{
 			rot[i] = ToDegrees(rot[i]);
 		}
@@ -127,7 +130,7 @@ void DisplayObjects(CGameObjectManager* GOM)
 		{
 			//if the value is changed 
 			//get back to radians
-			for (int i = 0; i < 2; i++)
+			for (int i = 0; i < 3; i++)
 			{
 				rot[i] = ToRadians(rot[i]);
 			}
@@ -146,9 +149,11 @@ void DisplayObjects(CGameObjectManager* GOM)
 			selectedObj->SetScale(scale);
 		}
 
-		//if it is a spotlight let it modify few things
-		if (auto light = dynamic_cast<CSpotLight*>(selectedObj))
+		if (auto light = dynamic_cast<CLight*>(selectedObj))
 		{
+
+			ImGui::Text("Specific settings");
+
 			//light colour edit
 
 			static bool colourPickerOpen = false;
@@ -160,7 +165,7 @@ void DisplayObjects(CGameObjectManager* GOM)
 
 			if (colourPickerOpen)
 			{
-				ImGui::Begin("ColourPicker",&colourPickerOpen);
+				ImGui::Begin("ColourPicker", &colourPickerOpen);
 
 				auto colour = light->GetColour().GetValuesArray();
 
@@ -179,58 +184,122 @@ void DisplayObjects(CGameObjectManager* GOM)
 				light->SetStrength(st);
 			}
 
-			//modify facing
-
-			auto facingV = light->GetFacing().GetValuesArray();
-
-			if (ImGui::DragFloat3("Facing", facingV, 0.001f, -1.0f, 1.0f))
+			//if it is a spotlight let it modify few things
+			if (auto spotLight = dynamic_cast<CSpotLight*>(selectedObj))
 			{
-				CVector3 facing = Normalise(facingV);
-				light->SetFacing(facing);
-			}
+				//modify facing
 
+				auto facingV = spotLight->GetFacing().GetValuesArray();
 
-			//modify cone angle
-
-			auto coneAngle = light->GetConeAngle();
-
-			if (ImGui::DragFloat("Cone Angle", &coneAngle, 1.0f, 0.0f, 180.0f))
-			{
-				light->SetConeAngle(coneAngle);
-			}
-
-			//modify shadow map size
-
-			auto size = light->getShadowMapSize();
-
-			if (ImGui::DragInt("ShadowMapsSize", &size, 1.0f, 2, 16384))
-			{
-				if (size < 16384)
+				if (ImGui::DragFloat3("Facing", facingV, 0.001f, -1.0f, 1.0f))
 				{
-					light->SetShadowMapsSize(size);
+					CVector3 facing = Normalise(facingV);
+					spotLight->SetFacing(facing);
 				}
-				else
+
+
+				//modify cone angle
+
+				auto coneAngle = spotLight->GetConeAngle();
+
+				if (ImGui::DragFloat("Cone Angle", &coneAngle, 1.0f, 0.0f, 180.0f))
 				{
-					std::runtime_error("Number Too big!");
+					spotLight->SetConeAngle(coneAngle);
+				}
+
+				//modify shadow map size
+
+				auto size = spotLight->getShadowMapSize();
+
+				if (ImGui::DragInt("ShadowMapsSize", &size, 1.0f, 2, 16384))
+				{
+					if (size < 16384)
+					{
+						spotLight->SetShadowMapsSize(size);
+					}
+					else
+					{
+						std::runtime_error("Number Too big!");
+					}
+				}
+			}
+			else if (auto dirLight = dynamic_cast<CDirLight*>(selectedObj))
+			{
+				//modify direction
+
+				auto facingV = dirLight->GetDirection().GetValuesArray();
+
+				if (ImGui::DragFloat3("Facing", facingV, 0.001f, -1.0f, 1.0f))
+				{
+					CVector3 facing = Normalise(facingV);
+					dirLight->SetDirection(facing);
+				}
+				//modify shadow map size
+
+				auto size = dirLight->GetShadowMapSize();
+
+				if (ImGui::DragInt("ShadowMapsSize", &size, 1.0f, 2, 16384))
+				{
+					if (size < 16384 && size >2)
+					{
+						dirLight->SetShadowMapSize(size);
+					}
+					else
+					{
+						std::runtime_error("Number Too big!");
+					}
+				}
+
+				//modify near clip and far clip
+
+				auto nearClip = dirLight->GetNearClip();
+				auto farClip = dirLight->GetFarClip();
+
+				if (ImGui::DragFloat("NearClip", &nearClip, 0.01f, 0.0f, 10.0f))
+				{
+					dirLight->SetNearClip(nearClip);
+				}
+
+				if (ImGui::DragFloat("FarClip", &farClip, 10.0f, 0.0f, D3D11_FLOAT32_MAX))
+				{
+					dirLight->SetFarClip(farClip);
 				}
 			}
 		}
 
-		////display the texture WIP
-		//ImGui::NewLine();
-		//ImGui::Text("Texture");
 
-		//ImTextureID texId = selectedObj->GetTextureSRV();
+		//display the texture WIP
+		ImGui::NewLine();
+		ImGui::Text("Texture");
 
-		//ImGui::Image((void*)texId, { 512, 512 });
+		ImTextureID texId = selectedObj->GetTextureSRV();
+
+		ImGui::Image((void*)selectedObj->GetTextureSRV(), { 256, 256 });
+
 	}
 }
 
+void DisplayShadowMaps(CGameObjectManager* GOM)
+{
+
+	ImGui::Begin("ShadowMaps");
+
+	for (auto tx : GOM->mShadowsMaps)
+	{
+		ImGui::NewLine();
+
+		ImTextureID texId = tx;
+
+		ImGui::Image((void*)texId, { 256, 256 });
+	}
+
+	ImGui::End();
+
+}
+
+
 void RenderGui(CGameObjectManager* GOM)
 {
-	ImGui_ImplDX11_NewFrame();
-	ImGui_ImplWin32_NewFrame();
-	ImGui::NewFrame();
 
 	ImGui::Begin("Objects");
 
@@ -374,6 +443,10 @@ void CScene::RenderSceneFromCamera(CCamera* camera) const
 void CScene::RenderScene(float frameTime) const
 {
 
+	ImGui_ImplDX11_NewFrame();
+	ImGui_ImplWin32_NewFrame();
+	ImGui::NewFrame();
+
 	//// Common settings ////
 
 	// Set up the light information in the constant buffer
@@ -420,6 +493,8 @@ void CScene::RenderScene(float frameTime) const
 
 	//Render the GUI
 	RenderGui(mObjManager);
+
+
 
 
 	////--------------- Scene completion ---------------////

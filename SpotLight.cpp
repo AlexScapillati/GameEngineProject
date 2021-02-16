@@ -88,7 +88,7 @@ ID3D11ShaderResourceView* CSpotLight::RenderFromThis(CGameObjectManager* CGOM)
 	gD3DContext->ClearDepthStencilView(mShadowMapDepthStencil, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 	gPerFrameConstants.viewMatrix = InverseAffine(WorldMatrix());
-	gPerFrameConstants.projectionMatrix = MakeProjectionMatrix(1.0f, ToRadians(mConeAngle)/*TODO Add this*/);
+	gPerFrameConstants.projectionMatrix = MakeProjectionMatrix(1.0f, ToRadians(mConeAngle));
 	gPerFrameConstants.viewProjectionMatrix = gPerFrameConstants.viewMatrix * gPerFrameConstants.projectionMatrix;
 	
 	UpdateFrameConstantBuffer(gPerFrameConstantBuffer, gPerFrameConstants);
@@ -110,6 +110,9 @@ void CSpotLight::SetShadowMapsSize(int value)
 	//TODO boundaries 
 	mShadowMapSize = value;
 
+	mShadowMap->Release();
+	mShadowMapDepthStencil->Release();
+	mShadowMapSRV->Release();
 	
 	//**** Create Shadow Map texture ****//
 

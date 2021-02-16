@@ -29,12 +29,19 @@ public:
 	auto SetFarClip(float n) { mFarClip = n; }
 	auto GetDirection() { return mDirection; }
 	auto SetDirection(CVector3& dir) { mDirection = dir; }
+	void SetShadowMapSize(int s);
+	auto GetShadowMapSize() { return mShadowMapSize; }
+
+	~CDirLight();
+
 
 private:
 
 	int mShadowMapSize;
 
 	CVector3 mDirection;
+	float mWidth;
+	float mHeight;
 	float mNearClip;
 	float mFarClip;
 

@@ -74,8 +74,7 @@ CGameObject::CGameObject(std::string mesh, std::string name, const std::string& 
 
 	//initialize graphics related components 
 
-	mDiffuseSpecularMap = nullptr;
-	mDiffuseSpecularMapSRV = nullptr;
+	mEnabled = true;
 
 	mVertexShader = nullptr;
 	mGeometryShader = nullptr;
@@ -275,7 +274,7 @@ CGameObject::CGameObject(std::string mesh, std::string name, const std::string& 
 			throw std::runtime_error("error loading pixel shader");
 		}
 
-		if (!LoadTexture(diffuseMap, &mDiffuseSpecularMap, &mDiffuseSpecularMapSRV))
+		if (!LoadTexture(diffuseMap, &mPbrMaps.Albedo, &mPbrMaps.AlbedoSRV))
 		{
 			throw std::runtime_error("Error loading texture: " + diffuseMap);
 		}
@@ -309,6 +308,9 @@ CGameObject::CGameObject(std::string mesh, std::string name, const std::string& 
 // All other per-frame constants must have been set already along with shaders, textures, samplers, states etc.
 void CGameObject::Render(bool basicGeometry)
 {
+
+	if (!mEnabled) return;
+
 	//General rendering
 
 	//gPerModelConstants.parallaxDepth = 0.006f; //TODO
@@ -365,13 +367,13 @@ void CGameObject::Render(bool basicGeometry)
 
 		gD3DContext->PSGetShaderResources(0, 1, &PSSRV);
 
-		if (PSSRV != mDiffuseSpecularMapSRV)
+		if (PSSRV != mPbrMaps.AlbedoSRV)
 		{
-			gD3DContext->PSSetShaderResources(0, 1, &mDiffuseSpecularMapSRV);
+			gD3DContext->PSSetShaderResources(0, 1, &mPbrMaps.AlbedoSRV);
 		}
 
 		//TODO remove 
-		if (!mDiffuseSpecularMap)
+		if (!mPbrMaps.Albedo)
 		{
 			gD3DContext->PSSetShaderResources(0, 1, &mPbrMaps.AlbedoSRV);
 		}
@@ -417,8 +419,6 @@ CGameObject::~CGameObject()
 
 	delete mMesh;
 
-	if (mDiffuseSpecularMap)	mDiffuseSpecularMap->Release();		mDiffuseSpecularMap = nullptr;
-	if (mDiffuseSpecularMapSRV) mDiffuseSpecularMapSRV->Release();	mDiffuseSpecularMapSRV = nullptr;
 	if (mPixelShader)			mPixelShader->Release();			mPixelShader = nullptr;
 	if (mVertexShader)			mVertexShader->Release();			mVertexShader = nullptr;
 	if (mGeometryShader)		mGeometryShader->Release();			mGeometryShader = nullptr;

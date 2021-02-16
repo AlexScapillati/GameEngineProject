@@ -36,8 +36,15 @@ public:
 	void SetFacing(CVector3 v)
 	{
 		mFacing = v;
+		mWorldMatrices[0].FaceTarget(Position()+v);
 	}
 	
+	void SetRotation(CVector3 rotation, int node = 0) override
+	{
+		CGameObject::SetRotation(rotation);
+		//mFacing = Normalise(Rotation());
+	}
+
 	~CSpotLight();
 
 private:

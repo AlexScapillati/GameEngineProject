@@ -52,6 +52,8 @@ public:
 
 	auto GetName() { return mName; }
 
+	auto Enabled() { return &mEnabled; }
+
 	auto GetTextureSRV() { return mPbrMaps.AlbedoSRV;}
 	
 	auto GetTexture() { return mPbrMaps.Albedo;}
@@ -59,7 +61,7 @@ public:
 	// Setters - model only stores matricies , so if user sets position, rotation or scale, just update those aspects of the matrix
 	void SetPosition(CVector3 position, int node = 0);
 
-	void SetRotation(CVector3 rotation, int node = 0);
+	virtual void SetRotation(CVector3 rotation, int node = 0);
 
 	// Two ways to set scale: x,y,z separately, or all to the same value
 	// To set scale without affecting rotation, normalize each row, then multiply it by the scale value.
@@ -73,7 +75,6 @@ public:
 
 	virtual ~CGameObject();
 
-	
 	//-------------------------------------
 	// Private data / members
 	//-------------------------------------
@@ -82,10 +83,6 @@ public:
 protected:
 
 	//for regular models
-	//can actually be replaced by the albedo
-	
-	ID3D11Resource*				mDiffuseSpecularMap;
-	ID3D11ShaderResourceView*	mDiffuseSpecularMapSRV;
 
 	ID3D11VertexShader*		mVertexShader;
 	ID3D11GeometryShader*   mGeometryShader; //WIP
@@ -112,6 +109,9 @@ protected:
 	CMesh* mMesh;
 	
 	std::string mName;
+
+	bool mEnabled;
+	
 
 	// World matrices for the model
 	// Now that meshes have multiple parts, we need multiple matrices. The root matrix (the first one) is the world matrix

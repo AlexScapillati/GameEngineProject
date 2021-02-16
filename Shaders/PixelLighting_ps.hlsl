@@ -62,7 +62,7 @@ float4 main(LightingPixelShaderInput input) : SV_Target
 
     const float depthAdjust = 0.0005f;
     
-	//for each dir light
+	//for each spot light
     for (int j = 0; j < gSpotLights[0].numLights; ++j)
     {
         const float3 lightDir = normalize(gSpotLights[j].pos - input.worldPosition);
@@ -93,7 +93,7 @@ float4 main(LightingPixelShaderInput input) : SV_Target
             {
                 for (int y = -pcfCount; y <= pcfCount; y++)
                 {
-                    const float objNearestLight = ShadowMaps.Sample(PointClamp, float3(shadowMapUV + float2(x, y) * texelSize, i)).r;
+                    const float objNearestLight = ShadowMaps.Sample(PointClamp, float3(shadowMapUV + float2(x, y) * texelSize, j)).r;
                     if (depthFromLight > objNearestLight)
                         total += 1.0f;
                 }
@@ -102,7 +102,6 @@ float4 main(LightingPixelShaderInput input) : SV_Target
             total /= totalTexels;
 		
             float lightFactor = 1.0f - (total * depthFromLight);
-		
 		
 			// Compare pixel depth from light with depth held in shadow map of the light. If shadow map depth is less than something is nearer
 			// to the light than this pixel - so the pixel gets no effect from this light
@@ -120,6 +119,60 @@ float4 main(LightingPixelShaderInput input) : SV_Target
         }
     }
 
+    //for each dir light
+    for (int k = 0; k < gDirLights[0].numLights; ++k)
+    {
+        const float3 lightDir = gDirLights[k].facing;
+        
+    	// Using the world position of the current pixel and the matrices of the light (as a camera), find the 2D position of the
+		// pixel *as seen from the light*. Will use this to find which part of the shadow map to look at.
+		// These are the same as the view / projection matrix multiplies in a vertex shader (can improve performance by putting these lines in vertex shader)
+        const float4 viewPosition = mul(gDirLights[k].viewMatrix, float4(input.worldPosition, 1.0f));
+        const float4 projection = mul(gDirLights[k].projMatrix, viewPosition);
+
+		// Convert 2D pixel position as viewed from light into texture coordinates for shadow map - an advanced topic related to the projection step
+		// Detail: 2D position x & y get perspective divide, then converted from range -1->1 to UV range 0->1. Also flip V axis
+        float2 shadowMapUV = 0.5f * projection.xy / projection.w + float2(0.5f, 0.5f);
+        shadowMapUV.y = 1.0f - shadowMapUV.y; // Check if pixel is within light cone
+
+		// Get depth of this pixel if it were visible from the light (another advanced projection step)
+        const float depthFromLight = projection.z / projection.w - depthAdjust; //*** Adjustment so polygons don't shadow themselves
+		
+		
+        const float texelSize = 1.0f / 1024;
+	
+        float total = 0.0f;
+	
+        for (int x = -pcfCount; x <= pcfCount; x++)
+        {
+            for (int y = -pcfCount; y <= pcfCount; y++)
+            {
+                const float objNearestLight = ShadowMaps.Sample(PointClamp, float3(shadowMapUV + float2(x, y) * texelSize, k)).r;
+                if (depthFromLight > objNearestLight)
+                    total += 1.0f;
+            }
+        }
+		
+        total /= totalTexels;
+		
+        float lightFactor = 1.0f - (total * depthFromLight);
+		
+		
+		// Compare pixel depth from light with depth held in shadow map of the light. If shadow map depth is less than something is nearer
+		// to the light than this pixel - so the pixel gets no effect from this light
+        if (depthFromLight < ShadowMaps.Sample(PointClamp, float3(shadowMapUV, k + gSpotLights[0].numLights)).r)
+        {
+            float3 diffuseLight = gDirLights[k].colour * max(dot(input.worldNormal, lightDir), 0); // Equations from lighting lecture
+            const float3 halfway = normalize(lightDir + cameraDirection);
+            const float3 specularLight = diffuseLight * pow(max(dot(input.worldNormal, halfway), 0), gSpecularPower); // Multiplying by diffuseLight instead of light colour - my own personal preference
+            diffuseLight *= lightFactor;
+
+            resDiffuse += diffuseLight;
+            resSpecular += specularLight;
+        }
+    }
+    
+    
 	////////////////////
 	// Combine lighting and textures
 

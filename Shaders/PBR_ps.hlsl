@@ -200,13 +200,13 @@ float4 main(NormalMappingPixelShaderInput input) : SV_Target
     
     for (int k = 0; k < gDirLights[0].numLights; ++k)
     {
-        const float3 lightDir = -normalize(gDirLights[j].facing - input.worldPosition);
+        const float3 lightDir = gDirLights[k].facing;
         
     	//Using the world position of the current pixel and the matrices of the light (as a camera), find the 2D position of the
 		//pixel *as seen from the light*. Will use this to find which part of the shadow map to look at.
 		//These are the same as the view / projection matrix multiplies in a vertex shader (can improve performance by putting these lines in vertex shader)
-        const float4 viewPosition = mul(gDirLights[j].viewMatrix, float4(input.worldPosition, 1.0f));
-        const float4 projection = mul(gDirLights[j].projMatrix, viewPosition);
+        const float4 viewPosition = mul(gDirLights[k].viewMatrix, float4(input.worldPosition, 1.0f));
+        const float4 projection = mul(gDirLights[k].projMatrix, viewPosition);
 
 		//Convert 2D pixel position as viewed from light into texture coordinates for shadow map - an advanced topic related to the projection step
 	    //Detail: 2D position x & y get perspective divide, then converted from range -1->1 to UV range 0->1. Also flip V axis
@@ -238,9 +238,9 @@ float4 main(NormalMappingPixelShaderInput input) : SV_Target
 		
 		//Compare pixel depth from light with depth held in shadow map of the light. If shadow map depth is less than something is nearer
 		//to the light than this pixel - so the pixel gets no effect from this light
-        if (depthFromLight < ShadowMaps.Sample(PointClamp, float3(shadowMapUV, j)).r)
+        if (depthFromLight < ShadowMaps.Sample(PointClamp, float3(shadowMapUV, k + gSpotLights[0].numLights)).r)
         {
-            const float3 diffuseLight = gDirLights[j].colour * max(dot(worldNormal, lightDir), 0); // Equations from lighting lecture
+            const float3 diffuseLight = gDirLights[k].colour * max(dot(worldNormal, lightDir), 0); // Equations from lighting lecture
             const float3 halfway = normalize(lightDir + cameraDirection);
             const float3 specularLight = diffuseLight * pow(max(dot(worldNormal, halfway), 0), gSpecularPower); // Multiplying by diffuseLight instead of light colour - my own personal preference
             

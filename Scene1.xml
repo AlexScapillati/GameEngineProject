@@ -30,26 +30,26 @@
     </Entity>
 
     <!-- Lights -->
-    <!--<Entity Type="Light" Name="Light1">
+    <Entity Type="Light" Name="Light1">
       <Geometry Mesh ="Light.x" Diffuse ="Flare.jpg" VS="BasicTransform_vs" PS="TintedTexture_ps"/>
       <Colour   X="0.8" Y="0.8" Z="1.0"/>
       <Strength S="10"/>
       <Position X="30.0" Y="10.0" Z="90.0"/>
       <Scale    X="0.7" Y="0.7" Z="0.7"/>
-    </Entity>-->
+    </Entity>
     <Entity Type="Light" Name="Light2">
         <Geometry Mesh="Light.x" Diffuse="Flare.jpg" VS="BasicTransform_vs" PS="TintedTexture_ps" />
         <Colour X="0.8" Y="0.8" Z="0.8" />
         <Strength S="120" />
         <Position X="-20" Y="10" Z="40" />
-        <Facing X="1.0" Y="0.0" Z="1.0" /> -->That means it is a spotlight
+        <Facing X="1.0" Y="0.0" Z="1.0" /> <!--That means it is a spotlight-->
         <Scale X="0.3" Y="0.3" Z="0.3" />
       </Entity>
-    <!--<Entity Type="Light" Name="Sun">
+    <Entity Type="Light" Name="Sun">
       <Geometry Mesh ="Light.x" Diffuse ="Flare.jpg" VS="BasicTransform_vs" PS="TintedTexture_ps"/>
       <Colour   X="1.0" Y="0.8" Z="0.2"/>
       <Strength S="200"/>
-      <Facing   X="-1" Y="0" Z="-1"/> --><!--Facing vector but no position, Directional Light!--><!--
+      <Facing   X="-1" Y="0" Z="-1"/> <!--Facing vector but no position, Directional Light!-->
       <Scale    X="0.7" Y="0.7" Z="0.7"/>
     </Entity>-->
 

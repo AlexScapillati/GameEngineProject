@@ -4,6 +4,7 @@
 #include "DirLight.h"
 #include "GraphicsHelpers.h"
 #include "MathHelpers.h"
+#include "External\imgui\imgui.h"
 
 CGameObjectManager::CGameObjectManager()
 {
@@ -81,7 +82,7 @@ void CGameObjectManager::UpdateSpotLightsConstBuffer(PerFrameSpotLights* FLB)
 		FLB->spotLights[i].facing = mSpotLights[i]->GetFacing();
 		FLB->spotLights[i].cosHalfAngle = cos(ToRadians(mSpotLights[i]->GetConeAngle() / 2));
 		FLB->spotLights[i].viewMatrix = InverseAffine(mSpotLights[i]->WorldMatrix());
-		FLB->spotLights[i].projMatrix = MakeProjectionMatrix(1.0f,mSpotLights[i]->GetConeAngle());
+		FLB->spotLights[i].projMatrix = MakeProjectionMatrix(1.0f, mSpotLights[i]->GetConeAngle());
 		FLB->spotLights[i].numLights = mCurrNumSpotLights;
 	}
 }
@@ -147,6 +148,8 @@ bool CGameObjectManager::RemoveDirLight(int pos)
 	return false;
 }
 
+extern void DisplayShadowMaps();
+
 bool CGameObjectManager::RenderAllObjects()
 {
 	for (auto it : mObjects)
@@ -159,7 +162,7 @@ bool CGameObjectManager::RenderAllObjects()
 		it->Render();
 	}
 
-	for(auto it : mSpotLights)
+	for (auto it : mSpotLights)
 	{
 		it->Render();
 	}
@@ -169,13 +172,25 @@ bool CGameObjectManager::RenderAllObjects()
 		it->Render();
 	}
 
-	//after the frame is rendered, we clear the shadowMaps array
+	ImGui::Begin("ShadowMaps");
+
+	for (auto tx : mShadowsMaps)
+	{
+		ImGui::NewLine();
+
+		ImTextureID texId = tx;
+
+		ImGui::Image((void*)texId, { 256, 256 });
+	}
+
+	ImGui::End();
+
 	mShadowsMaps.clear();
 
-    // Unbind shadow maps from shaders - prevents warnings from DirectX when we try to render to the shadow maps again next frame
-    ID3D11ShaderResourceView* nullView = nullptr;
-    gD3DContext->PSSetShaderResources(5, 1, &nullView);
-	
+	// Unbind shadow maps from shaders - prevents warnings from DirectX when we try to render to the shadow maps again next frame
+	ID3D11ShaderResourceView* nullView = nullptr;
+	gD3DContext->PSSetShaderResources(5, 1, &nullView);
+
 	return true;
 }
 
@@ -183,11 +198,14 @@ void CGameObjectManager::RenderFromSpotLights()
 {
 	for (auto it : mSpotLights)
 	{
-		//render from its prospective into a texture
-		auto temp = it->RenderFromThis(this);
-		
-		//put this texture in the texture array that will be passed to the shader	
-		mShadowsMaps.push_back(temp);
+		if (*it->Enabled())
+		{
+			//render from its prospective into a texture
+			auto temp = it->RenderFromThis(this);
+
+			//put this texture in the texture array that will be passed to the shader	
+			mShadowsMaps.push_back(temp);
+		}
 	}
 }
 
@@ -195,9 +213,12 @@ void CGameObjectManager::RenderFromDirLights()
 {
 	for (auto it : mDirLights)
 	{
-		auto tmp = it->RenderFromThis(this);
+		if (*it->Enabled())
+		{
+			auto tmp = it->RenderFromThis(this);
 
-		mShadowsMaps.push_back(tmp);
+			mShadowsMaps.push_back(tmp);
+		}
 	}
 }
 
@@ -233,12 +254,12 @@ CGameObjectManager::~CGameObjectManager()
 		delete it;
 	}
 
-	for(auto it : mSpotLights)
+	for (auto it : mSpotLights)
 	{
 		delete it;
 	}
 
-	for(auto it : mShadowsMaps)
+	for (auto it : mShadowsMaps)
 	{
 		if (it)
 		{

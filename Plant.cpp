@@ -11,6 +11,7 @@ void CPlant::Render(bool basicGeometry)
 	}
 	else
 	{
+		//store previous settings
 		ID3D11BlendState* pBlendState = nullptr;
 		ID3D11DepthStencilState* pBPSState = nullptr;
 		ID3D11RasterizerState* pRSState = nullptr;
@@ -19,7 +20,7 @@ void CPlant::Render(bool basicGeometry)
 		gD3DContext->OMGetDepthStencilState(&pBPSState, 0);
 		gD3DContext->RSGetState(&pRSState);
 
-		// States - additive blending, read-only depth buffer and no culling (standard set-up for blending)
+		// additive blending, read-only depth buffer and no culling (standard set-up for blending)
 		gD3DContext->OMSetBlendState(gNoBlendingState, NULL, 0xffffff);
 		gD3DContext->OMSetDepthStencilState(gUseDepthBufferState, 0);
 		gD3DContext->RSSetState(gCullNoneState);
