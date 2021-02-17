@@ -42,8 +42,7 @@
       <Colour X="0.8" Y="0.8" Z="0.8" />
       <Strength S="120" />
       <Position X="-20" Y="10" Z="40" />
-      <Facing X="1.0" Y="0.0" Z="1.0" />
-      --><!--That means it is a spotlight--><!--
+      <Facing X="1.0" Y="0.0" Z="1.0" /> --><!--That means it is a spotlight--><!--
       <Scale X="0.3" Y="0.3" Z="0.3" />
     </Entity>-->
     <!--<Entity Type="Light" Name="Sun">

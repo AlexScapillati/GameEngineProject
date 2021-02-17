@@ -121,9 +121,10 @@ void CGameObjectManager::UpdatePointLightsConstBuffer(PerFramePointLights* FLB)
 		for (auto j = 0; j < 6; ++j)
 		{
 			mPointLights[i]->WorldMatrix().FaceTarget(mPointLights[i]->mSides[j]);
+
 			FLB->pointLights[i].viewMatrices[j] = InverseAffine(mPointLights[i]->WorldMatrix());
 
-			//IDK
+			//probably useless since they are all the same
 			FLB->pointLights[i].projMatrices[j] = MakeProjectionMatrix(1.0f, ToRadians(90.0f));
 		}
 	}
@@ -189,6 +190,7 @@ bool CGameObjectManager::RemoveDirLight(int pos)
 	return false;
 }
 
+extern void DisplayShadowMaps(CGameObjectManager* GOM);
 
 bool CGameObjectManager::RenderAllObjects()
 {
@@ -217,18 +219,7 @@ bool CGameObjectManager::RenderAllObjects()
 		it->Render();
 	}
 
-	ImGui::Begin("ShadowMaps");
-
-	for (auto tx : mShadowsMaps)
-	{
-		ImGui::NewLine();
-
-		ImTextureID texId = tx;
-
-		ImGui::Image((void*)texId, { 256, 256 });
-	}
-
-	ImGui::End();
+	DisplayShadowMaps(this);
 
 	mShadowsMaps.clear();
 
@@ -262,8 +253,10 @@ void CGameObjectManager::RenderFromPointLights()
 		{
 			auto tmp = it->RenderFromThis(this);
 
-
-			mShadowsMaps.push_back(tmp);
+			for (int i = 0; i < 6; ++i)
+			{
+				mShadowsMaps.push_back(tmp[i]);
+			}
 		}
 	}
 }

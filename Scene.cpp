@@ -431,12 +431,21 @@ void CScene::RenderSceneFromCamera(CCamera* camera) const
 	// Select which shaders to use next
 	gD3DContext->GSSetShader(nullptr, nullptr, 0);  ////// Switch off geometry shader when not using it (pass nullptr for first parameter)
 
+	gD3DContext->PSSetSamplers(1, 1, &gPointSampler);
+
 	//if the shadowmaps array is not empty
 	if (!mObjManager->mShadowsMaps.empty())
 	{
 		//send the shadow maps to the shaders (slot 5)
-		gD3DContext->PSSetShaderResources(5, mObjManager->mShadowsMaps.size(), &mObjManager->mShadowsMaps[0]);
-		gD3DContext->PSSetSamplers(1, 1, &gPointSampler);
+
+		try
+		{
+			gD3DContext->PSSetShaderResources(5, mObjManager->mShadowsMaps.size(), &mObjManager->mShadowsMaps[0]);
+		}
+		catch (std::exception e)
+		{
+			throw std::runtime_error(e.what());
+		}
 	}
 
 	// States - no blending, normal depth buffer and back-face culling (standard set-up for opaque models)

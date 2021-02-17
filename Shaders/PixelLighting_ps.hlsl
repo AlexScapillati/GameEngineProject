@@ -17,8 +17,8 @@
 Texture2D DiffuseSpecularMap : register(t0); // Textures here can contain a diffuse map (main colour) in their rgb channels and a specular map (shininess) in the a channel
 SamplerState TexSampler : register(s0); // A sampler is a filter for a texture like bilinear, trilinear or anisotropic - this is the sampler used for the texture above
 Texture2DArray ShadowMaps : register(t5);
-SamplerState PointClamp : register(s1);
 
+SamplerState PointClamp : register(s1);
 
 static const int pcfCount = 8;
 static const float totalTexels = (pcfCount * 2.0f + 1.0f) * (pcfCount * 2.0f + 1.0f);
@@ -214,7 +214,7 @@ float4 main(LightingPixelShaderInput input) : SV_Target
             
 		    // Compare pixel depth from light with depth held in shadow map of the light. If shadow map depth is less than something is nearer
 		    // to the light than this pixel - so the pixel gets no effect from this light
-            if (depthFromLight < ShadowMaps.Sample(PointClamp, float3(shadowMapUV, l + gSpotLights[0].numLights + gDirLights[0].numLights )).r)
+            if (depthFromLight < ShadowMaps.Sample(PointClamp, float3(shadowMapUV, l + gSpotLights[0].numLights + gDirLights[0].numLights + face)).r)
             {
                 float3 diffuseLight = gPointLights[l].colour * max(dot(input.worldNormal, lightDir), 0); // Equations from lighting lecture
                 const float3 halfway = normalize(lightDir + cameraDirection);
