@@ -96,6 +96,26 @@ inline void UpdateDirLightsBuffer(ID3D11Buffer* buffer, PerFrameDirLights& buffe
     gD3DContext->Unmap(buffer, 0);
 }
 
+inline void UpdatePointLightsBuffer(ID3D11Buffer* buffer, PerFramePointLights& bufferData)
+{
+    D3D11_MAPPED_SUBRESOURCE cb;
+    gD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
+
+    //calculate the size of the frame constant buffer
+
+    //remove the lights array from the equation
+    auto size = sizeof(PerFramePointLights) - sizeof(bufferData.pointLights);
+
+    const auto sizeOfLightStruct = sizeof(sDirLights);
+	
+	//add just the lights used
+	size += sizeOfLightStruct * bufferData.pointLights[0].numLights;
+
+    memcpy(cb.pData, &bufferData, size);
+    gD3DContext->Unmap(buffer, 0);
+}
+
+
 //--------------------------------------------------------------------------------------
 // Texture Loading
 //--------------------------------------------------------------------------------------

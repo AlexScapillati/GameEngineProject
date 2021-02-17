@@ -13,6 +13,7 @@
 
 #include "SpotLight.h"
 #include "DirLight.h"
+#include "CPointLight.h"
 
 #include "External\imgui\imgui.h"
 #include "External\imgui\imgui_impl_dx11.h"
@@ -44,6 +45,9 @@ ID3D11Buffer* gPerFrameSpotLightsConstBuffer;
 
 PerFrameDirLights gPerFrameDirLightsConstants;
 ID3D11Buffer* gPerFrameDirLightsConstBuffer;
+
+PerFramePointLights gPerFramePointLightsConstants;
+ID3D11Buffer* gPerFramePointLightsConstBuffer;
 
 
 void SetupGui()
@@ -102,7 +106,17 @@ void DisplayObjects(CGameObjectManager* GOM)
 			selectedObj = it;
 		}
 	}
-
+	
+	for (auto it : GOM->mPointLights)
+	{
+		//if a butto is pressed
+		if (ImGui::Button(it->GetName().c_str()))
+		{
+			//stor the object pointer
+			selectedObj = it;
+		}
+	}
+	
 	//if there is an object selected
 	if (selectedObj)
 	{
@@ -143,7 +157,7 @@ void DisplayObjects(CGameObjectManager* GOM)
 		float* scale = selectedObj->Scale().GetValuesArray();
 
 		//display the scale array
-		if (ImGui::DragFloat3("Scale", scale,0.1f,0.001f,D3D11_FLOAT32_MAX))
+		if (ImGui::DragFloat3("Scale", scale, 0.1f, 0.001f, D3D11_FLOAT32_MAX))
 		{
 			//if it has changed set the scale
 			selectedObj->SetScale(scale);
@@ -188,7 +202,6 @@ void DisplayObjects(CGameObjectManager* GOM)
 			if (auto spotLight = dynamic_cast<CSpotLight*>(selectedObj))
 			{
 				//modify facing
-
 				auto facingV = spotLight->GetFacing().GetValuesArray();
 
 				if (ImGui::DragFloat3("Facing", facingV, 0.001f, -1.0f, 1.0f))
@@ -274,7 +287,7 @@ void DisplayObjects(CGameObjectManager* GOM)
 
 		ImTextureID texId = selectedObj->GetTextureSRV();
 
-		ImGui::Image((void*)texId, { 256,256});
+		ImGui::Image((void*)texId, { 256,256 });
 
 	}
 }
@@ -365,12 +378,14 @@ bool CScene::InitScene(std::string fileName)
 	gPerFrameLightsConstBuffer = CreateConstantBuffer(sizeof(gPerFrameLightsConstants));
 	gPerFrameSpotLightsConstBuffer = CreateConstantBuffer(sizeof(gPerFrameSpotLightsConstants));
 	gPerFrameDirLightsConstBuffer = CreateConstantBuffer(sizeof(gPerFrameDirLightsConstants));
+	gPerFramePointLightsConstBuffer = CreateConstantBuffer(sizeof(gPerFramePointLightsConstants));
 
 	if (!gPerFrameConstantBuffer ||
 		!gPerModelConstantBuffer ||
 		!gPerFrameDirLightsConstBuffer ||
 		!gPerFrameLightsConstBuffer ||
-		!gPerFrameSpotLightsConstBuffer)
+		!gPerFrameSpotLightsConstBuffer||
+		!gPerFramePointLightsConstBuffer)
 	{
 		throw std::runtime_error("Error creating constant buffers");
 	}
@@ -399,16 +414,17 @@ void CScene::RenderSceneFromCamera(CCamera* camera) const
 	UpdateLightBuffer(gPerFrameLightsConstBuffer, gPerFrameLightsConstants);
 	UpdateSpotLightsBuffer(gPerFrameSpotLightsConstBuffer, gPerFrameSpotLightsConstants);
 	UpdateDirLightsBuffer(gPerFrameDirLightsConstBuffer, gPerFrameDirLightsConstants);
-
+	UpdatePointLightsBuffer(gPerFramePointLightsConstBuffer, gPerFramePointLightsConstants);
 
 	ID3D11Buffer* frameCBuffers[] = { gPerFrameConstantBuffer,
 		gPerFrameLightsConstBuffer,
 		gPerFrameSpotLightsConstBuffer,
-		gPerFrameDirLightsConstBuffer };
+		gPerFrameDirLightsConstBuffer,
+		gPerFramePointLightsConstBuffer};
 
-	gD3DContext->PSSetConstantBuffers(1, 4, frameCBuffers);
-	gD3DContext->VSSetConstantBuffers(1, 4, frameCBuffers); // First parameter must match constant buffer number in the shader 
-	gD3DContext->GSSetConstantBuffers(1, 4, frameCBuffers);
+	gD3DContext->PSSetConstantBuffers(1, 5, frameCBuffers);
+	gD3DContext->VSSetConstantBuffers(1, 5, frameCBuffers); // First parameter must match constant buffer number in the shader 
+	gD3DContext->GSSetConstantBuffers(1, 5, frameCBuffers);
 
 	////--------------- Render ordinary models ---------------///
 
@@ -455,6 +471,7 @@ void CScene::RenderScene(float frameTime) const
 	mObjManager->UpdateLightsConstBuffer(&gPerFrameLightsConstants);
 	mObjManager->UpdateSpotLightsConstBuffer(&gPerFrameSpotLightsConstants);
 	mObjManager->UpdateDirLightsConstBuffer(&gPerFrameDirLightsConstants);
+	mObjManager->UpdatePointLightsConstBuffer(&gPerFramePointLightsConstants);
 
 	gPerModelConstants.parallaxDepth = 0.00f;
 
@@ -490,11 +507,8 @@ void CScene::RenderScene(float frameTime) const
 	// Render the scene from the main camera
 	RenderSceneFromCamera(mCamera);
 
-
 	//Render the GUI
 	RenderGui(mObjManager);
-
-
 
 
 	////--------------- Scene completion ---------------////
@@ -706,10 +720,94 @@ void CScene::LoadObject(tinyxml2::XMLElement* currEntity) const
 		}
 		else
 		{
-			auto obj = new CGameObject(ID, name,vertexShader,pixelShader, pos, rot, scale);
+			auto obj = new CGameObject(ID, name, vertexShader, pixelShader, pos, rot, scale);
 			mObjManager->AddObject(obj);
 		}
 
+	}
+	catch (const std::exception& e)
+	{
+		throw std::runtime_error(std::string(e.what()) + " of object " + name);
+	}
+}
+
+void CScene::LoadPointLight(tinyxml2::XMLElement* currEntity)
+{
+	std::string mesh;
+	std::string name;
+	std::string diffuse;
+	auto vertexShader = mDefaultVs;
+	auto pixelShader = mDefaultPs;
+
+	CVector3 colour = { 0,0,0 };
+	float strength = 0;
+	CVector3 pos = { 0,0,0 };
+	CVector3 rot = { 0,0,0 };
+	CVector3 facing = { 0,0,0 };
+	auto scale = 1.0f;
+
+	const auto entityNameAttr = currEntity->FindAttribute("Name");
+	if (entityNameAttr) name = entityNameAttr->Value();
+
+	const auto geometry = currEntity->FirstChildElement("Geometry");
+	if (geometry)
+	{
+		const auto meshAttr = geometry->FindAttribute("Mesh");
+		if (meshAttr) mesh = meshAttr->Value();
+
+		const auto diffuseAttr = geometry->FindAttribute("Diffuse");
+		if (diffuseAttr) diffuse = diffuseAttr->Value();
+
+		const auto VsAttr = geometry->FindAttribute("VS");
+		if (VsAttr) vertexShader = VsAttr->Value();
+
+		const auto PsAttr = geometry->FindAttribute("PS");
+		if (PsAttr) pixelShader = PsAttr->Value();
+	}
+
+	const auto positionEl = currEntity->FirstChildElement("Position");
+	if (positionEl)
+	{
+		pos = { positionEl->FindAttribute("X")->FloatValue(),
+				positionEl->FindAttribute("Y")->FloatValue(),
+				positionEl->FindAttribute("Z")->FloatValue() };
+	}
+
+
+	const auto rotationEl = currEntity->FirstChildElement("Rotation");
+	if (rotationEl)
+	{
+		rot = { ToRadians(rotationEl->FindAttribute("X")->FloatValue()),
+				ToRadians(rotationEl->FindAttribute("Y")->FloatValue()),
+				ToRadians(rotationEl->FindAttribute("Z")->FloatValue()) };
+	}
+
+	const auto strengthEl = currEntity->FirstChildElement("Strength");
+	if (strengthEl)
+	{
+		strength = strengthEl->FindAttribute("S")->FloatValue();
+	}
+
+	const auto scaleEl = currEntity->FirstChildElement("Scale");
+	if (scaleEl)
+	{
+		scale = scaleEl->FindAttribute("X")->FloatValue() * strength;
+	}
+
+	const auto colourEl = currEntity->FirstChildElement("Colour");
+	if (colourEl)
+	{
+		colour = { colourEl->FindAttribute("X")->FloatValue(),
+					colourEl->FindAttribute("Y")->FloatValue(),
+					colourEl->FindAttribute("Z")->FloatValue() };
+	}
+
+
+	try
+	{
+		auto obj = new CPointLight(mesh, name, diffuse, vertexShader, pixelShader, colour, strength, pos, rot, scale);
+
+		mObjManager->AddPointLight(obj);
 	}
 	catch (const std::exception& e)
 	{
@@ -1020,7 +1118,7 @@ void CScene::LoadPlant(tinyxml2::XMLElement* currEntity) const
 		}
 		else
 		{
-			auto obj = new CPlant(ID,name,vertexShader, pixelShader, pos,rot,scale);
+			auto obj = new CPlant(ID, name, vertexShader, pixelShader, pos, rot, scale);
 			mObjManager->AddObject(obj);
 		}
 
@@ -1056,6 +1154,10 @@ bool CScene::ParseEntities(tinyxml2::XMLElement* entitiesEl)
 				{
 					LoadLight(currEntity);
 				}
+				else if (typeValue == "PointLight")
+				{
+					LoadPointLight(currEntity);
+				}
 				else if (typeValue == "Sky")
 				{
 					LoadSky(currEntity);
@@ -1083,8 +1185,10 @@ CScene::~CScene()
 	ReleaseStates();
 	if (gPerModelConstantBuffer)  gPerModelConstantBuffer->Release();
 	if (gPerFrameConstantBuffer)  gPerFrameConstantBuffer->Release();
+	if (gPerFrameLightsConstBuffer) gPerFrameLightsConstBuffer->Release();
 	if (gPerFrameSpotLightsConstBuffer) gPerFrameSpotLightsConstBuffer->Release();
 	if (gPerFrameDirLightsConstBuffer) gPerFrameDirLightsConstBuffer->Release();
+	if (gPerFramePointLightsConstBuffer) gPerFramePointLightsConstBuffer->Release();
 
 	ReleaseDefaultShaders();
 

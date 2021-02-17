@@ -1,6 +1,7 @@
 #include "GameObjectManager.h"
 
 #include "SpotLight.h"
+#include "CPointLight.h"
 #include "DirLight.h"
 #include "GraphicsHelpers.h"
 #include "MathHelpers.h"
@@ -39,6 +40,16 @@ void CGameObjectManager::AddLight(CLight* obj)
 	{
 		throw std::runtime_error("Not enough space to store more objects");
 	}
+}
+
+void CGameObjectManager::AddPointLight(CPointLight* obj)
+{
+	if (mPointLights.size() < mMaxSize)
+	{
+		mPointLights.push_back(obj);
+	}
+	else
+		throw std::runtime_error("Not enough space to store more objects");
 }
 
 void CGameObjectManager::AddSpotLight(CSpotLight* obj)
@@ -99,6 +110,25 @@ void CGameObjectManager::UpdateDirLightsConstBuffer(PerFrameDirLights* FLB)
 	}
 }
 
+void CGameObjectManager::UpdatePointLightsConstBuffer(PerFramePointLights* FLB)
+{
+	for (auto i = 0; i < mPointLights.size(); ++i)
+	{
+		FLB->pointLights[i].colour = mPointLights[i]->GetColour() * mPointLights[i]->GetStrength();
+		FLB->pointLights[i].numLights = mPointLights.size();
+		FLB->pointLights[i].position = mPointLights[i]->Position();
+
+		for (auto j = 0; j < 6; ++j)
+		{
+			mPointLights[i]->WorldMatrix().FaceTarget(mPointLights[i]->mSides[j]);
+			FLB->pointLights[i].viewMatrices[j] = InverseAffine(mPointLights[i]->WorldMatrix());
+
+			//IDK
+			FLB->pointLights[i].projMatrices[j] = MakeProjectionMatrix(1.0f, ToRadians(90.0f));
+		}
+	}
+}
+
 
 bool CGameObjectManager::RemoveObject(int pos)
 {
@@ -119,6 +149,17 @@ bool CGameObjectManager::RemoveLight(int pos)
 	{
 		mLights.erase(mLights.begin() + pos);
 		mCurrNumLights--;
+		return true;
+	}
+
+	return false;
+}
+
+bool CGameObjectManager::RemovePointLight(int pos)
+{
+	if (!mPointLights.empty())
+	{
+		mPointLights.erase(mPointLights.begin() + pos);
 		return true;
 	}
 
@@ -148,7 +189,6 @@ bool CGameObjectManager::RemoveDirLight(int pos)
 	return false;
 }
 
-extern void DisplayShadowMaps();
 
 bool CGameObjectManager::RenderAllObjects()
 {
@@ -168,6 +208,11 @@ bool CGameObjectManager::RenderAllObjects()
 	}
 
 	for (auto it : mDirLights)
+	{
+		it->Render();
+	}
+
+	for (auto it : mPointLights)
 	{
 		it->Render();
 	}
@@ -209,6 +254,20 @@ void CGameObjectManager::RenderFromSpotLights()
 	}
 }
 
+void CGameObjectManager::RenderFromPointLights()
+{
+	for (auto it : mPointLights)
+	{
+		if (*it->Enabled())
+		{
+			auto tmp = it->RenderFromThis(this);
+
+
+			mShadowsMaps.push_back(tmp);
+		}
+	}
+}
+
 void CGameObjectManager::RenderFromDirLights()
 {
 	for (auto it : mDirLights)
@@ -226,6 +285,7 @@ void CGameObjectManager::RenderFromAllLights()
 {
 	RenderFromSpotLights();
 	RenderFromDirLights();
+	RenderFromPointLights();
 }
 
 void CGameObjectManager::UpdateObjects(float updateTime)
@@ -255,6 +315,11 @@ CGameObjectManager::~CGameObjectManager()
 	}
 
 	for (auto it : mSpotLights)
+	{
+		delete it;
+	}
+
+	for (auto it : mPointLights)
 	{
 		delete it;
 	}

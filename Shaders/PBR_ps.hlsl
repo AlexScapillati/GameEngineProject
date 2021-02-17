@@ -273,8 +273,8 @@ float4 main(NormalMappingPixelShaderInput input) : SV_Target
     float3 finalColour = resDiffuse * diffuseMaterialColour +
                          resSpecular;
     
-    if (DiffuseSpecularMap.Sample(TexSampler, offsetTexCoord).a < 0.5)
-        discard;
+    //if (DiffuseSpecularMap.Sample(TexSampler, offsetTexCoord).a < 0.5)
+    //    discard;
     
     return float4(finalColour,1); // Always use 1.0f for alpha - no alpha blending in this lab
 }

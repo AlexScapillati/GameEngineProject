@@ -76,6 +76,8 @@ public:
 
 	void LoadObject(tinyxml2::XMLElement* entitiesEl) const;
 
+	void LoadPointLight(tinyxml2::XMLElement* currEntity);
+
 	void LoadLight(tinyxml2::XMLElement* currEntity) const;
 
 	void LoadSky(tinyxml2::XMLElement* currEntity) const;

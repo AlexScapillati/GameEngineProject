@@ -7,56 +7,6 @@
 extern std::string gMediaFolder;
 
 
-void GetSimilarFilesIn(std::string& dirPath, std::vector<std::string>& fileNames, std::string& fileToFind)
-{
-	//get the name of the file 
-	auto esPos = fileToFind.find_last_of('_');
-	std::string es;
-
-	if (esPos != std::string::npos)
-	{
-		es = fileToFind.substr(0, esPos);
-
-		//iterate through the directory
-		std::filesystem::recursive_directory_iterator iter(dirPath);
-
-		std::filesystem::recursive_directory_iterator end;
-
-		while (iter != end)
-		{
-			if (!is_directory(iter->path()))
-			{
-				//get just the ID of the iterated file
-				auto filename = iter->path().filename().string();
-
-				//get the position of the first underscore that is after the name
-				auto currIdPos = filename.find_first_of('_');
-
-				if (currIdPos != std::string::npos)
-				{
-					//get the first name of the file
-					auto fileNameS = filename.substr(0, currIdPos);
-
-					//if this file id is the same as the one in the file to find
-					if (fileNameS == es)
-					{
-						fileNames.push_back(iter->path().filename().string());
-						iter.disable_recursion_pending();
-					}
-				}
-			}
-			std::error_code ec;
-			iter.increment(ec);
-			if (ec)
-			{
-				throw std::runtime_error("Error accessing " + ec.message());
-			}
-		}
-	}
-}
-
-
-
 CMaterial::CMaterial(std::string& diffuseMap, std::string& vertexShader, std::string& pixelShader)
 {
 	mVertexShader = nullptr;
@@ -82,128 +32,14 @@ CMaterial::CMaterial(std::string& diffuseMap, std::string& vertexShader, std::st
 	vertexShader = "Shaders\\" + vertexShader;
 
 
-	//For PBR
-	std::vector<std::string> files;
+	//the model is not pbr
+	mIsPbr = false;
 
-	//go thought the media folder and get the files with the same id
-	GetSimilarFilesIn(gMediaFolder, files, diffuseMap);
+	//just load the diffuse texture
 
-	//if there were some
-	if (!files.empty())
+	if (!LoadTexture(diffuseMap, &mPbrMaps.Albedo, &mPbrMaps.AlbedoSRV))
 	{
-
-		//the model is pbr
-		mIsPbr = true;
-
-		//for each file in the vector with the same name as the mesh one
-		for (auto fileName : files)
-		{
-			auto originalFileName = fileName;
-
-			//load it
-
-			//get the type or first attribute of the map
-
-			auto arrtPos = fileName.find_first_of('_') + 1;
-
-			fileName = fileName.substr(arrtPos);
-
-			//remove the extenstion
-
-			fileName = fileName.substr(0, fileName.find_first_of('.'));
-
-			if (fileName[0] == '8' || fileName[0] == '4' || fileName[0] == '2')
-			{
-				//map
-				// TODO: ONLY SUPPORTED 8,4,2K MAPS
-				// This should be fine since megascans only gives one resolution typer per model
-				// TODO: include the other resolutions in the /Thumbs folder
-				// TODO: MAKE A DISTINCTION (ARRAY OF TEXTURE TO SCALE) OR TO IMPLEMENT IN QUALITY SETTINGS?
-
-				auto mapTypePos = fileName.find_first_of('_');
-
-				if (mapTypePos != std::string::npos)
-				{
-					//check what type of texture it is
-
-					fileName = fileName.substr(mapTypePos + 1);
-
-					//remove the extenstion
-
-					fileName = fileName.substr(0, fileName.find_last_of('.'));
-
-					if (fileName == "Albedo")
-					{
-						//found albedo map
-						if (!LoadTexture(originalFileName, &mPbrMaps.Albedo, &mPbrMaps.AlbedoSRV))
-						{
-							throw std::runtime_error("Error Loading: " + fileName);
-						}
-					}
-					else if (fileName == "AO")
-					{
-						//ambient occlusion map
-						if (!LoadTexture(originalFileName, &mPbrMaps.AO, &mPbrMaps.AoSRV))
-						{
-							throw std::runtime_error("Error Loading: " + fileName);
-						}
-					}
-					else if (fileName == "Displacement")
-					{
-						//found displacement map
-						//TODO: THERE IS A .EXR FILE THAT I DUNNO WHAT IS IT
-						if (!LoadTexture(originalFileName, &mPbrMaps.Displacement, &mPbrMaps.DisplacementSRV))
-						{
-							throw std::runtime_error("Error Loading: " + fileName);
-						}
-					}
-					//find rather than compare because there could be multiple normal maps because of the LOD
-					else if (fileName.find("Normal") != std::string::npos)
-					{
-						mHasNormals = true;
-
-						//TODO include LOD
-						//
-						//normal map
-						if (!LoadTexture(originalFileName, &mPbrMaps.Normal, &mPbrMaps.NormalSRV))
-						{
-							throw std::runtime_error("Error Loading: " + fileName);
-						}
-					}
-					else if (fileName == "Roughness")
-					{
-						//roughness map
-						if (!LoadTexture(originalFileName, &mPbrMaps.Roughness, &mPbrMaps.RoughnessSRV))
-						{
-							throw std::runtime_error("Error Loading: " + fileName);
-						}
-					}
-				}
-			}
-			else if (fileName[0] == 'L')
-			{
-				//Level of Detail
-				//push the all the meshes avaliable in this vector
-				//TODO
-			}
-			else
-			{
-				//TODO more functionality maybe?
-				throw std::runtime_error("File not recognized");
-			}
-		}
-	}
-	else
-	{
-		//the model is not pbr
-		mIsPbr = false;
-
-		//just load the diffuse texture
-
-		if (!LoadTexture(diffuseMap, &mPbrMaps.Albedo, &mPbrMaps.AlbedoSRV))
-		{
-			throw std::runtime_error("Error loading texture: " + diffuseMap);
-		}
+		throw std::runtime_error("Error loading texture: " + diffuseMap);
 	}
 
 	// load the shaders
@@ -255,93 +91,53 @@ CMaterial::CMaterial(std::vector<std::string> fileMaps, std::string& vs, std::st
 
 		//load it
 
-		//get the type or first attribute of the map
-
-		auto arrtPos = fileName.find_first_of('_') + 1;
-
-		fileName = fileName.substr(arrtPos);
-
-		//remove the extenstion
-
-		fileName = fileName.substr(0, fileName.find_first_of('.'));
-
-		if (fileName[0] == '8' || fileName[0] == '4' || fileName[0] == '2')
+		if (fileName.find("Albedo") != std::string::npos)
 		{
-			//map
-			// TODO: ONLY SUPPORTED 8,4,2K MAPS
-			// This should be fine since megascans only gives one resolution typer per model
-			// TODO: include the other resolutions in the /Thumbs folder
-			// TODO: MAKE A DISTINCTION (ARRAY OF TEXTURE TO SCALE) OR TO IMPLEMENT IN QUALITY SETTINGS?
-
-			auto mapTypePos = fileName.find_first_of('_');
-
-			if (mapTypePos != std::string::npos)
+			//found albedo map
+			if (!LoadTexture(originalFileName, &mPbrMaps.Albedo, &mPbrMaps.AlbedoSRV))
 			{
-				//check what type of texture it is
-
-				fileName = fileName.substr(mapTypePos + 1);
-
-				//remove the extenstion
-
-				fileName = fileName.substr(0, fileName.find_last_of('.'));
-
-				if (fileName == "Albedo")
-				{
-					//found albedo map
-					if (!LoadTexture(originalFileName, &mPbrMaps.Albedo, &mPbrMaps.AlbedoSRV))
-					{
-						throw std::runtime_error("Error Loading: " + fileName);
-					}
-				}
-				else if (fileName == "AO")
-				{
-					//ambient occlusion map
-					if (!LoadTexture(originalFileName, &mPbrMaps.AO, &mPbrMaps.AoSRV))
-					{
-						throw std::runtime_error("Error Loading: " + fileName);
-					}
-				}
-				else if (fileName == "Displacement")
-				{
-					//found displacement map
-					//TODO: THERE IS A .EXR FILE THAT I DUNNO WHAT IS IT
-					if (!LoadTexture(originalFileName, &mPbrMaps.Displacement, &mPbrMaps.DisplacementSRV))
-					{
-						throw std::runtime_error("Error Loading: " + fileName);
-					}
-				}
-				//find rather than compare because there could be multiple normal maps because of the LOD
-				else if (fileName.find("Normal") != std::string::npos)
-				{
-					mHasNormals = true;
-
-					//TODO include LOD
-					//
-					//normal map
-					if (!LoadTexture(originalFileName, &mPbrMaps.Normal, &mPbrMaps.NormalSRV))
-					{
-						throw std::runtime_error("Error Loading: " + fileName);
-					}
-				}
-				else if (fileName == "Roughness")
-				{
-					//roughness map
-					if (!LoadTexture(originalFileName, &mPbrMaps.Roughness, &mPbrMaps.RoughnessSRV))
-					{
-						throw std::runtime_error("Error Loading: " + fileName);
-					}
-				}
+				throw std::runtime_error("Error Loading: " + fileName);
 			}
 		}
-		else if (fileName[0] == 'L')
+		else if (fileName.find("Roughness") != std::string::npos)
 		{
-			//nothing to do, L stands for LOD, the mesh 
-			//in this case the mesh gets handeled by the gameObject constructor
+
+			//roughness map
+			if (!LoadTexture(originalFileName, &mPbrMaps.Roughness, &mPbrMaps.RoughnessSRV))
+			{
+				throw std::runtime_error("Error Loading: " + fileName);
+			}
+
 		}
-		else
+		else if (fileName.find("AO") != std::string::npos)
 		{
-			//TODO more functionality maybe?
-			throw std::runtime_error("File not recognized");
+			//ambient occlusion map
+			if (!LoadTexture(originalFileName, &mPbrMaps.AO, &mPbrMaps.AoSRV))
+			{
+				throw std::runtime_error("Error Loading: " + fileName);
+			}
+
+		}
+		else if (fileName.find("Displacement") != std::string::npos)
+		{
+			//found displacement map
+			//TODO: THERE IS A .EXR FILE THAT I DUNNO WHAT IS IT
+			if (!LoadTexture(originalFileName, &mPbrMaps.Displacement, &mPbrMaps.DisplacementSRV))
+			{
+				throw std::runtime_error("Error Loading: " + fileName);
+			}
+		}
+		else if (fileName.find("Normal") != std::string::npos)
+		{
+			mHasNormals = true;
+
+			//TODO include LOD
+			//
+			//normal map
+			if (!LoadTexture(originalFileName, &mPbrMaps.Normal, &mPbrMaps.NormalSRV))
+			{
+				throw std::runtime_error("Error Loading: " + fileName);
+			}
 		}
 	}
 

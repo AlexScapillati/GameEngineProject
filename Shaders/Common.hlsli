@@ -104,6 +104,17 @@ struct sDirLight
     float4x4 projMatrix; //--"--
 };
 
+
+struct sPointLight
+{
+    float3 colour;
+    float pad;
+    float3 pos;
+    int numLights;
+    float4x4 viewMatrices[6];
+    float4x4 projMatrices[6];
+};
+
 //--------------------------------------------------------------------------------------
 // Constant Buffers
 //--------------------------------------------------------------------------------------
@@ -153,7 +164,6 @@ cbuffer PerFrameLights : register(b2)
 	sLight   gLights[MAX_LIGHTS];
 }
 
-
 cbuffer PerFrameSpotLights : register(b3)
 {
     sSpotLight gSpotLights[MAX_LIGHTS];
@@ -162,4 +172,9 @@ cbuffer PerFrameSpotLights : register(b3)
 cbuffer PerFrameDirLights : register(b4)
 {
     sDirLight gDirLights[MAX_LIGHTS];
+}
+
+cbuffer PerFramePointLights : register(b5)
+{
+    sPointLight gPointLights[MAX_LIGHTS];
 }

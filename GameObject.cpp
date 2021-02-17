@@ -33,60 +33,21 @@ CGameObject::CGameObject(std::string mesh, std::string name, std::string& diffus
 		throw std::runtime_error(e.what());
 	}
 
-	if (mMaterial->IsPbr())
+	//default model
+	//not PBR
+	//that could be light models or cube maps
+	try
 	{
-		//if this model has a normal map
-		if (mMaterial->HasNormals())
-		{
-			try
-			{
-				//load the most detailed mesh with tangents required
-				mMesh = new CMesh(mMeshFiles.front(), true);
-			}
-			catch (std::exception& e)
-			{
-				throw std::runtime_error(e.what());
-			}
-		}
-		else
-		{
-			try
-			{
-				mMesh = new CMesh(mMeshFiles.front() /* TODO .front for best resolution*/);
-			}
-			catch (std::exception& e)
-			{
-				throw std::runtime_error(e.what());
-			}
-		}
+		mMesh = new CMesh(mesh);
 
-		// Set default matrices from mesh //TODO could set initially the less detailed one and then load the more complex ones according to the camera position
+		// Set default matrices from mesh
 		mWorldMatrices.resize(mMesh->NumberNodes());
-
 		for (auto i = 0; i < mWorldMatrices.size(); ++i)
-		{
 			mWorldMatrices[i] = mMesh->GetNodeDefaultMatrix(i);
-		}
-
 	}
-	else
+	catch (std::exception& e)
 	{
-		//default model
-		//not PBR
-		//that could be light models or cube maps
-		try
-		{
-			mMesh = new CMesh(mesh);
-
-			// Set default matrices from mesh
-			mWorldMatrices.resize(mMesh->NumberNodes());
-			for (auto i = 0; i < mWorldMatrices.size(); ++i)
-				mWorldMatrices[i] = mMesh->GetNodeDefaultMatrix(i);
-		}
-		catch (std::exception& e)
-		{
-			throw std::runtime_error(e.what());
-		}
+		throw std::runtime_error(e.what());
 	}
 
 	//geometry loaded, set its position...
@@ -111,20 +72,10 @@ void GetFilesWithID(std::string& dirPath, std::vector<std::string>& fileNames, s
 
 			auto filename = iter->path().filename().string();
 
-			//get the position of the first underscore that is after the name
-			auto currIdPos = filename.find_first_of('_');
-
-			if (currIdPos != std::string::npos)
+			if (filename.find(id) != std::string::npos)
 			{
-				//get the first name of the file
-				auto fileNameS = filename.substr(0, currIdPos);
-
-				//if this file id is the same as the one in the file to find
-				if (fileNameS == id)
-				{
-					fileNames.push_back(iter->path().filename().string());
-					iter.disable_recursion_pending();
-				}
+				fileNames.push_back(iter->path().filename().string());
+				iter.disable_recursion_pending();
 			}
 		}
 		std::error_code ec;
@@ -160,6 +111,15 @@ CGameObject::CGameObject(std::string id, std::string name, std::string vs, std::
 		{
 			mMeshFiles.push_back(st);
 		}
+		else if (st.find(".x") != std::string::npos)
+		{
+			mMeshFiles.push_back(st);
+		}
+	}
+
+	if (mMeshFiles.empty())
+	{
+		throw std::runtime_error(name);
 	}
 
 	try

@@ -84,6 +84,16 @@ struct sDirLights
     CMatrix4x4 projMatrix;    //--"--
 };
 
+struct sPointLights
+{
+    CVector3 colour;
+    float pad;
+    CVector3 position;
+    uint32_t numLights;
+    CMatrix4x4 viewMatrices[6];    //the light view matrix (as it was a camera)
+    CMatrix4x4 projMatrices[6];    //--"--
+};
+
 //--------------------------------------------------------------------------------------
 // Constant Buffers
 //--------------------------------------------------------------------------------------
@@ -136,6 +146,14 @@ struct PerFrameDirLights
 
 extern PerFrameDirLights gPerFrameDirLightsConstants;
 extern ID3D11Buffer* gPerFrameDirLightsConstBuffer;
+
+struct PerFramePointLights
+{
+    sPointLights pointLights[MAX_LIGHTS];
+};
+
+extern PerFramePointLights gPerFramePointLightsConstants;
+extern ID3D11Buffer* gPerFramePointLightsConstBuffer;
 
 static const int MAX_BONES = 64;
 
