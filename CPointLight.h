@@ -43,7 +43,6 @@ public:
 		textureDesc.CPUAccessFlags = 0;
 		textureDesc.MiscFlags = 0;
 
-
 		for (int i = 0; i < 6; ++i)
 		{
 			if (FAILED(gD3DDevice->CreateTexture2D(&textureDesc, NULL, &mShadowMap[i])))

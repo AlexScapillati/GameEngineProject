@@ -70,7 +70,7 @@ public:
 
 	std::deque<CDirLight*> mDirLights;
 
-	std::deque<ID3D11ShaderResourceView*> mShadowsMaps;
+	std::vector<ID3D11ShaderResourceView*> mShadowsMaps;
 	
 
 private:

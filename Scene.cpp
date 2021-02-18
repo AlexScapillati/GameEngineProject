@@ -106,7 +106,7 @@ void DisplayObjects(CGameObjectManager* GOM)
 			selectedObj = it;
 		}
 	}
-	
+
 	for (auto it : GOM->mPointLights)
 	{
 		//if a butto is pressed
@@ -116,7 +116,7 @@ void DisplayObjects(CGameObjectManager* GOM)
 			selectedObj = it;
 		}
 	}
-	
+
 	//if there is an object selected
 	if (selectedObj)
 	{
@@ -384,7 +384,7 @@ bool CScene::InitScene(std::string fileName)
 		!gPerModelConstantBuffer ||
 		!gPerFrameDirLightsConstBuffer ||
 		!gPerFrameLightsConstBuffer ||
-		!gPerFrameSpotLightsConstBuffer||
+		!gPerFrameSpotLightsConstBuffer ||
 		!gPerFramePointLightsConstBuffer)
 	{
 		throw std::runtime_error("Error creating constant buffers");
@@ -420,7 +420,7 @@ void CScene::RenderSceneFromCamera(CCamera* camera) const
 		gPerFrameLightsConstBuffer,
 		gPerFrameSpotLightsConstBuffer,
 		gPerFrameDirLightsConstBuffer,
-		gPerFramePointLightsConstBuffer};
+		gPerFramePointLightsConstBuffer };
 
 	gD3DContext->PSSetConstantBuffers(1, 5, frameCBuffers);
 	gD3DContext->VSSetConstantBuffers(1, 5, frameCBuffers); // First parameter must match constant buffer number in the shader 
@@ -437,15 +437,7 @@ void CScene::RenderSceneFromCamera(CCamera* camera) const
 	if (!mObjManager->mShadowsMaps.empty())
 	{
 		//send the shadow maps to the shaders (slot 5)
-
-		try
-		{
-			gD3DContext->PSSetShaderResources(5, mObjManager->mShadowsMaps.size(), &mObjManager->mShadowsMaps[0]);
-		}
-		catch (std::exception e)
-		{
-			throw std::runtime_error(e.what());
-		}
+		gD3DContext->PSSetShaderResources(5, mObjManager->mShadowsMaps.size(), &mObjManager->mShadowsMaps[0]);
 	}
 
 	// States - no blending, normal depth buffer and back-face culling (standard set-up for opaque models)
