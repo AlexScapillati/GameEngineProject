@@ -1,13 +1,13 @@
 
 #pragma once
 
-#include "GameObject.h"
-#include "Light.h"
 #include <deque>
 #include <memory>
-
+#include <vector>
 #include "Common.h"
 
+class CLight;
+class CGameObject;
 class CSpotLight;
 class CDirLight;
 class CPointLight;
@@ -76,9 +76,6 @@ public:
 private:
 
 	int mMaxSize;
-	int mCurrNumSpotLights;
-	int mCurrNumLights;
-	int mCurrNumDirLights;
 
 };
 

@@ -76,7 +76,7 @@ struct SimplePixelShaderInput
 struct sLight
 {
     float3 position;
-    float1 padding;
+    float enabled;
     float3 colour;
     int1 numLights;
 };
@@ -84,7 +84,7 @@ struct sLight
 struct sSpotLight
 {
     float3 colour;
-    float pad;
+    float enabled;
     float3 pos;
     int numLights;          //Not smart to use this variable here, but it is using a padding that otherwise would be lost
     float3 facing;          //the direction facing of the light 
@@ -97,7 +97,7 @@ struct sSpotLight
 struct sDirLight
 {
     float3 colour;
-    float pad;
+    float enabled;
     float3 facing;
     int numLights;
     float4x4 viewMatrix; //the light view matrix (as it was a camera)
@@ -108,11 +108,11 @@ struct sDirLight
 struct sPointLight
 {
     float3 colour;
-    float pad;
+    float enabled;
     float3 pos;
     int numLights;
     float4x4 viewMatrices[6];
-    float4x4 projMatrices[6];
+    float4x4 projMatrix;
 };
 
 //--------------------------------------------------------------------------------------

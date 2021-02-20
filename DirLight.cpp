@@ -63,7 +63,7 @@ CDirLight::CDirLight(std::string mesh, std::string name, std::string& diffuse, s
 }
 
 
-ID3D11ShaderResourceView* CDirLight::RenderFromThis(CGameObjectManager* CGOM)
+ID3D11ShaderResourceView* CDirLight::RenderFromThis()
 {
 	// Setup the viewport to the size of the shadow map texture
 	D3D11_VIEWPORT vp;
@@ -90,7 +90,7 @@ ID3D11ShaderResourceView* CDirLight::RenderFromThis(CGameObjectManager* CGOM)
 	gD3DContext->VSSetConstantBuffers(1, 1, &gPerFrameConstantBuffer);
 
 	//render just the objects that can cast shadows
-	for (auto it : CGOM->mObjects)
+	for (auto it : GOM->mObjects)
 	{
 		//basic geometry rendered, that means just render the model's geometry, leaving all the fancy shaders
 		it->Render(true);

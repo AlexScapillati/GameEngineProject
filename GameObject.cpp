@@ -11,11 +11,16 @@
 #include "Shader.h"
 #include <locale>
 #include <utility>
+#include "ColourRGBA.h"
+#include "GameObjectManager.h"
 
 
 CGameObject::CGameObject(std::string mesh, std::string name, std::string& diffuseMap, std::string&
 	vertexShader, std::string& pixelShader, CVector3 position /*= { 0,0,0 }*/, CVector3 rotation /*= { 0,0,0 }*/, float scale /*= 1*/)
 {
+	mAmbientMap.enabled = false;
+	mAmbientMap.size = 256;
+	mAmbientMap.Init();
 
 	mEnabled = true;
 
@@ -93,6 +98,8 @@ CGameObject::CGameObject(std::string id, std::string name, std::string vs, std::
 	//initialize member variables
 	mName = std::move(name);
 
+	mAmbientMap.Init();
+
 	mEnabled = true;
 
 	//search for files with the same id
@@ -156,8 +163,20 @@ void CGameObject::Render(bool basicGeometry)
 	//render the material
 	mMaterial->RenderMaterial(basicGeometry);
 
+	//render the ambient cube map
+	if (mAmbientMap.enabled)
+	{
+		RenderToAmbientMap();
+
+		//send the cubemap to the shader (slot 5)
+		gD3DContext->PSSetShaderResources(5, 1, &mAmbientMap.mapSRV);
+	}
+
 	//TODO render the the correct mesh according to the camera distance
 	mMesh->Render(mWorldMatrices);
+
+	ID3D11ShaderResourceView* nullView = nullptr;
+	gD3DContext->PSSetShaderResources(5, 1, &nullView);
 }
 
 bool CGameObject::Update(float updateTime)
@@ -165,9 +184,164 @@ bool CGameObject::Update(float updateTime)
 	return true; //TODO WIP
 }
 
+void CGameObject::RenderToAmbientMap()
+{
+	//create the viewport 
+	D3D11_VIEWPORT vp;
+	vp.Width = static_cast<FLOAT>(mAmbientMap.size);
+	vp.Height = static_cast<FLOAT>(mAmbientMap.size);
+	vp.MinDepth = 0.0f;
+	vp.MaxDepth = 1.0f;
+	vp.TopLeftX = 0;
+	vp.TopLeftY = 0;
+	gD3DContext->RSSetViewports(1, &vp);
+
+
+	float mSides[6][3] = {
+			{ 1.0f,	 0.0f,	 0.0f},
+			{-1.0f,	 0.0f,	 0.0f},
+			{ 0.0f,	 1.0f,	 0.0f},
+			{ 0.0f, -1.0f,	 0.0f},
+			{ 0.0f,	 0.0f,	 1.0f},
+			{ 0.0f,	 0.0f,  -1.0f}
+	};
+
+	auto matrix = WorldMatrix();
+
+	//for all six faces of the cubemap
+	for (int i = 0; i < 6; ++i)
+	{
+		//change rotation
+		SetRotation(CVector3(mSides[i]) * PI);
+
+		float c[] = { 0.0f,0.0f,0.0f ,0.0f };
+
+		gD3DContext->ClearRenderTargetView(mAmbientMap.RTV[i], c);
+		gD3DContext->ClearDepthStencilView(mAmbientMap.depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+		gD3DContext->OMSetRenderTargets(6, mAmbientMap.RTV, mAmbientMap.depthStencilView);
+
+		gPerFrameConstants.viewMatrix = InverseAffine(WorldMatrix());
+		gPerFrameConstants.projectionMatrix = MakeProjectionMatrix(1.0f, ToRadians(90.0f));
+		gPerFrameConstants.viewProjectionMatrix = gPerFrameConstants.viewMatrix * gPerFrameConstants.projectionMatrix;
+
+		UpdateFrameConstantBuffer(gPerFrameConstantBuffer, gPerFrameConstants);
+
+		gD3DContext->VSSetConstantBuffers(1, 1, &gPerFrameConstantBuffer);
+
+		//render just the objects that can cast shadows
+		for (auto it : GOM->mObjects)
+		{
+			if (it != this)
+				//render with all the fancy shaders
+				it->Render();
+		}
+	}
+
+	//restore prev matrix
+	SetWorldMatrix(matrix);
+
+	//generate mipMaps for the cube map
+	gD3DContext->GenerateMips(mAmbientMap.mapSRV);
+
+}
+
+void CGameObject::sAmbientMap::Init()
+{
+	//initialize ambient map variables
+
+	size = 256;
+	enabled = false;
+
+	//initialize the texture map cube
+	D3D11_TEXTURE2D_DESC textureDesc = {};
+	textureDesc.Width = size;
+	textureDesc.Height = size;
+	textureDesc.MipLevels = 0;
+	textureDesc.ArraySize = 6; //6 faces
+	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.SampleDesc.Quality = 0;
+	textureDesc.Usage = D3D11_USAGE_DEFAULT;
+	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET; //use it to passit to the shader and use it as a render target
+	textureDesc.CPUAccessFlags = 0;
+	textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS | D3D11_RESOURCE_MISC_TEXTURECUBE;
+
+	//create it
+	if (FAILED(gD3DDevice->CreateTexture2D(&textureDesc, NULL, &map)))
+	{
+		throw std::runtime_error("Error creating cube texture");
+	}
+
+	//create render target views
+	D3D11_RENDER_TARGET_VIEW_DESC viewDesc = {};
+	viewDesc.Format = textureDesc.Format;
+	viewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
+	viewDesc.Texture2DArray.ArraySize = 1;
+	viewDesc.Texture2DArray.MipSlice = 0;
+
+	//create 6 of them
+	for (int i = 0; i < 6; ++i)
+	{
+		viewDesc.Texture2DArray.FirstArraySlice = i;
+
+		if (FAILED(gD3DDevice->CreateRenderTargetView(map, &viewDesc, &RTV[i])))
+		{
+			throw std::runtime_error("Error creating render target view");
+		}
+	}
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Format = textureDesc.Format;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
+	srvDesc.TextureCube.MostDetailedMip = 0;
+	srvDesc.TextureCube.MipLevels = -1;
+
+	if (FAILED(gD3DDevice->CreateShaderResourceView(map, &srvDesc, &mapSRV)))
+	{
+		throw std::runtime_error("Error creating cube map SRV");
+	}
+
+	//now can release the texture
+	map->Release();
+
+	//create depth stencil
+	D3D11_TEXTURE2D_DESC dsDesc = {};
+	dsDesc.Width = size;
+	dsDesc.Height = size;
+	dsDesc.MipLevels = 1;
+	dsDesc.ArraySize = 1; //6 faces
+	dsDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+	dsDesc.SampleDesc.Count = 1;
+	dsDesc.SampleDesc.Quality = 0;
+	dsDesc.Usage = D3D11_USAGE_DEFAULT;
+	dsDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	dsDesc.CPUAccessFlags = 0;
+	dsDesc.MiscFlags = 0;
+
+	//create it
+	if (FAILED(gD3DDevice->CreateTexture2D(&dsDesc, NULL, &depthStencilMap)))
+	{
+		throw std::runtime_error("Error creating depth stencil");
+	}
+
+	//create depth stencil view
+	D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+	dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	dsvDesc.Flags = 0;
+	dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	dsvDesc.Texture2D.MipSlice = 0;
+
+	if (FAILED(gD3DDevice->CreateDepthStencilView(depthStencilMap, &dsvDesc, &depthStencilView)))
+	{
+		throw std::runtime_error("Error creating depth stencil view ");
+	}
+
+	//release the depth stencil texture since we are done with it
+	depthStencilMap->Release();
+}
+
 CGameObject::~CGameObject()
 {
-
 	delete mMesh;
 	delete mMaterial;
 }
@@ -275,3 +449,28 @@ void CGameObject::SetScale(CVector3 scale, int node)
 void CGameObject::SetScale(float scale) { SetScale({ scale, scale, scale }); }
 
 void CGameObject::SetWorldMatrix(CMatrix4x4 matrix, int node) { mWorldMatrices[node] = matrix; }
+
+void CGameObject::SetSize(UINT s)
+{
+	mAmbientMap.size = s;
+
+	//TODO remake the texture
+}
+
+bool* CGameObject::AmbientMapEnabled()
+{
+	return &mAmbientMap.enabled;
+}
+
+void CGameObject::sAmbientMap::Release()
+{
+	depthStencilMap->Release();
+	depthStencilView->Release();
+	map->Release();
+	mapSRV->Release();
+	for (auto it : RTV)
+	{
+		it->Release();
+	}
+	enabled = false;
+}

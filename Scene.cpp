@@ -6,14 +6,14 @@
 #pragma once
 
 #include "Scene.h"
-#include "Plant.h"
-#include "Sky.h"
 #include <dxgidebug.h>
 #include <utility>
 
 #include "SpotLight.h"
 #include "DirLight.h"
 #include "CPointLight.h"
+#include "Plant.h"
+#include "Sky.h"
 
 #include "External\imgui\imgui.h"
 #include "External\imgui\imgui_impl_dx11.h"
@@ -49,6 +49,8 @@ ID3D11Buffer* gPerFrameDirLightsConstBuffer;
 PerFramePointLights gPerFramePointLightsConstants;
 ID3D11Buffer* gPerFramePointLightsConstBuffer;
 
+CGameObjectManager* GOM;
+
 
 void SetupGui()
 {
@@ -63,7 +65,7 @@ void SetupGui()
 
 CGameObject* selectedObj = nullptr;
 
-void DisplayObjects(CGameObjectManager* GOM)
+void DisplayObjects()
 {
 
 	//display for each model a button
@@ -122,6 +124,8 @@ void DisplayObjects(CGameObjectManager* GOM)
 	{
 
 		ImGui::Checkbox("Enabled", selectedObj->Enabled());
+
+		ImGui::Checkbox("Toggle ambient Map", selectedObj->AmbientMapEnabled());
 
 		//display the transform component
 		ImGui::NewLine();
@@ -289,10 +293,18 @@ void DisplayObjects(CGameObjectManager* GOM)
 
 		ImGui::Image((void*)texId, { 256,256 });
 
+		//display the ambient map (if any)
+		if (*selectedObj->AmbientMapEnabled())
+		{
+			ImGui::NewLine();
+			ImGui::Text("AmbientMap");
+
+			//ImGui::Image((void*)selectedObj->GetAmbientMap(), {256.f, 256.f});
+		}
 	}
 }
 
-void DisplayShadowMaps(CGameObjectManager* GOM)
+void DisplayShadowMaps()
 {
 
 	ImGui::Begin("ShadowMaps");
@@ -310,13 +322,12 @@ void DisplayShadowMaps(CGameObjectManager* GOM)
 
 }
 
-
-void RenderGui(CGameObjectManager* GOM)
+void RenderGui()
 {
 
 	ImGui::Begin("Objects");
 
-	DisplayObjects(GOM);
+	DisplayObjects();
 
 	ImGui::End();
 
@@ -433,11 +444,13 @@ void CScene::RenderSceneFromCamera(CCamera* camera) const
 
 	gD3DContext->PSSetSamplers(1, 1, &gPointSampler);
 
+	gD3DContext->PSSetShaderResources(5, 0, nullptr);
+
 	//if the shadowmaps array is not empty
 	if (!mObjManager->mShadowsMaps.empty())
 	{
-		//send the shadow maps to the shaders (slot 5)
-		gD3DContext->PSSetShaderResources(5, mObjManager->mShadowsMaps.size(), &mObjManager->mShadowsMaps[0]);
+		//send the shadow maps to the shaders (slot 6)
+		gD3DContext->PSSetShaderResources(6, mObjManager->mShadowsMaps.size(), &mObjManager->mShadowsMaps[0]);
 	}
 
 	// States - no blending, normal depth buffer and back-face culling (standard set-up for opaque models)
@@ -509,7 +522,7 @@ void CScene::RenderScene(float frameTime) const
 	RenderSceneFromCamera(mCamera);
 
 	//Render the GUI
-	RenderGui(mObjManager);
+	RenderGui();
 
 
 	////--------------- Scene completion ---------------////
@@ -1190,10 +1203,12 @@ CScene::~CScene()
 	if (gPerFrameSpotLightsConstBuffer) gPerFrameSpotLightsConstBuffer->Release();
 	if (gPerFrameDirLightsConstBuffer) gPerFrameDirLightsConstBuffer->Release();
 	if (gPerFramePointLightsConstBuffer) gPerFramePointLightsConstBuffer->Release();
+	if (mTargetView) mTargetView->Release();
+	if (mTextrue) mTextrue->Release();
+	if (mTextureSRV) mTextureSRV->Release();
 
 	ReleaseDefaultShaders();
 
 	delete mCamera;
-
 	delete mObjManager;
 }

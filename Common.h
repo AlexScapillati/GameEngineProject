@@ -10,6 +10,7 @@
 #include <d3d11.h>
 #include <string>
 
+class CGameObjectManager;
 
 
 //--------------------------------------------------------------------------------------
@@ -37,6 +38,7 @@ extern ID3D11RenderTargetView*   gBackBufferRenderTarget; // Back buffer is wher
 extern ID3D11DepthStencilView*   gDepthStencil;           // The depth buffer contains a depth for each back buffer pixel
 extern ID3D11ShaderResourceView* gDepthShaderView;        // Allows access to the depth buffer as a texture for certain specialised shaders
 
+extern CGameObjectManager* GOM;
 
 // Input constsnts
 extern const float ROTATION_SPEED;
@@ -56,7 +58,7 @@ extern std::string gMediaFolder;
 struct sLight
 {
     CVector3 position;
-	float padding;
+	float enabled;
     CVector3 colour;
     uint32_t  numLights;
 };
@@ -65,7 +67,7 @@ struct sLight
 struct sSpotLight
 {
     CVector3 colour;
-    float pad;
+    float enabled;
     CVector3 pos;
     uint32_t numLights;
     CVector3 facing;          //the direction facing of the light 
@@ -77,7 +79,7 @@ struct sSpotLight
 struct sDirLights
 {
     CVector3 colour;
-    float pad;
+    float enabled;
     CVector3 facing;
     uint32_t numLights;
     CMatrix4x4 viewMatrix;    //the light view matrix (as it was a camera)
@@ -87,11 +89,11 @@ struct sDirLights
 struct sPointLights
 {
     CVector3 colour;
-    float pad;
+    float enabled;
     CVector3 position;
     uint32_t numLights;
     CMatrix4x4 viewMatrices[6];    //the light view matrix (as it was a camera)
-    CMatrix4x4 projMatrices[6];    //--"--
+    CMatrix4x4 projMatrix;    //--"--
 };
 
 //--------------------------------------------------------------------------------------

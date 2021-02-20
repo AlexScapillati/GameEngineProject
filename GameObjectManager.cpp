@@ -3,6 +3,7 @@
 #include "SpotLight.h"
 #include "CPointLight.h"
 #include "DirLight.h"
+#include "Light.h"
 #include "GraphicsHelpers.h"
 #include "MathHelpers.h"
 #include "External\imgui\imgui.h"
@@ -10,8 +11,6 @@
 CGameObjectManager::CGameObjectManager()
 {
 	mMaxSize = 1000;
-	mCurrNumLights = 0;
-	mCurrNumSpotLights = 0;
 }
 
 void CGameObjectManager::AddObject(CGameObject* obj)
@@ -34,7 +33,6 @@ void CGameObjectManager::AddLight(CLight* obj)
 	if (mLights.size() < mMaxSize)
 	{
 		mLights.push_back(obj);
-		mCurrNumLights++;
 	}
 	else
 	{
@@ -57,7 +55,6 @@ void CGameObjectManager::AddSpotLight(CSpotLight* obj)
 	if (mSpotLights.size() < mMaxSize)
 	{
 		mSpotLights.push_back(obj);
-		mCurrNumSpotLights++;
 	}
 	else
 		throw std::runtime_error("Not enough space to store more objects");
@@ -68,45 +65,67 @@ void CGameObjectManager::AddDirLight(CDirLight* obj)
 	if (mDirLights.size() < mMaxSize)
 	{
 		mDirLights.push_back(obj);
-		mCurrNumDirLights++;
 	}
 }
 
 
 void CGameObjectManager::UpdateLightsConstBuffer(PerFrameLights* FCB)
 {
-	for (auto i = 0; i < mCurrNumLights; ++i)
+	for (auto i = 0; i < mLights.size(); ++i)
 	{
-		FCB->lights[i].colour = mLights[i]->GetColour() * mLights[i]->GetStrength();
-		FCB->lights[i].padding = 1;
-		FCB->lights[i].position = mLights[i]->Position();
-		FCB->lights[i].numLights = mCurrNumLights;
+		if (*mLights[i]->Enabled())
+		{
+			FCB->lights[i].colour = mLights[i]->GetColour() * mLights[i]->GetStrength();
+			FCB->lights[i].enabled = 1;
+			FCB->lights[i].position = mLights[i]->Position();
+			FCB->lights[i].numLights = mLights.size();
+		}
+		else
+		{
+			FCB->lights[i].enabled = 0;
+		}
 	}
 }
 
 void CGameObjectManager::UpdateSpotLightsConstBuffer(PerFrameSpotLights* FLB)
 {
-	for (auto i = 0; i < mCurrNumSpotLights; ++i)
+	for (auto i = 0; i < mSpotLights.size(); ++i)
 	{
-		FLB->spotLights[i].colour = mSpotLights[i]->GetColour() * mSpotLights[i]->GetStrength();
-		FLB->spotLights[i].pos = mSpotLights[i]->Position();
-		FLB->spotLights[i].facing = mSpotLights[i]->GetFacing();
-		FLB->spotLights[i].cosHalfAngle = cos(ToRadians(mSpotLights[i]->GetConeAngle() / 2));
-		FLB->spotLights[i].viewMatrix = InverseAffine(mSpotLights[i]->WorldMatrix());
-		FLB->spotLights[i].projMatrix = MakeProjectionMatrix(1.0f, mSpotLights[i]->GetConeAngle());
-		FLB->spotLights[i].numLights = mCurrNumSpotLights;
+		if (*mSpotLights[i]->Enabled())
+		{
+			FLB->spotLights[i].enabled = 1;
+			FLB->spotLights[i].colour = mSpotLights[i]->GetColour() * mSpotLights[i]->GetStrength();
+			FLB->spotLights[i].pos = mSpotLights[i]->Position();
+			FLB->spotLights[i].facing = mSpotLights[i]->GetFacing();
+			FLB->spotLights[i].cosHalfAngle = cos(ToRadians(mSpotLights[i]->GetConeAngle() / 2));
+			FLB->spotLights[i].viewMatrix = InverseAffine(mSpotLights[i]->WorldMatrix());
+			FLB->spotLights[i].projMatrix = MakeProjectionMatrix(1.0f, mSpotLights[i]->GetConeAngle());
+			FLB->spotLights[i].numLights = mSpotLights.size();
+		}
+		else
+		{
+			FLB->spotLights[i].enabled = 0;
+		}
 	}
 }
 
 void CGameObjectManager::UpdateDirLightsConstBuffer(PerFrameDirLights* FLB)
 {
-	for (auto i = 0; i < mCurrNumDirLights; ++i)
+	for (auto i = 0; i < mDirLights.size(); ++i)
 	{
-		FLB->dirLights[i].colour = mDirLights[i]->GetColour() * mDirLights[i]->GetStrength();
-		FLB->dirLights[i].facing = mDirLights[i]->GetMesh()->GetNodeDefaultMatrix(0).GetRow(2);
-		FLB->dirLights[i].viewMatrix = InverseAffine(mDirLights[i]->WorldMatrix());
-		FLB->dirLights[i].projMatrix = MakeOrthogonalMatrix(1000.0f, 1000.0f, mDirLights[i]->GetNearClip(), mDirLights[i]->GetFarClip());
-		FLB->dirLights[i].numLights = mCurrNumDirLights;
+		if (*mDirLights[i]->Enabled())
+		{
+			FLB->dirLights[i].enabled = 1;
+			FLB->dirLights[i].colour = mDirLights[i]->GetColour() * mDirLights[i]->GetStrength();
+			FLB->dirLights[i].facing = mDirLights[i]->GetMesh()->GetNodeDefaultMatrix(0).GetRow(2);
+			FLB->dirLights[i].viewMatrix = InverseAffine(mDirLights[i]->WorldMatrix());
+			FLB->dirLights[i].projMatrix = MakeOrthogonalMatrix(1000.0f, 1000.0f, mDirLights[i]->GetNearClip(), mDirLights[i]->GetFarClip());
+			FLB->dirLights[i].numLights = mDirLights.size();
+		}
+		else
+		{
+			FLB->dirLights[i].enabled = 0;
+		}
 	}
 }
 
@@ -114,18 +133,27 @@ void CGameObjectManager::UpdatePointLightsConstBuffer(PerFramePointLights* FLB)
 {
 	for (auto i = 0; i < mPointLights.size(); ++i)
 	{
-		FLB->pointLights[i].colour = mPointLights[i]->GetColour() * mPointLights[i]->GetStrength();
-		FLB->pointLights[i].numLights = mPointLights.size();
-		FLB->pointLights[i].position = mPointLights[i]->Position();
-
-		for (auto j = 0; j < 6; ++j)
+		if (*mPointLights[i]->Enabled())
 		{
-			mPointLights[i]->WorldMatrix().FaceTarget(mPointLights[i]->mSides[j]);
+			FLB->pointLights[i].enabled = 1;
+			FLB->pointLights[i].colour = mPointLights[i]->GetColour() * mPointLights[i]->GetStrength();
+			FLB->pointLights[i].numLights = mPointLights.size();
+			FLB->pointLights[i].position = mPointLights[i]->Position();
 
-			FLB->pointLights[i].viewMatrices[j] = InverseAffine(mPointLights[i]->WorldMatrix());
+			for (auto j = 0; j < 6; ++j)
+			{
+				CVector3 rot = mPointLights[i]->mSides[i];
 
-			//probably useless since they are all the same
-			FLB->pointLights[i].projMatrices[j] = MakeProjectionMatrix(1.0f, ToRadians(90.0f));
+				mPointLights[i]->SetRotation(-rot * PI);
+
+				FLB->pointLights[i].viewMatrices[j] = InverseAffine(mPointLights[i]->WorldMatrix());
+			}
+			//since they are all the same
+			FLB->pointLights[i].projMatrix = MakeProjectionMatrix(1.0f, ToRadians(90.0f));
+		}
+		else
+		{
+			FLB->pointLights[i].enabled = 0;
 		}
 	}
 }
@@ -149,7 +177,6 @@ bool CGameObjectManager::RemoveLight(int pos)
 	if (!mLights.empty())
 	{
 		mLights.erase(mLights.begin() + pos);
-		mCurrNumLights--;
 		return true;
 	}
 
@@ -172,7 +199,6 @@ bool CGameObjectManager::RemoveSpotLight(int pos)
 	if (!mSpotLights.empty())
 	{
 		mSpotLights.erase(mSpotLights.begin() + pos);
-		mCurrNumSpotLights--;
 		return true;
 	}
 
@@ -184,13 +210,12 @@ bool CGameObjectManager::RemoveDirLight(int pos)
 	if (!mDirLights.empty())
 	{
 		mDirLights.erase(mDirLights.begin() + pos);
-		mCurrNumDirLights--;
 		return true;
 	}
 	return false;
 }
 
-extern void DisplayShadowMaps(CGameObjectManager* GOM);
+extern void DisplayShadowMaps();
 
 bool CGameObjectManager::RenderAllObjects()
 {
@@ -219,13 +244,18 @@ bool CGameObjectManager::RenderAllObjects()
 		it->Render();
 	}
 
-	DisplayShadowMaps(this);
+	DisplayShadowMaps();
 
 	mShadowsMaps.clear();
 
 	// Unbind shadow maps from shaders - prevents warnings from DirectX when we try to render to the shadow maps again next frame
-	ID3D11ShaderResourceView* nullView = nullptr;
-	gD3DContext->PSSetShaderResources(5, 1, &nullView);
+
+	for (int i = 0; i < mSpotLights.size() + mDirLights.size() + mPointLights.size(); ++i)
+	{
+		// Unbind shadow maps from shaders - prevents warnings from DirectX when we try to render to the shadow maps again next frame
+		ID3D11ShaderResourceView* nullView = nullptr;
+		gD3DContext->PSSetShaderResources(6 + i, 1, &nullView);
+	}
 
 	return true;
 }
@@ -237,7 +267,7 @@ void CGameObjectManager::RenderFromSpotLights()
 		if (*it->Enabled())
 		{
 			//render from its prospective into a texture
-			auto temp = it->RenderFromThis(this);
+			auto temp = it->RenderFromThis();
 
 			//put this texture in the texture array that will be passed to the shader	
 			mShadowsMaps.push_back(temp);
@@ -251,7 +281,7 @@ void CGameObjectManager::RenderFromPointLights()
 	{
 		if (*it->Enabled())
 		{
-			auto tmp = it->RenderFromThis(this);
+			auto tmp = it->RenderFromThis();
 
 			for (int i = 0; i < 6; ++i)
 			{
@@ -267,7 +297,7 @@ void CGameObjectManager::RenderFromDirLights()
 	{
 		if (*it->Enabled())
 		{
-			auto tmp = it->RenderFromThis(this);
+			auto tmp = it->RenderFromThis();
 
 			mShadowsMaps.push_back(tmp);
 		}
@@ -322,7 +352,6 @@ CGameObjectManager::~CGameObjectManager()
 		if (it)
 		{
 			it->Release();
-			delete it;
 		}
 	}
 

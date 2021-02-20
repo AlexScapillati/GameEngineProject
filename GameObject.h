@@ -16,6 +16,7 @@
 #include "Material.h"
 
 class CMesh;
+class CGameObjectManager;
 
 class CGameObject
 {
@@ -24,8 +25,8 @@ public:
 	// Construction / Usage
 	//-------------------------------------
 
-	CGameObject(std::string mesh,std::string name, std::string& diffuseMap, std::string& vertexShader,
-	            std::string& pixelShader, CVector3 position = { 0,0,0 }, CVector3 rotation = { 0,0,0 }, float scale = 1);
+	CGameObject(std::string mesh, std::string name, std::string& diffuseMap, std::string& vertexShader,
+		std::string& pixelShader, CVector3 position = { 0,0,0 }, CVector3 rotation = { 0,0,0 }, float scale = 1);
 
 	CGameObject(std::string id, std::string name, std::string vs, std::string ps, CVector3 position, CVector3 rotation, float scale);
 
@@ -58,8 +59,8 @@ public:
 	auto Enabled() { return &mEnabled; }
 
 	auto GetTextureSRV() { return mMaterial->GetTextureSRV(); }
-	
-	auto GetTexture() { return mMaterial->GetTexture();}
+
+	auto GetTexture() { return mMaterial->GetTexture(); }
 
 	// Setters - model only stores matricies , so if user sets position, rotation or scale, just update those aspects of the matrix
 	void SetPosition(CVector3 position, int node = 0);
@@ -76,6 +77,17 @@ public:
 
 	bool Update(float updateTime);
 
+	void RenderToAmbientMap();
+
+	void SetSize(UINT s);
+
+	bool* AmbientMapEnabled();
+
+	auto GetAmbientMap()
+	{
+		return mAmbientMap.mapSRV;
+	}
+
 	virtual ~CGameObject();
 
 	//-------------------------------------
@@ -85,7 +97,7 @@ public:
 
 protected:
 
-	
+
 	//the material
 	CMaterial* mMaterial;
 
@@ -93,11 +105,27 @@ protected:
 	std::vector<std::string> mMeshFiles;
 
 	CMesh* mMesh;
-	
+
 	std::string mName;
 
 	bool mEnabled;
-	
+
+	struct sAmbientMap
+	{
+		void Init();
+
+		bool enabled;
+		ID3D11Texture2D* map;
+		ID3D11ShaderResourceView* mapSRV;
+		ID3D11Texture2D* depthStencilMap;
+		ID3D11DepthStencilView* depthStencilView;
+		ID3D11RenderTargetView* RTV[6];
+		UINT size;
+
+		void Release();
+
+	} mAmbientMap;
+
 
 	// World matrices for the model
 	// Now that meshes have multiple parts, we need multiple matrices. The root matrix (the first one) is the world matrix

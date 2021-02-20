@@ -70,7 +70,7 @@ void CSpotLight::Render(bool basicGeometry)
 	CLight::Render(basicGeometry);
 }
 
-ID3D11ShaderResourceView* CSpotLight::RenderFromThis(CGameObjectManager* CGOM)
+ID3D11ShaderResourceView* CSpotLight::RenderFromThis()
 {
     // Setup the viewport to the size of the shadow map texture
     D3D11_VIEWPORT vp;
@@ -96,7 +96,7 @@ ID3D11ShaderResourceView* CSpotLight::RenderFromThis(CGameObjectManager* CGOM)
 	gD3DContext->VSSetConstantBuffers(1, 1, &gPerFrameConstantBuffer);
 	
 	//render just the objects that can cast shadows
-	for (auto it : CGOM->mObjects)
+	for (auto it : GOM->mObjects)
 	{
 		//basic geometry rendered, that means just render the model's geometry, leaving all the fancy shaders
 		it->Render(true);
@@ -126,7 +126,7 @@ void CSpotLight::SetShadowMapsSize(int value)
 	textureDesc.SampleDesc.Count = 1;
 	textureDesc.SampleDesc.Quality = 0;
 	textureDesc.Usage = D3D11_USAGE_DEFAULT;
-	textureDesc.BindFlags = D3D10_BIND_DEPTH_STENCIL | D3D10_BIND_SHADER_RESOURCE; // Indicate we will use texture as a depth buffer and also pass it to shaders
+	textureDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE; // Indicate we will use texture as a depth buffer and also pass it to shaders
 	textureDesc.CPUAccessFlags = 0;
 	textureDesc.MiscFlags = 0;
 	if (FAILED(gD3DDevice->CreateTexture2D(&textureDesc, NULL, &mShadowMap)))

@@ -14,8 +14,7 @@ public:
 
 	void Render(bool basicGeometry = false) override;
 
-
-	ID3D11ShaderResourceView* RenderFromThis(CGameObjectManager* CGOM);
+	ID3D11ShaderResourceView* RenderFromThis();
 
 	void SetShadowMapsSize(int value);
 

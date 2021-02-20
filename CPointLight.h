@@ -2,7 +2,6 @@
 #include "Light.h"
 #include "GameObjectManager.h"
 
-
 class CPointLight :
 	public CLight
 {
@@ -90,11 +89,16 @@ public:
 	}
 
 
-	auto RenderFromThis(CGameObjectManager* CGOM)
+	auto RenderFromThis()
 	{
+
+		auto originalOrientation = Rotation();
+
 		for (int i = 0; i < 6; ++i)
 		{
-			WorldMatrix().FaceTarget(mSides[i]);
+			CVector3 rot = mSides[i];
+
+			SetRotation( -rot * PI);
 
 			// Setup the viewport to the size of the shadow map texture
 			D3D11_VIEWPORT vp;
@@ -105,6 +109,7 @@ public:
 			vp.TopLeftX = 0;
 			vp.TopLeftY = 0;
 			gD3DContext->RSSetViewports(1, &vp);
+
 
 			// Select the shadow map texture as the current depth buffer. We will not be rendering any pixel colours
 			// Also clear the the shadow map depth buffer to the far distance
@@ -120,12 +125,20 @@ public:
 			gD3DContext->VSSetConstantBuffers(1, 1, &gPerFrameConstantBuffer);
 
 			//render just the objects that can cast shadows
-			for (auto it : CGOM->mObjects)
+			for (auto it : GOM->mObjects)
 			{
 				//basic geometry rendered, that means just render the model's geometry, leaving all the fancy shaders
 				it->Render(true);
 			}
+
+			ID3D11DepthStencilView* nullD = nullptr;
+			gD3DContext->OMSetRenderTargets(0, nullptr, nullD);
 		}
+
+		//restore original orentation //kind of useless i think
+
+		SetRotation(originalOrientation);
+
 		return mShadowMapSRV;
 	}
 

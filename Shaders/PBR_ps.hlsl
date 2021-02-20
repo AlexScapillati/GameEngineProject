@@ -19,7 +19,7 @@ Texture2D NormalHeightMap : register(t3); // Normal map in rgb and height maps i
 Texture2D RoughnessMap : register(t4);
 SamplerState TexSampler : register(s0); // A sampler is a filter for a texture like bilinear, trilinear or anisotropic
 
-Texture2DArray ShadowMaps : register(t5); //an array of shadow maps
+Texture2DArray ShadowMaps : register(t6); //an array of shadow maps
 SamplerState PointClamp : register(s1); //sampler for the shadow maps 
 
 
@@ -264,7 +264,7 @@ float4 main(NormalMappingPixelShaderInput input) : SV_Target
 		    // pixel *as seen from the light*. Will use this to find which part of the shadow map to look at.
 		    // These are the same as the view / projection matrix multiplies in a vertex shader (can improve performance by putting these lines in vertex shader)
             const float4 viewPosition = mul(gPointLights[l].viewMatrices[face], float4(input.worldPosition, 1.0f));
-            const float4 projection = mul(gPointLights[l].projMatrices[face], viewPosition);
+            const float4 projection = mul(gPointLights[l].projMatrix, viewPosition);
 
 		    // Convert 2D pixel position as viewed from light into texture coordinates for shadow map - an advanced topic related to the projection step
 		    // Detail: 2D position x & y get perspective divide, then converted from range -1->1 to UV range 0->1. Also flip V axis

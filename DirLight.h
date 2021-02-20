@@ -21,7 +21,7 @@ public:
 	//}
 
 
-	ID3D11ShaderResourceView* RenderFromThis(CGameObjectManager* CGOM);
+	ID3D11ShaderResourceView* RenderFromThis();
 
 	auto GetNearClip() { return mNearClip; }
 	auto GetFarClip() { return mFarClip; }

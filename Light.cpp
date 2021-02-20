@@ -27,7 +27,7 @@ void CLight::Render(bool basicGeometry)
 		gD3DContext->RSSetState(gCullNoneState);
 
 		//render object
-		CGameObject::Render();
+		CGameObject::Render(false);
 
 		//set previous states
 		gD3DContext->OMSetBlendState(pBlendState, nullptr, 0xffffff);

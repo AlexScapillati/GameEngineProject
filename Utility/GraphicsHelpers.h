@@ -24,95 +24,96 @@
 
 inline void UpdateModelConstantBuffer(ID3D11Buffer* buffer, PerModelConstants& bufferData)
 {
-    D3D11_MAPPED_SUBRESOURCE cb;
-    gD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
-    memcpy(cb.pData, &bufferData, sizeof(PerModelConstants));
-    gD3DContext->Unmap(buffer, 0);
+	D3D11_MAPPED_SUBRESOURCE cb;
+	gD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
+	memcpy(cb.pData, &bufferData, sizeof(PerModelConstants));
+	gD3DContext->Unmap(buffer, 0);
 }
 
 inline void UpdateFrameConstantBuffer(ID3D11Buffer* buffer, PerFrameConstants& bufferData)
 {
-    D3D11_MAPPED_SUBRESOURCE cb;
-    gD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
-    
-    memcpy(cb.pData, &bufferData, sizeof(PerFrameConstants));
-    gD3DContext->Unmap(buffer, 0);
+	D3D11_MAPPED_SUBRESOURCE cb;
+	gD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
+
+	memcpy(cb.pData, &bufferData, sizeof(PerFrameConstants));
+	gD3DContext->Unmap(buffer, 0);
 }
+
 
 inline void UpdateLightBuffer(ID3D11Buffer* buffer, PerFrameLights& bufferData)
 {
 	D3D11_MAPPED_SUBRESOURCE cb;
-    gD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
+	gD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
 
-    //calculate the size of the frame constant buffer
+	//calculate the size of the frame constant buffer
 
-    //remove the lights array from the equation
-    auto size = sizeof(PerFrameLights) - sizeof(bufferData.lights);
+	//remove the lights array from the equation
+	auto size = sizeof(PerFrameLights) - sizeof(bufferData.lights);
 
-    const auto sizeOfLightStruct = sizeof(sLight);
-	
+	const auto sizeOfLightStruct = sizeof(sLight);
+
 	//add just the lights used
 	size += sizeOfLightStruct * bufferData.lights[0].numLights;
 
-    memcpy(cb.pData, &bufferData, size);
-    gD3DContext->Unmap(buffer, 0);
+	memcpy(cb.pData, &bufferData, size);
+	gD3DContext->Unmap(buffer, 0);
 }
 
 inline void UpdateSpotLightsBuffer(ID3D11Buffer* buffer, PerFrameSpotLights& bufferData)
 {
 	D3D11_MAPPED_SUBRESOURCE cb;
-    gD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
+	gD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
 
-    //calculate the size of the frame constant buffer
+	//calculate the size of the frame constant buffer
 
-    //remove the lights array from the equation
-    auto size = sizeof(PerFrameSpotLights) - sizeof(bufferData.spotLights);
+	//remove the lights array from the equation
+	auto size = sizeof(PerFrameSpotLights) - sizeof(bufferData.spotLights);
 
-    const auto sizeOfLightStruct = sizeof(sSpotLight);
-	
+	const auto sizeOfLightStruct = sizeof(sSpotLight);
+
 	//add just the lights used
 	size += sizeOfLightStruct * bufferData.spotLights[0].numLights;
 
-    memcpy(cb.pData, &bufferData, size);
-    gD3DContext->Unmap(buffer, 0);
+	memcpy(cb.pData, &bufferData, size);
+	gD3DContext->Unmap(buffer, 0);
 }
 
 inline void UpdateDirLightsBuffer(ID3D11Buffer* buffer, PerFrameDirLights& bufferData)
 {
 	D3D11_MAPPED_SUBRESOURCE cb;
-    gD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
+	gD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
 
-    //calculate the size of the frame constant buffer
+	//calculate the size of the frame constant buffer
 
-    //remove the lights array from the equation
-    auto size = sizeof(PerFrameDirLights) - sizeof(bufferData.dirLights);
+	//remove the lights array from the equation
+	auto size = sizeof(PerFrameDirLights) - sizeof(bufferData.dirLights);
 
-    const auto sizeOfLightStruct = sizeof(sDirLights);
-	
+	const auto sizeOfLightStruct = sizeof(sDirLights);
+
 	//add just the lights used
 	size += sizeOfLightStruct * bufferData.dirLights[0].numLights;
 
-    memcpy(cb.pData, &bufferData, size);
-    gD3DContext->Unmap(buffer, 0);
+	memcpy(cb.pData, &bufferData, size);
+	gD3DContext->Unmap(buffer, 0);
 }
 
 inline void UpdatePointLightsBuffer(ID3D11Buffer* buffer, PerFramePointLights& bufferData)
 {
-    D3D11_MAPPED_SUBRESOURCE cb;
-    gD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
+	D3D11_MAPPED_SUBRESOURCE cb;
+	gD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
 
-    //calculate the size of the frame constant buffer
+	//calculate the size of the frame constant buffer
 
-    //remove the lights array from the equation
-    auto size = sizeof(PerFramePointLights) - sizeof(bufferData.pointLights);
+	//remove the lights array from the equation
+	auto size = sizeof(PerFramePointLights) - sizeof(bufferData.pointLights);
 
-    const auto sizeOfLightStruct = sizeof(sDirLights);
-	
+	const auto sizeOfLightStruct = sizeof(sPointLights);
+
 	//add just the lights used
 	size += sizeOfLightStruct * bufferData.pointLights[0].numLights;
 
-    memcpy(cb.pData, &bufferData, size);
-    gD3DContext->Unmap(buffer, 0);
+	memcpy(cb.pData, &bufferData, size);
+	gD3DContext->Unmap(buffer, 0);
 }
 
 
@@ -141,7 +142,7 @@ CVector3 GetTextureDimentions(ID3D11Resource* texture);
 // - FOVx is the viewing angle from left->right (high values give a fish-eye look),
 // - near and far clip are the range of z distances that can be rendered
 CMatrix4x4 MakeProjectionMatrix(float aspectRatio = 4.0f / 3.0f, float FOVx = ToRadians(60),
-                                float nearClip = 0.1f, float farClip = 10000.0f);
+	float nearClip = 0.1f, float farClip = 10000.0f);
 
 
 CMatrix4x4 MakeOrthogonalMatrix(float width, float height, float nearClip, float farClip);
