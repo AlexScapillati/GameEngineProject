@@ -25,7 +25,6 @@ public:
 
 		mShadowMapSize = 1024;
 
-
 		//**** Create Shadow Map texture ****//
 
 		// We also need a depth buffer to go with our portal

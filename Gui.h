@@ -6,8 +6,44 @@
 #include "Common.h"
 
 #include <vector>
-#include "External\imgui\imgui_internal.h"
 #include "Scene.h"
+
+class CWindow
+{
+public:
+
+	CWindow(std::string name, UINT width, UINT height, bool show = true)
+	{
+		mName = name;
+		mWidth = width;
+		mHeight = height;
+		mShow = show;
+	}
+
+	virtual void Update() = 0;
+
+
+private:
+
+
+	std::string mName;
+	UINT mWidth;
+	UINT mHeight;
+	bool mShow;
+
+protected:
+
+	void Begin()
+	{
+		ImGui::Begin(mName.c_str(), &mShow);
+	}
+
+	void End()
+	{
+		ImGui::End();
+	}
+};
+
 
 class CGui
 {
@@ -20,8 +56,6 @@ public:
 		ImGui::CreateContext();
 
 		ImGuiIO& io = ImGui::GetIO(); (void)io;
-		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
-		//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
 		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
 
@@ -41,13 +75,16 @@ public:
 
 		for (auto window : mWindows)
 		{
-
+			window->Update();
 		}
+
+		ImGui::EndFrame();
+		ImGui::UpdatePlatformWindows();
 
 	}
 
 
-	void AddWindow(ImGuiWindow* window)
+	void AddWindow(CWindow* window)
 	{
 		mWindows.push_back(window);
 	}
@@ -68,6 +105,21 @@ public:
 
 private:
 
-	std::vector<ImGuiWindow*> mWindows;
+	std::vector<CWindow*> mWindows;
+};
+
+
+class ImGuiShowImageWindow : public CWindow
+{
+	// Inherited via ImGuiWindow
+	virtual void Update() override
+	{
+		Begin();
+
+
+
+		End();
+	}
+
 };
 

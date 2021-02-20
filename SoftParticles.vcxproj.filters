@@ -76,8 +76,6 @@
     <ClCompile Include="Material.cpp">
       <Filter>Engine\Objects</Filter>
     </ClCompile>
-    <ClCompile Include="Gui.cpp" />
-    <ClCompile Include="LevelImporter.cpp" />
     <ClCompile Include="DirLight.cpp">
       <Filter>Engine\Objects\Lights</Filter>
     </ClCompile>
@@ -89,6 +87,12 @@
     </ClCompile>
     <ClCompile Include="PointLight.cpp">
       <Filter>Engine\Objects\Lights</Filter>
+    </ClCompile>
+    <ClCompile Include="Gui.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="LevelImporter.cpp">
+      <Filter>Engine</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -191,8 +195,6 @@
     <ClInclude Include="Material.h">
       <Filter>Engine\Objects</Filter>
     </ClInclude>
-    <ClInclude Include="Gui.h" />
-    <ClInclude Include="LevelImporter.h" />
     <ClInclude Include="DirLight.h">
       <Filter>Engine\Objects\Lights</Filter>
     </ClInclude>
@@ -204,6 +206,12 @@
     </ClInclude>
     <ClInclude Include="PointLight.h">
       <Filter>Engine\Objects\Lights</Filter>
+    </ClInclude>
+    <ClInclude Include="Gui.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="LevelImporter.h">
+      <Filter>Engine</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

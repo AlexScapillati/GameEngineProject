@@ -15,10 +15,8 @@
 #include "Plant.h"
 #include "Sky.h"
 
-#include "External\imgui\imgui.h"
-#include "External\imgui\imgui_impl_dx11.h"
-#include "External\imgui\imgui_impl_win32.h"
 #include "LevelImporter.h"
+#include "External\imgui\imgui.h"
 
 
 const float ROTATION_SPEED = 1.5f;
@@ -312,54 +310,6 @@ void DisplayShadowMaps()
 
 }
 
-void InitGui()
-{
-	//initialize ImGui
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-
-
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
-	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
-	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
-
-	io.ConfigDockingWithShift = false;
-
-	// Setup Platform/Renderer bindings
-	ImGui_ImplDX11_Init(gD3DDevice, gD3DContext);
-	ImGui_ImplWin32_Init(gHWnd);
-	// Setup Dear ImGui style
-	ImGui::StyleColorsDark();
-}
-
-void RenderGui()
-{
-
-	ImGui::Begin("Objects");
-
-	DisplayObjects();
-
-	ImGui::End();
-
-	ImGui::Render();
-	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-
-	ImGui::EndFrame();
-	ImGui::UpdatePlatformWindows();
-
-}
-
-void ShutdownGui()
-{
-
-	ImGui_ImplDX11_Shutdown();
-	ImGui_ImplWin32_Shutdown();
-	ImGui::DestroyContext();
-
-}
-
  CScene::CScene(std::string fileName)
 {
 	 
@@ -372,6 +322,11 @@ void ShutdownGui()
 	mTextrue = nullptr;
 	mTargetView = nullptr;
 	mTextureSRV = nullptr;
+	mDepthStencil = nullptr;
+	mDepthStencilView = nullptr;
+
+	mViewportX = 1024;
+	mViewportY = 720;
 
 	mObjManager = std::make_unique<CGameObjectManager>();
 
@@ -381,7 +336,7 @@ void ShutdownGui()
 	gCameraOrbitSpeed = 1.2f;
 	gAmbientColour = { 0.3f, 0.3f, 0.4f };
 	gSpecularPower = 256; // Specular power //will be removed since it will be dependent on the material
-	lockFPS = true;
+	mLockFPS = true;
 	gBackgroundColor = { 0.3f, 0.3f, 0.4f, 1.0f };
 	gLightOrbitRadius = 20.0f;
 	gLightOrbitSpeed = 0.7f;
@@ -390,8 +345,8 @@ void ShutdownGui()
 
 	// We also need a depth buffer to go with our texture
 	D3D11_TEXTURE2D_DESC textureDesc = {};
-	textureDesc.Width = gViewportWidth; // Size of the "screen"
-	textureDesc.Height = gViewportHeight;
+	textureDesc.Width =	mViewportX; // Size of the "screen"
+	textureDesc.Height = mViewportY;
 	textureDesc.MipLevels = 1; // 1 level, means just the main texture, no additional mip-maps. Usually don't use mip-maps when rendering to textures (or we would have to render every level)
 	textureDesc.ArraySize = 1;
 	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -406,10 +361,15 @@ void ShutdownGui()
 		throw std::runtime_error("Error creating scene texture");
 	}
 
+	D3D11_RENDER_TARGET_VIEW_DESC rtvDesc;
+	rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+	rtvDesc.Texture2D.MipSlice = 0;
+
 
 	// We created the scene texture above, now we get a "view" of it as a render target, i.e. get a special pointer to the texture that
 	// we use when rendering to it (see RenderScene function below)
-	if (FAILED(gD3DDevice->CreateRenderTargetView(mTextrue, NULL, &mTargetView)))
+	if (FAILED(gD3DDevice->CreateRenderTargetView(mTextrue, &rtvDesc, &mTargetView)))
 	{
 		gLastError = "Error creating scene render target view";
 	}
@@ -424,6 +384,39 @@ void ShutdownGui()
 	{
 		throw std::runtime_error("Error creating scene texture shader resource view");
 	}
+	
+	//create depth stencil
+	D3D11_TEXTURE2D_DESC dsDesc = {};
+	dsDesc.Width = textureDesc.Width;
+	dsDesc.Height = textureDesc.Height;
+	dsDesc.MipLevels = 1;
+	dsDesc.ArraySize = 1; 
+	dsDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+	dsDesc.SampleDesc.Count = 1;
+	dsDesc.SampleDesc.Quality = 0;
+	dsDesc.Usage = D3D11_USAGE_DEFAULT;
+	dsDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	dsDesc.CPUAccessFlags = 0;
+	dsDesc.MiscFlags = 0;
+
+	//create it
+	if (FAILED(gD3DDevice->CreateTexture2D(&dsDesc, NULL, &mDepthStencil)))
+	{
+		throw std::runtime_error("Error creating depth stencil");
+	}
+	
+	//create depth stencil view
+	D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+	dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	dsvDesc.Flags = 0;
+	dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	dsvDesc.Texture2D.MipSlice = 0;
+
+	if (FAILED(gD3DDevice->CreateDepthStencilView(mDepthStencil, &dsvDesc, &mDepthStencilView)))
+	{
+		throw std::runtime_error("Error creating depth stencil view ");
+	}
+
 
 
 	//--------------------------------------------------------------------------------------
@@ -456,7 +449,6 @@ void ShutdownGui()
 		throw std::runtime_error("No objects loaded");
 	}
 
-	InitGui();
 
 	////--------------- GPU states ---------------////
 
@@ -551,12 +543,8 @@ void CScene::RenderSceneFromCamera(CCamera* camera) const
 
 
 // Rendering the scene
-void CScene::RenderScene(float frameTime) const
+ID3D11ShaderResourceView* CScene::RenderScene(float frameTime) const
 {
-
-	ImGui_ImplDX11_NewFrame();
-	ImGui_ImplWin32_NewFrame();
-	ImGui::NewFrame();
 
 	//// Common settings ////
 
@@ -583,16 +571,16 @@ void CScene::RenderScene(float frameTime) const
 
 	// Set the back buffer as the target for rendering and select the main depth buffer.
 	// When finished the back buffer is sent to the "front buffer" - which is the monitor.
-	gD3DContext->OMSetRenderTargets(1, &gBackBufferRenderTarget, gDepthStencil);
+	gD3DContext->OMSetRenderTargets(1, &mTargetView, mDepthStencilView);
 
 	// Clear the back buffer to a fixed colour and the depth buffer to the far distance
-	gD3DContext->ClearRenderTargetView(gBackBufferRenderTarget, &gBackgroundColor.r);
-	gD3DContext->ClearDepthStencilView(gDepthStencil, D3D11_CLEAR_DEPTH, 1.0f, 0);
+	gD3DContext->ClearRenderTargetView(mTargetView, &gBackgroundColor.r);
+	gD3DContext->ClearDepthStencilView(mDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 	// Setup the viewport to the size of the main window
 	D3D11_VIEWPORT vp;
-	vp.Width = static_cast<FLOAT>(gViewportWidth);
-	vp.Height = static_cast<FLOAT>(gViewportHeight);
+	vp.Width = static_cast<FLOAT>(mViewportX);
+	vp.Height = static_cast<FLOAT>(mViewportY);
 	vp.MinDepth = 0.0f;
 	vp.MaxDepth = 1.0f;
 	vp.TopLeftX = 0;
@@ -602,18 +590,16 @@ void CScene::RenderScene(float frameTime) const
 	// Render the scene from the main camera
 	RenderSceneFromCamera(mCamera.get());
 
-	RenderGui();
+	// Set the back buffer as the target for rendering and select the main depth buffer.
+	// When finished the back buffer is sent to the "front buffer" - which is the monitor.
+	gD3DContext->OMSetRenderTargets(1, &gBackBufferRenderTarget, gDepthStencil);
 
-	////--------------- Scene completion ---------------////
+	// Clear the back buffer to a fixed colour and the depth buffer to the far distance
+	gD3DContext->ClearRenderTargetView(gBackBufferRenderTarget, &gBackgroundColor.r);
+	gD3DContext->ClearDepthStencilView(gDepthStencil, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
-	// When drawing to the off-screen back buffer is complete, we "present" the image to the front buffer (the screen)
-	// Set first parameter to 1 to lock to vsync
-	if (gSwapChain->Present(lockFPS ? 1 : 0, 0) == DXGI_ERROR_DEVICE_REMOVED)
-	{
-		gD3DDevice->GetDeviceRemovedReason();
 
-		throw std::runtime_error("Device Removed");
-	}
+	return mTextureSRV;
 }
 //--------------------------------------------------------------------------------------
 // Scene Update
@@ -640,7 +626,7 @@ void CScene::UpdateScene(float frameTime)
 	// Toggle FPS limiting
 	if (KeyHit(Key_P))
 	{
-		lockFPS = !lockFPS;
+		mLockFPS = !mLockFPS;
 	}
 
 	// Show frame time / FPS in the window title //
@@ -668,7 +654,6 @@ void CScene::UpdateScene(float frameTime)
 CScene::~CScene()
 {
 
-	ShutdownGui();
 
 	ReleaseStates();
 	if (gPerModelConstantBuffer)  gPerModelConstantBuffer->Release();
@@ -680,6 +665,8 @@ CScene::~CScene()
 	if (mTargetView) mTargetView->Release();
 	if (mTextrue) mTextrue->Release();
 	if (mTextureSRV) mTextureSRV->Release();
+	if (mDepthStencil) mDepthStencil->Release();
+	if (mDepthStencilView) mDepthStencilView->Release();
 
 	ReleaseDefaultShaders();
 }

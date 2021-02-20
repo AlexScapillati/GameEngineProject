@@ -77,5 +77,7 @@ private:
 
 	int mMaxSize;
 
+	int mMaxShadowMaps;
+
 };
 

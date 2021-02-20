@@ -10,7 +10,8 @@
 
 CGameObjectManager::CGameObjectManager()
 {
-	mMaxSize = 1000;
+	mMaxSize = 100;
+	mMaxShadowMaps = 10;
 }
 
 void CGameObjectManager::AddObject(CGameObject* obj)
@@ -250,13 +251,14 @@ bool CGameObjectManager::RenderAllObjects()
 
 	// Unbind shadow maps from shaders - prevents warnings from DirectX when we try to render to the shadow maps again next frame
 
-	for (int i = 0; i < mSpotLights.size() + mDirLights.size() + mPointLights.size(); ++i)
+	auto nShadowMaps = mSpotLights.size() + mDirLights.size() + (mPointLights.size() * 6);
+
+	for (int i = 0; i < nShadowMaps; ++i)
 	{
 		// Unbind shadow maps from shaders - prevents warnings from DirectX when we try to render to the shadow maps again next frame
 		ID3D11ShaderResourceView* nullView = nullptr;
 		gD3DContext->PSSetShaderResources(6 + i, 1, &nullView);
 	}
-
 	return true;
 }
 

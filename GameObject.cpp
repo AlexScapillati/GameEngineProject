@@ -248,7 +248,6 @@ void CGameObject::RenderToAmbientMap()
 void CGameObject::sAmbientMap::Init()
 {
 	//initialize ambient map variables
-
 	size = 256;
 	enabled = false;
 

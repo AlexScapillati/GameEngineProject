@@ -33,10 +33,15 @@ public:
 	// Scene Render and Update
 	//--------------------------------------------------------------------------------------
 
-	void RenderScene(float frameTime) const;
+	ID3D11ShaderResourceView* RenderScene(float frameTime) const;
 
 	// frameTime is the time passed since the last frame
 	void UpdateScene(float frameTime);
+
+	
+	//--------------------------------------------------------------------------------------
+	// Public Variables TODO REMOVE BIG NONO
+	//--------------------------------------------------------------------------------------
 
 	std::string mDefaultVs;
 	std::string mDefaultPs;
@@ -45,6 +50,13 @@ public:
 
 	std::unique_ptr<CCamera> mCamera;
 
+	// Lock FPS to monitor refresh rate, which will typically set it to 60fps. Press 'p' to toggle to full fps
+	bool mLockFPS = true;
+
+	ColourRGBA gBackgroundColor;
+
+	float mViewportX;
+	float mViewportY;
 
 	~CScene();
 
@@ -54,8 +66,6 @@ private:
 	// Scene Data
 	//--------------------------------------------------------------------------------------
 
-	// Lock FPS to monitor refresh rate, which will typically set it to 60fps. Press 'p' to toggle to full fps
-	bool lockFPS = true;
 
 
 	// Variables controlling light1's orbiting of the particle emitter
@@ -67,7 +77,6 @@ private:
 	CVector3 gAmbientColour; // Background level of light (slightly bluish to match the far background, which is dark blue)
 	float    gSpecularPower; // Specular power controls shininess - same for all models in this app
 
-	ColourRGBA gBackgroundColor;
 
 	// Variables controlling light1's orbiting of the cube
 	float gLightOrbitRadius;
@@ -77,5 +86,7 @@ private:
 	ID3D11Texture2D* mTextrue;
 	ID3D11ShaderResourceView* mTextureSRV;
 	ID3D11RenderTargetView* mTargetView;
+	ID3D11Texture2D* mDepthStencil;
+	ID3D11DepthStencilView* mDepthStencilView;
 
 };
