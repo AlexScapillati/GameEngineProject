@@ -41,7 +41,7 @@ public:
 	void SetRotation(CVector3 rotation, int node = 0) override
 	{
 		CGameObject::SetRotation(rotation);
-		//mFacing = Normalise(Rotation());
+		mFacing = Normalise(Rotation());
 	}
 
 	~CSpotLight();

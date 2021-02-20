@@ -1,5 +1,4 @@
 #include "Engine.h"
-
 #include "Direct3DSetup.h"
 
 CDXEngine::CDXEngine(HINSTANCE hInstance, int nCmdShow)
@@ -33,14 +32,16 @@ CDXEngine::CDXEngine(HINSTANCE hInstance, int nCmdShow)
 		throw std::runtime_error("Impossible initialize DirectX");
 	}
 
+	//create gui
+
+	//auto gGui = std::make_unique<CGui>();
+
 	try
 	{
-		mMainScene = new CScene("Scene1.xml");
+		mMainScene = std::make_unique<CScene>("Scene1.xml");
 	}
 	catch (std::exception e)
 	{
-		delete mMainScene;
-
 		ShutdownDirect3D();
 
 		throw std::runtime_error(e.what());
@@ -74,14 +75,15 @@ bool CDXEngine::Update()
 			// Draw the scene
 			mMainScene->RenderScene(frameTime);
 
+			//render the scene image to ImGui
+
+
 			if (KeyHit(Key_Escape))
 			{
 				DestroyWindow(gHWnd); // This will close the window and ultimately exit this loop
 			}
 		}
 	}
-
-	delete mMainScene;
 
 	ShutdownDirect3D();
 

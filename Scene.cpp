@@ -52,17 +52,6 @@ ID3D11Buffer* gPerFramePointLightsConstBuffer;
 CGameObjectManager* GOM;
 
 
-void SetupGui()
-{
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	// Setup Platform/Renderer bindings
-	ImGui_ImplDX11_Init(gD3DDevice, gD3DContext);
-	ImGui_ImplWin32_Init(gHWnd);
-	// Setup Dear ImGui style
-	ImGui::StyleColorsDark();
-}
-
 CGameObject* selectedObj = nullptr;
 
 void DisplayObjects()
@@ -322,6 +311,28 @@ void DisplayShadowMaps()
 
 }
 
+void InitGui()
+{
+	//initialize ImGui
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+
+
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
+	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
+	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
+
+
+
+	// Setup Platform/Renderer bindings
+	ImGui_ImplDX11_Init(gD3DDevice, gD3DContext);
+	ImGui_ImplWin32_Init(gHWnd);
+	// Setup Dear ImGui style
+	ImGui::StyleColorsDark();
+}
+
 void RenderGui()
 {
 
@@ -338,9 +349,11 @@ void RenderGui()
 
 void ShutdownGui()
 {
+
 	ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
+
 }
 
 
@@ -371,6 +384,8 @@ bool CScene::InitScene(std::string fileName)
 		throw std::runtime_error("No objects loaded");
 	}
 
+	InitGui();
+
 	////--------------- GPU states ---------------////
 
 
@@ -400,9 +415,6 @@ bool CScene::InitScene(std::string fileName)
 	{
 		throw std::runtime_error("Error creating constant buffers");
 	}
-
-	//SetupGui
-	SetupGui();
 
 	return true;
 }
@@ -521,9 +533,7 @@ void CScene::RenderScene(float frameTime) const
 	// Render the scene from the main camera
 	RenderSceneFromCamera(mCamera);
 
-	//Render the GUI
 	RenderGui();
-
 
 	////--------------- Scene completion ---------------////
 
