@@ -1,7 +1,7 @@
 #include "GameObjectManager.h"
 
 #include "SpotLight.h"
-#include "CPointLight.h"
+#include "PointLight.h"
 #include "DirLight.h"
 #include "Light.h"
 #include "GraphicsHelpers.h"

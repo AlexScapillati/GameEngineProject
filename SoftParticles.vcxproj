@@ -113,7 +113,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="CPointLight.cpp" />
+    <ClCompile Include="PointLight.cpp" />
     <ClCompile Include="Direct3DSetup.cpp" />
     <ClCompile Include="DirLight.cpp" />
     <ClCompile Include="External\imgui\imgui.cpp" />
@@ -123,6 +123,7 @@
     <ClCompile Include="External\imgui\imgui_tables.cpp" />
     <ClCompile Include="External\imgui\imgui_widgets.cpp" />
     <ClCompile Include="Gui.cpp" />
+    <ClCompile Include="LevelImporter.cpp" />
     <ClCompile Include="Light.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="SpotLight.cpp" />
@@ -146,7 +147,7 @@
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Common.h" />
-    <ClInclude Include="CPointLight.h" />
+    <ClInclude Include="PointLight.h" />
     <ClInclude Include="Direct3DSetup.h" />
     <ClInclude Include="DirLight.h" />
     <ClInclude Include="External\imgui\imconfig.h" />
@@ -159,6 +160,7 @@
     <ClInclude Include="External\imgui\imstb_truetype.h" />
     <ClInclude Include="External\imgui\stb_image.h" />
     <ClInclude Include="Gui.h" />
+    <ClInclude Include="LevelImporter.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="SpotLight.h" />
     <ClInclude Include="Engine.h" />

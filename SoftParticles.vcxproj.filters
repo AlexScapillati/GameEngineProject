@@ -55,18 +55,6 @@
     <ClCompile Include="Plant.cpp">
       <Filter>Engine\Objects</Filter>
     </ClCompile>
-    <ClCompile Include="SpotLight.cpp">
-      <Filter>Engine\Objects</Filter>
-    </ClCompile>
-    <ClCompile Include="DirLight.cpp">
-      <Filter>Engine\Objects</Filter>
-    </ClCompile>
-    <ClCompile Include="Light.cpp">
-      <Filter>Engine\Objects</Filter>
-    </ClCompile>
-    <ClCompile Include="CPointLight.cpp">
-      <Filter>Engine\Objects</Filter>
-    </ClCompile>
     <ClCompile Include="External\imgui\imgui.cpp">
       <Filter>Engine\GUI</Filter>
     </ClCompile>
@@ -89,6 +77,19 @@
       <Filter>Engine\Objects</Filter>
     </ClCompile>
     <ClCompile Include="Gui.cpp" />
+    <ClCompile Include="LevelImporter.cpp" />
+    <ClCompile Include="DirLight.cpp">
+      <Filter>Engine\Objects\Lights</Filter>
+    </ClCompile>
+    <ClCompile Include="Light.cpp">
+      <Filter>Engine\Objects\Lights</Filter>
+    </ClCompile>
+    <ClCompile Include="SpotLight.cpp">
+      <Filter>Engine\Objects\Lights</Filter>
+    </ClCompile>
+    <ClCompile Include="PointLight.cpp">
+      <Filter>Engine\Objects\Lights</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Utility\ColourRGBA.h">
@@ -148,9 +149,6 @@
     <ClInclude Include="GameObjectManager.h">
       <Filter>Engine\Objects</Filter>
     </ClInclude>
-    <ClInclude Include="Light.h">
-      <Filter>Engine\Objects</Filter>
-    </ClInclude>
     <ClInclude Include="Sky.h">
       <Filter>Engine\Objects</Filter>
     </ClInclude>
@@ -161,15 +159,6 @@
       <Filter>Engine\Objects</Filter>
     </ClInclude>
     <ClInclude Include="Plant.h">
-      <Filter>Engine\Objects</Filter>
-    </ClInclude>
-    <ClInclude Include="SpotLight.h">
-      <Filter>Engine\Objects</Filter>
-    </ClInclude>
-    <ClInclude Include="DirLight.h">
-      <Filter>Engine\Objects</Filter>
-    </ClInclude>
-    <ClInclude Include="CPointLight.h">
       <Filter>Engine\Objects</Filter>
     </ClInclude>
     <ClInclude Include="External\imgui\imconfig.h">
@@ -203,6 +192,19 @@
       <Filter>Engine\Objects</Filter>
     </ClInclude>
     <ClInclude Include="Gui.h" />
+    <ClInclude Include="LevelImporter.h" />
+    <ClInclude Include="DirLight.h">
+      <Filter>Engine\Objects\Lights</Filter>
+    </ClInclude>
+    <ClInclude Include="Light.h">
+      <Filter>Engine\Objects\Lights</Filter>
+    </ClInclude>
+    <ClInclude Include="SpotLight.h">
+      <Filter>Engine\Objects\Lights</Filter>
+    </ClInclude>
+    <ClInclude Include="PointLight.h">
+      <Filter>Engine\Objects\Lights</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Engine">
@@ -225,6 +227,9 @@
     </Filter>
     <Filter Include="Engine\GUI">
       <UniqueIdentifier>{8008c174-8775-4f81-9def-efa80ca57d99}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Objects\Lights">
+      <UniqueIdentifier>{91ceb4a8-e3bd-4b14-a123-0675e77474ac}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
