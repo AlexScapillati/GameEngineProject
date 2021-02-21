@@ -25,9 +25,10 @@ class CGameObjectManager;
 extern HWND gHWnd;
 
 // Viewport size
-extern int gViewportWidth;
-extern int gViewportHeight;
+extern UINT gViewportWidth;
+extern UINT gViewportHeight;
 
+extern bool gViewportFullscreen;
 
 // Important DirectX variables
 extern ID3D11Device*           gD3DDevice;

@@ -48,7 +48,6 @@ private:
 	struct Node
 	{
 		std::string  name;
-
 		CMatrix4x4   defaultMatrix; // Starting position/rotation/scale for this node. Relative to parent. Used when first creating a model from this mesh
 		CMatrix4x4   offsetMatrix;
 
@@ -70,6 +69,8 @@ public:
     // Will throw a std::runtime_error exception on failure (since constructors can't return errors).
     CMesh(const std::string& fileName, bool requireTangents = false);
     ~CMesh();
+
+	CMesh(const CMesh&);
 
 
 	// How many nodes are in the hierarchy for this mesh. Nodes can control individual parts (rigid body animation),
@@ -107,6 +108,9 @@ private:
 // Member data
 //--------------------------------------------------------------------------------------
 private:
+	
+	std::string mFileName;			//store the filename for the copy constructor
+		bool hasTangents;			//store if the mesh has tangents, same reason for above
 
     std::vector<SubMesh> mSubMeshes; // The mesh geometry. Nodes refer to sub-meshes in this vector
     std::vector<Node>    mNodes;     // The mesh hierarchy. First entry is root. remainder aree stored in depth-first order

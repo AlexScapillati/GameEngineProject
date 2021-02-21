@@ -24,6 +24,7 @@ public:
 	//-------------------------------------
 	// Construction / Usage
 	//-------------------------------------
+	CGameObject(const CGameObject&);
 
 	CGameObject(std::string mesh, std::string name, std::string& diffuseMap, std::string& vertexShader,
 		std::string& pixelShader, CVector3 position = { 0,0,0 }, CVector3 rotation = { 0,0,0 }, float scale = 1);
@@ -99,12 +100,12 @@ protected:
 
 
 	//the material
-	CMaterial* mMaterial;
+	std::unique_ptr<CMaterial> mMaterial;
 
 	//the meshes that a model has (all the LODS that a model has)
 	std::vector<std::string> mMeshFiles;
 
-	CMesh* mMesh;
+	std::unique_ptr<CMesh> mMesh;
 
 	std::string mName;
 

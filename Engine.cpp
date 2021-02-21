@@ -16,7 +16,7 @@ void InitGui()
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
-	//io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
+	//io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows //super broken
 
 	io.ConfigDockingWithShift = false;
 
@@ -32,10 +32,10 @@ extern void DisplayObjects();
 void RenderGui()
 {
 
-	ImGui::Begin("Objects");
-
-	DisplayObjects();
-
+	if (ImGui::Begin("Objects"))
+	{
+		DisplayObjects();
+	}
 	ImGui::End();
 
 }
@@ -126,30 +126,60 @@ bool CDXEngine::Update()
 			ImGui_ImplWin32_NewFrame();
 			ImGui::NewFrame();
 
-			if(ImGui::BeginMainMenuBar())
+			if (ImGui::BeginMainMenuBar())
 			{
 				ImGui::MenuItem("Open");
+				ImGui::EndMainMenuBar();
 			}
-			ImGui::EndMainMenuBar();
 
 			//ImGui::Begin("Engine", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_MenuBar);
 			//ImGui::SetWindowPos({ 0.0,0.0 });
 			//ImGui::SetWindowSize({ (float)gViewportWidth, (float)gViewportHeight });
 
 
-			ImGui::Begin("Viewport", nullptr, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoCollapse);
+			if (ImGui::Begin("Viewport", nullptr, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_MenuBar))
+			{
+				if (ImGui::BeginMenuBar())
+				{
+					ImGui::MenuItem("Maximize", "", &gViewportFullscreen);
+					ImGui::EndMenuBar();
+				}
 
-			// Draw the scene
-			auto tex = mMainScene->RenderScene(frameTime);
+				//get the available region of the window 
+				auto size = ImGui::GetContentRegionAvail();
 
+				if (gViewportFullscreen)
+				{
+					size = { (float)gViewportWidth, (float)gViewportHeight };
+					ImGui::SetWindowSize(size);
+				}
 
-			//render the scene image to ImGui
-			ImGui::Image(tex, ImGui::GetWindowSize());
+				//compare it with the scene viewport
+				if (size.x != mMainScene->mViewportX || size.y != mMainScene->mViewportY)
+				{
+					//if they are different, resize the scene viewport
+					mMainScene->Resize(size.x, size.y);
+				}
 
+				// Draw the scene
+				auto sceneTexture = mMainScene->RenderScene(frameTime);
+
+				// Set the back buffer as the target for rendering and select the main depth buffer.
+				// When finished the back buffer is sent to the "front buffer" - which is the monitor.
+				gD3DContext->OMSetRenderTargets(1, &gBackBufferRenderTarget, gDepthStencil);
+
+				// Clear the back buffer to a fixed colour and the depth buffer to the far distance
+				gD3DContext->ClearRenderTargetView(gBackBufferRenderTarget, &mMainScene->gBackgroundColor.r);
+				gD3DContext->ClearDepthStencilView(gDepthStencil, D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+				//render the scene image to ImGui
+				ImGui::Image(sceneTexture, size);
+			}
 			ImGui::End();
 
 			//render GUI
-			RenderGui();
+			if (!gViewportFullscreen)
+				RenderGui();
 
 			//ImGui::End();
 

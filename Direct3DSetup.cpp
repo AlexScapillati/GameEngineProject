@@ -7,6 +7,7 @@
 #include "Common.h"
 #include <d3d11.h>
 #include <vector>
+#include <stdexcept>
 
 
 //--------------------------------------------------------------------------------------
@@ -161,6 +162,9 @@ void ShutdownDirect3D()
 void Resize(UINT w, UINT h)
 {
 
+	gViewportWidth = w;
+	gViewportHeight = h;
+
 	HRESULT hr;
 
 	gD3DContext->OMSetRenderTargets(0, 0, 0);
@@ -192,7 +196,7 @@ void Resize(UINT w, UINT h)
 	if (FAILED(hr))
 	{
 		gLastError = "Error creating depth buffer texture";
-		return;
+		throw std::runtime_error(gLastError);
 	}
 
 	// Create the depth stencil view - an object to allow us to use the texture
@@ -205,7 +209,7 @@ void Resize(UINT w, UINT h)
 	if (FAILED(hr))
 	{
 		gLastError = "Error creating depth buffer view";
-		return;
+		throw std::runtime_error(gLastError);
 	}
 
 	// Also create a shader resource view for the depth buffer - required when we want to access the depth buffer as a texture (also note the two important comments in above code)
@@ -219,22 +223,33 @@ void Resize(UINT w, UINT h)
 	if (FAILED(hr))
 	{
 		gLastError = "Error creating depth buffer shader resource view";
-		return;
+		throw std::runtime_error(gLastError);
 	}
 
 	// Preserve the existing buffer count and format.
 	// Automatically choose the width and height to match the client rect for HWNDs.
 	hr = gSwapChain->ResizeBuffers(1, w, h, DXGI_FORMAT_R8G8B8A8_UNORM,D3D11_CREATE_DEVICE_DEBUG);
-
-	// Perform error handling here!
+	if (FAILED(hr))
+	{
+		gLastError = "Error resizing buffer";
+		throw std::runtime_error(gLastError);
+	}
 
 	// Get buffer and create a render-target-view.
 	ID3D11Texture2D* pBuffer;
 	hr = gSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D),(void**)&pBuffer);
-	// Perform error handling here!
+	if (FAILED(hr))
+	{
+		gLastError = "Error getting buffer ";
+		throw std::runtime_error(gLastError);
+	}
 
 	hr = gD3DDevice->CreateRenderTargetView(pBuffer, NULL, &gBackBufferRenderTarget);
+	if (FAILED(hr))
+	{
+		gLastError = "Error creating render target view";
+		throw std::runtime_error(gLastError);
+	}
 
-	// Perform error handling here!
 	pBuffer->Release();
 }

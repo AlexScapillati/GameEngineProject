@@ -216,7 +216,27 @@ bool CGameObjectManager::RemoveDirLight(int pos)
 	return false;
 }
 
-extern void DisplayShadowMaps();
+void DisplayShadowMaps()
+{
+	if (ImGui::Begin("ShadowMaps"))
+	{
+		if (ImGui::BeginTable("", 6))
+		{
+			for (auto tx : GOM->mShadowsMaps)
+			{
+				ImTextureID texId = tx;
+
+				ImGui::TableNextColumn();
+
+				ImGui::Image((void*)texId, { 256, 256 });
+			}
+
+			ImGui::EndTable();
+		}
+	}
+	ImGui::End();
+}
+
 
 bool CGameObjectManager::RenderAllObjects()
 {
@@ -245,7 +265,10 @@ bool CGameObjectManager::RenderAllObjects()
 		it->Render();
 	}
 
-	DisplayShadowMaps();
+	if (!gViewportFullscreen)
+	{
+		DisplayShadowMaps();
+	}
 
 	mShadowsMaps.clear();
 

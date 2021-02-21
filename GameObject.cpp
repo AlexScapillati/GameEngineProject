@@ -14,6 +14,21 @@
 #include "ColourRGBA.h"
 #include "GameObjectManager.h"
 
+CGameObject::CGameObject(const CGameObject& obj)
+{
+	mEnabled = true;
+	mMaterial = std::make_unique<CMaterial>(*obj.mMaterial);
+	mMeshFiles = obj.mMeshFiles;
+	mMesh = std::make_unique<CMesh>(*obj.mMesh);
+	mName = "new" + obj.mName;
+
+	mAmbientMap.Init();
+
+	// Set default matrices from mesh
+	mWorldMatrices.resize(mMesh->NumberNodes());
+	for (auto i = 0; i < mWorldMatrices.size(); ++i)
+		mWorldMatrices[i] = mMesh->GetNodeDefaultMatrix(i);
+}
 
 CGameObject::CGameObject(std::string mesh, std::string name, std::string& diffuseMap, std::string&
 	vertexShader, std::string& pixelShader, CVector3 position /*= { 0,0,0 }*/, CVector3 rotation /*= { 0,0,0 }*/, float scale /*= 1*/)
@@ -31,7 +46,7 @@ CGameObject::CGameObject(std::string mesh, std::string name, std::string& diffus
 	//import material
 	try
 	{
-		mMaterial = new CMaterial(diffuseMap, vertexShader, pixelShader);
+		mMaterial = std::make_unique<CMaterial>(diffuseMap, vertexShader, pixelShader);
 	}
 	catch (std::exception e)
 	{
@@ -43,7 +58,7 @@ CGameObject::CGameObject(std::string mesh, std::string name, std::string& diffus
 	//that could be light models or cube maps
 	try
 	{
-		mMesh = new CMesh(mesh);
+		mMesh = std::make_unique<CMesh>(mesh);
 
 		// Set default matrices from mesh
 		mWorldMatrices.resize(mMesh->NumberNodes());
@@ -108,7 +123,7 @@ CGameObject::CGameObject(std::string id, std::string name, std::string vs, std::
 	GetFilesWithID(gMediaFolder, files, id);
 
 	//create the material
-	mMaterial = new CMaterial(files, vs, ps);
+	mMaterial = std::make_unique<CMaterial>(files, vs, ps);
 
 	//find meshes trough the files
 	for (auto st : files)
@@ -132,7 +147,7 @@ CGameObject::CGameObject(std::string id, std::string name, std::string vs, std::
 	try
 	{
 		//load the most detailed mesh with tangents required
-		mMesh = new CMesh(mMeshFiles.front(), mMaterial->HasNormals());
+		mMesh = std::make_unique<CMesh>(mMeshFiles.front(), mMaterial->HasNormals());
 
 		// Set default matrices from mesh
 		mWorldMatrices.resize(mMesh->NumberNodes());
@@ -341,8 +356,6 @@ void CGameObject::sAmbientMap::Init()
 
 CGameObject::~CGameObject()
 {
-	delete mMesh;
-	delete mMaterial;
 }
 
 
@@ -421,7 +434,7 @@ float* CGameObject::DirectPosition()
 }
 
 
-CMesh* CGameObject::GetMesh() const { return mMesh; }
+CMesh* CGameObject::GetMesh() const { return mMesh.get(); }
 
 // Setters - model only stores matricies , so if user sets position, rotation or scale, just update those aspects of the matrix
 

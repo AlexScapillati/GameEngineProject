@@ -9,9 +9,11 @@ class CMaterial
 {
 public:
 
-	CMaterial(std::string& diffuseMap, std::string&vertexShader, std::string& pixelShader);
+	CMaterial(std::string diffuseMap, std::string vertexShader, std::string pixelShader);
 
-	CMaterial(std::vector<std::string> fileMaps, std::string& vs, std::string& ps);
+	CMaterial(std::vector<std::string> fileMaps, std::string vs, std::string ps);
+
+	CMaterial(CMaterial& m);
 
 	bool HasNormals() { return mHasNormals; }
 	bool IsPbr() { return mIsPbr; }
@@ -24,6 +26,11 @@ public:
 	~CMaterial();
 
 private:
+	
+	std::vector<std::string> mMapsStr;
+
+	std::string mVsStr;
+	std::string mPsStr;
 
 	bool mHasNormals;
 
@@ -48,6 +55,8 @@ private:
 		ID3D11Resource*				Roughness;
 		ID3D11ShaderResourceView*	RoughnessSRV;
 	} mPbrMaps;
+
+	void LoadMaps(std::vector<std::string>& maps);
 
 };
 

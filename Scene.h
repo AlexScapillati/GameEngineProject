@@ -55,10 +55,12 @@ public:
 
 	ColourRGBA gBackgroundColor;
 
-	float mViewportX;
-	float mViewportY;
+	UINT mViewportX;
+	UINT mViewportY;
 
 	~CScene();
+
+	void Resize(UINT newX, UINT newY);
 
 private:
 
