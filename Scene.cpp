@@ -69,15 +69,36 @@ extern ID3D11PixelShader* gHeatHazePostProcess;
 
 CGameObjectManager* GOM;
 
-CGameObject* selectedObj = nullptr;
-
 void CScene::DisplayObjects()
 {
 
+	static CGameObject* selectedObj = nullptr;
+
 	static auto mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
+
+	static bool showBounds = false;
 
 	if (ImGui::Begin("Objects"))
 	{
+		//	static bool addObj = false;
+
+		//	if (ImGui::Button("Add Object"))
+		//	{
+		//		addObj = true;
+		//	}
+
+		//	if (ImGui::Begin("Add object"), &addObj)
+		//	{
+		//		//WIP
+		//		ImGui::Button("Add Mesh");
+		//		ImGui::Button("Add Texture");
+
+		//	}
+		//	ImGui::End();
+
+		ImGui::Separator();
+		ImGui::Separator();
+
 		//display for each model a button
 		for (auto it : GOM->mObjects)
 		{
@@ -158,6 +179,7 @@ void CScene::DisplayObjects()
 
 			//display the transform component
 			ImGui::NewLine();
+			ImGui::Separator();
 
 			ImGui::Text("Transform");
 
@@ -207,10 +229,11 @@ void CScene::DisplayObjects()
 			}
 
 
+			ImGui::Checkbox("Show Bounds", &showBounds);
+
 			//----------------------------------------------------------------
 			// Object Specific settings
 			//----------------------------------------------------------------
-
 
 			if (auto light = dynamic_cast<CLight*>(selectedObj))
 			{
@@ -326,14 +349,20 @@ void CScene::DisplayObjects()
 	//display imguizmo outside the object window (therfore in the viewport window)
 	if (selectedObj)
 	{
-		auto pos = ImGui::GetWindowContentRegionMin();
+		auto pos = ImGui::GetWindowPos();
 
-		ImGuizmo::SetRect(pos.x, pos.y, mViewportX, mViewportY);
+		ImGuizmo::SetRect(pos.x, pos.y, pos.x + mViewportX, pos.y + mViewportY);
 
 		ImGuizmo::SetDrawlist(ImGui::GetForegroundDrawList());
 
+		static float bounds[] =
+		{
+			0.0f,0.0f,0.0f,
+			 1.f, 1.f, 1.f
+		};
+
 		ImGuizmo::Manipulate(mCamera->ViewMatrix().GetArray(), mCamera->ProjectionMatrix().GetArray(),
-			mCurrentGizmoOperation, ImGuizmo::WORLD, selectedObj->WorldMatrix().GetArray(),0,0);
+			mCurrentGizmoOperation, ImGuizmo::WORLD, selectedObj->WorldMatrix().GetArray(), 0, 0, showBounds ? bounds : 0);
 	}
 }
 
@@ -688,9 +717,10 @@ void CScene::UpdateScene(float frameTime)
 	gPostProcessingConstants.heatHazeTimer += frameTime;
 
 	//***********
-
-	mCamera->Control(frameTime, Key_Up, Key_Down, Key_Left, Key_Right, Key_W, Key_S, Key_A, Key_D);
-
+	if (ImGui::IsWindowFocused())
+	{
+		mCamera->Control(frameTime, Key_Up, Key_Down, Key_Left, Key_Right, Key_W, Key_S, Key_A, Key_D);
+	}
 
 	// Toggle FPS limiting
 	if (KeyHit(Key_P))
@@ -721,42 +751,46 @@ void CScene::UpdateScene(float frameTime)
 
 void CScene::PostProcessingPass()
 {
-	//Render a window with all the postprocessing 
-	if (ImGui::Begin("PostProcessing", 0, ImGuiWindowFlags_NoNav))
+	//show the postprocessing window
+	if (!gViewportFullscreen)
 	{
-		//render two table 
-		//one is for the type of PP 
-		//one is for the mode
-
-		auto items = "None\0Tint\0GrayNoise\0Burn\0Distort\0Spiral\0HeatHaze";
-
-		static int select = 0;
-
-		if (ImGui::Combo("Type", &select, items))
+		//Render a window with all the postprocessing 
+		if (ImGui::Begin("PostProcessing", 0))
 		{
-			switch (select)
+			//render two table 
+			//one is for the type of PP 
+			//one is for the mode
+
+			auto items = "None\0Tint\0GrayNoise\0Burn\0Distort\0Spiral\0HeatHaze";
+
+			static int select = 0;
+
+			if (ImGui::Combo("Type", &select, items))
 			{
-			case 0: mCurrPostProcess = PostProcess::None; break;
-			case 1: mCurrPostProcess = PostProcess::Tint; break;
-			case 2: mCurrPostProcess = PostProcess::GreyNoise; break;
-			case 3: mCurrPostProcess = PostProcess::Burn; break;
-			case 4: mCurrPostProcess = PostProcess::Distort; break;
-			case 5: mCurrPostProcess = PostProcess::Spiral; break;
-			case 6: mCurrPostProcess = PostProcess::HeatHaze; break;
+				switch (select)
+				{
+				case 0: mCurrPostProcess = PostProcess::None; break;
+				case 1: mCurrPostProcess = PostProcess::Tint; break;
+				case 2: mCurrPostProcess = PostProcess::GreyNoise; break;
+				case 3: mCurrPostProcess = PostProcess::Burn; break;
+				case 4: mCurrPostProcess = PostProcess::Distort; break;
+				case 5: mCurrPostProcess = PostProcess::Spiral; break;
+				case 6: mCurrPostProcess = PostProcess::HeatHaze; break;
+				}
 			}
-		}
 
-		static int selectMode = 0;
+			static int selectMode = 0;
 
-		auto modes = "FullScreen\0Area\0Polygon";
+			auto modes = "FullScreen\0Area\0Polygon";
 
-		if (ImGui::Combo("Mode", &selectMode, modes))
-		{
-			switch (selectMode)
+			if (ImGui::Combo("Mode", &selectMode, modes))
 			{
-			case 0: mCurrPostProcessMode = PostProcessMode::Fullscreen; break;
-			case 1: mCurrPostProcessMode = PostProcessMode::Area; break;
-			case 2: mCurrPostProcessMode = PostProcessMode::Polygon; break;
+				switch (selectMode)
+				{
+				case 0: mCurrPostProcessMode = PostProcessMode::Fullscreen; break;
+				case 1: mCurrPostProcessMode = PostProcessMode::Area; break;
+				case 2: mCurrPostProcessMode = PostProcessMode::Polygon; break;
+				}
 			}
 		}
 	}
@@ -1125,7 +1159,6 @@ void CScene::PolygonPostProcess(PostProcess postProcess, const std::array<CVecto
 
 CScene::~CScene()
 {
-
 	ReleaseStates();
 	if (gPerModelConstantBuffer)			gPerModelConstantBuffer->Release();
 	if (gPerFrameConstantBuffer)			gPerFrameConstantBuffer->Release();

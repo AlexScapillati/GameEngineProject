@@ -163,7 +163,6 @@
     <ClInclude Include="External\imgui\imstb_textedit.h" />
     <ClInclude Include="External\imgui\imstb_truetype.h" />
     <ClInclude Include="External\imgui\stb_image.h" />
-    <ClInclude Include="Gui.h" />
     <ClInclude Include="LevelImporter.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="SpotLight.h" />

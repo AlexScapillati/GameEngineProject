@@ -112,70 +112,80 @@ bool CDXEngine::Update()
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
-
 		else // When no windows messages left to process then render & update our scene
 		{
-			// Update the scene by the amount of time since the last frame
-			const auto frameTime = mTimer.GetLapTime();
-			mMainScene->UpdateScene(frameTime);
-
 			ImGui_ImplDX11_NewFrame();
 			ImGui_ImplWin32_NewFrame();
 			ImGui::NewFrame();
 			ImGuizmo::BeginFrame();
 
-
 			if (ImGui::BeginMainMenuBar())
 			{
 				ImGui::MenuItem("Open");
+
+
 				ImGui::EndMainMenuBar();
 			}
 
-			if (ImGui::Begin("Viewport", nullptr, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_MenuBar /*| ImGuiWindowFlags_NoMove*/))
+			auto vp = ImGui::GetMainViewport();
+			ImGui::SetNextWindowPos({ 0,0 });
+			ImGui::SetNextWindowSize({ (float)gViewportWidth,(float)gViewportHeight });
+
+			if (ImGui::Begin("Engine"))
 			{
-				if (ImGui::BeginMenuBar())
+
+				if (ImGui::Begin("Viewport", nullptr,
+					ImGuiWindowFlags_NoScrollbar |
+					ImGuiWindowFlags_NoCollapse |
+					ImGuiWindowFlags_MenuBar))
 				{
-					ImGui::MenuItem("Maximize", "", &gViewportFullscreen);
-					ImGui::EndMenuBar();
+					// Update the scene by the amount of time since the last frame
+					const auto frameTime = mTimer.GetLapTime();
+					mMainScene->UpdateScene(frameTime);
+
+					if (ImGui::BeginMenuBar())
+					{
+						ImGui::MenuItem("Maximize", "", &gViewportFullscreen);
+						ImGui::EndMenuBar();
+					}
+
+					//get the available region of the window 
+					auto size = ImGui::GetContentRegionAvail();
+
+					if (gViewportFullscreen)
+					{
+						size = { (float)gViewportWidth, (float)gViewportHeight };
+						ImGui::SetWindowSize(size);
+					}
+
+					//compare it with the scene viewport
+					if ((size.x != mMainScene->mViewportX || size.y != mMainScene->mViewportY) && (size.x != 0 && size.y != 0))
+					{
+						//if they are different, resize the scene viewport
+						mMainScene->Resize(size.x, size.y);
+					}
+
+					// Draw the scene
+					auto sceneTexture = mMainScene->RenderScene(frameTime);
+
+					// Set the back buffer as the target for rendering and select the main depth buffer.
+					// When finished the back buffer is sent to the "front buffer" - which is the monitor.
+					gD3DContext->OMSetRenderTargets(1, &gBackBufferRenderTarget, gDepthStencil);
+
+					// Clear the back buffer to a fixed colour and the depth buffer to the far distance
+					gD3DContext->ClearRenderTargetView(gBackBufferRenderTarget, &mMainScene->gBackgroundColor.r);
+					gD3DContext->ClearDepthStencilView(gDepthStencil, D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+					//render the scene image to ImGui
+					ImGui::Image(sceneTexture, size);
 				}
-
-				//get the available region of the window 
-				auto size = ImGui::GetContentRegionAvail();
-
-				if (gViewportFullscreen)
-				{
-					size = { (float)gViewportWidth, (float)gViewportHeight };
-					ImGui::SetWindowSize(size);
-				}
-
-				//compare it with the scene viewport
-				if (size.x != mMainScene->mViewportX || size.y != mMainScene->mViewportY)
-				{
-					//if they are different, resize the scene viewport
-					mMainScene->Resize(size.x, size.y);
-				}
-
-				// Draw the scene
-				auto sceneTexture = mMainScene->RenderScene(frameTime);
-
-				// Set the back buffer as the target for rendering and select the main depth buffer.
-				// When finished the back buffer is sent to the "front buffer" - which is the monitor.
-				gD3DContext->OMSetRenderTargets(1, &gBackBufferRenderTarget, gDepthStencil);
-
-				// Clear the back buffer to a fixed colour and the depth buffer to the far distance
-				gD3DContext->ClearRenderTargetView(gBackBufferRenderTarget, &mMainScene->gBackgroundColor.r);
-				gD3DContext->ClearDepthStencilView(gDepthStencil, D3D11_CLEAR_DEPTH, 1.0f, 0);
-
-				//render the scene image to ImGui
-				ImGui::Image(sceneTexture, size);
+				ImGui::End();
 			}
 			ImGui::End();
 
 			//render GUI
 			if (!gViewportFullscreen)
 				RenderGui();
-
-			//ImGui::End();
 
 			ImGui::Render();
 			ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());

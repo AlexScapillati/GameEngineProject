@@ -213,9 +213,6 @@
     <ClInclude Include="PointLight.h">
       <Filter>Engine\Objects\Lights</Filter>
     </ClInclude>
-    <ClInclude Include="Gui.h">
-      <Filter>Engine</Filter>
-    </ClInclude>
     <ClInclude Include="LevelImporter.h">
       <Filter>Engine</Filter>
     </ClInclude>
