@@ -4,11 +4,13 @@
 #ifndef _COMMON_H_INCLUDED_
 #define _COMMON_H_INCLUDED_
 
-#include "CVector3.h"
-#include "CMatrix4x4.h"
+#include "Math\CVector3.h"
+#include "Math\CVector4.h"
+#include "Math\CMatrix4x4.h"
 
 #include <d3d11.h>
 #include <string>
+#include <CVector2.h>
 
 class CGameObjectManager;
 
@@ -174,5 +176,48 @@ struct PerModelConstants
 extern PerModelConstants gPerModelConstants;      // This variable holds the CPU-side constant buffer described above
 extern ID3D11Buffer*     gPerModelConstantBuffer; // This variable controls the GPU-side constant buffer related to the above structure
 
+
+//**************************
+
+// Settings used by post-processes - must match the similar structure in the Common.hlsli shader file
+struct PostProcessingConstants
+{
+    CVector2 area2DTopLeft; // Top-left of post-process area on screen, provided as coordinate from 0.0->1.0 not as a pixel coordinate
+    CVector2 area2DSize; // Size of post-process area on screen, provided as sizes from 0.0->1.0 (1 = full screen) not as a size in pixels
+    float area2DDepth; // Depth buffer value for area (0.0 nearest to 1.0 furthest). Full screen post-processing uses 0.0f
+    CVector3 paddingA; // Pad things to collections of 4 floats (see notes in earlier labs to read about padding)
+
+    CVector4 polygon2DPoints[4]; // Four points of a polygon in 2D viewport space for polygon post-processing. Matrix transformations already done on C++ side
+
+	// Tint post-process settings
+    CVector3 tintColour;
+    float paddingB;
+
+	// Grey noise post-process settings
+    CVector2 noiseScale;
+    CVector2 noiseOffset;
+
+	// Burn post-process settings
+    float burnHeight;
+    CVector3 paddingC;
+
+	// Distort post-process settings
+    float distortLevel;
+    CVector3 paddingD;
+
+	// Spiral post-process settings
+    float spiralLevel;
+    CVector3 paddingE;
+
+	// Heat haze post-process settings
+    float heatHazeTimer;
+    float heatEffectStrength;
+    float heatSoftEdge;// Softness of the edge of the circle - range 0.001 (hard edge) to 0.25 (very soft)
+    float pad;
+};
+extern PostProcessingConstants gPostProcessingConstants; // This variable holds the CPU-side constant buffer described above
+extern ID3D11Buffer* gPostProcessingConstBuffer; // This variable controls the GPU-side constant buffer related to the above structure
+
+//**************************
 
 #endif //_COMMON_H_INCLUDED_

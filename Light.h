@@ -33,9 +33,9 @@ public:
 		mStrength = strength;
 	}
 
-	CVector3 GetColour() const { return mColour; }
+	CVector3& GetColour() { return mColour; }
 
-	float GetStrength() const { return mStrength; }
+	float& GetStrength()  { return mStrength; }
 
 
 private:

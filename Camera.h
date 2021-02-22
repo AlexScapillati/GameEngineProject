@@ -6,6 +6,7 @@
 #pragma once
 
 #include "CVector3.h"
+#include "CVector2.h"
 #include "CMatrix4x4.h"
 #include "MathHelpers.h"
 #include "Input.h"
@@ -31,6 +32,8 @@ public:
 	void Control( float frameTime, KeyCode turnUp, KeyCode turnDown, KeyCode turnLeft, KeyCode turnRight,  
 	              KeyCode moveForward, KeyCode moveBackward, KeyCode moveLeft, KeyCode moveRight);
 
+	void SetAspectRatio(float r);
+
 
 	//-------------------------------------
 	// Data access
@@ -51,11 +54,19 @@ public:
 	void SetFarClip (float farClip )  { mFarClip  = farClip;  }
 
 	// Read only access to camera matrices, updated on request from position, rotation and camera settings
-	CMatrix4x4 WorldMatrix()           { UpdateMatrices(); return mWorldMatrix; }
-	CMatrix4x4 ViewMatrix()            { UpdateMatrices(); return mViewMatrix;           }
-	CMatrix4x4 ProjectionMatrix()      { UpdateMatrices(); return mProjectionMatrix;     }
-	CMatrix4x4 ViewProjectionMatrix()  { UpdateMatrices(); return mViewProjectionMatrix; }
+	CMatrix4x4& WorldMatrix()           { UpdateMatrices(); return mWorldMatrix; }
+	CMatrix4x4& ViewMatrix()            { UpdateMatrices(); return mViewMatrix;           }
+	CMatrix4x4& ProjectionMatrix()      { UpdateMatrices(); return mProjectionMatrix;     }
+	CMatrix4x4& ViewProjectionMatrix()  { UpdateMatrices(); return mViewProjectionMatrix; }
 	
+	//-------------------------------------
+	// Camera picking
+	//-------------------------------------
+
+	CVector3 PixelFromWorldPt(CVector3 worldPoint, unsigned int viewportWidth, unsigned int viewportHeight);
+
+	CVector2 PixelSizeInWorldSpace(float Z, unsigned int viewportWidth, unsigned int viewportHeight);
+
 	
 //-------------------------------------
 // Private members

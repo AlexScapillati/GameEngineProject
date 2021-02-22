@@ -48,7 +48,7 @@ public:
 	CVector3 Position(int node = 0);         // Position is on bottom row of matrix
 	CVector3 Rotation(int node = 0);  // Getting angles from a matrix is complex - see .cpp file
 	CVector3 Scale(int node = 0); // Scale is length of rows 0-2 in matrix
-	CMatrix4x4 WorldMatrix(int node = 0);
+	CMatrix4x4& WorldMatrix(int node = 0);
 
 	//get the directs access to the position of the model
 	float* DirectPosition();

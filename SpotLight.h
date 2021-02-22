@@ -25,16 +25,16 @@ public:
 
 	void SetShadowMapsSize(int value);
 
-	int getShadowMapSize() { return mShadowMapSize; }
+	int& getShadowMapSize() { return mShadowMapSize; }
 
 	void SetConeAngle(float value);
 
-	float GetConeAngle() const
+	float& GetConeAngle()
 	{
 		return mConeAngle;
 	}
 
-	CVector3 GetFacing() const
+	CVector3& GetFacing() 
 	{
 		return mFacing;
 	}

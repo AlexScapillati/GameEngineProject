@@ -412,7 +412,7 @@ CVector3 CGameObject::Rotation(int node) { return mWorldMatrices[node].GetEulerA
 
 // Getting angles from a matrix is complex - see .cpp file
 
-inline CVector3 CGameObject::Scale(int node) {
+CVector3 CGameObject::Scale(int node) {
 	return { Length(mWorldMatrices[node].GetRow(0)),
 		Length(mWorldMatrices[node].GetRow(1)),
 		Length(mWorldMatrices[node].GetRow(2)) };
@@ -420,7 +420,7 @@ inline CVector3 CGameObject::Scale(int node) {
 
 // Scale is length of rows 0-2 in matrix
 
-CMatrix4x4 CGameObject::WorldMatrix(int node) { return mWorldMatrices[node]; }
+CMatrix4x4& CGameObject::WorldMatrix(int node) { return mWorldMatrices[node]; }
 
 float* CGameObject::DirectPosition()
 {

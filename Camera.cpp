@@ -55,6 +55,11 @@ void CCamera::Control(float frameTime, KeyCode turnUp, KeyCode turnDown, KeyCode
 	}
 }
 
+void CCamera::SetAspectRatio(float r)
+{
+	mAspectRatio = r;
+}
+
 
 // Update the matrices used for the camera in the rendering pipeline
 void CCamera::UpdateMatrices()
@@ -81,3 +86,57 @@ void CCamera::UpdateMatrices()
     mViewProjectionMatrix = mViewMatrix * mProjectionMatrix;
 }
 
+
+
+//-----------------------------------------------------------------------------
+// Camera picking
+//-----------------------------------------------------------------------------
+
+// Return pixel coordinates corresponding to given world point when viewing from this
+// camera. Pass the viewport width and height. The returned CVector3 contains the pixel
+// coordinates in x and y and the Z-distance to the world point in z. If the Z-distance
+// is less than the camera near clip (use NearClip() member function), then the world
+// point is behind the camera and the 2D x and y coordinates are to be ignored.
+CVector3 CCamera::PixelFromWorldPt(CVector3 worldPoint, unsigned int viewportWidth, unsigned int viewportHeight)
+{
+	CVector3 pixelPoint;
+
+	UpdateMatrices();
+
+	// Transform world point into camera space and return immediately if point is behind camera near clip (it won't be on screen - no 2D pixel position)
+	CVector4 cameraPt = CVector4(worldPoint, 1.0f) * mViewMatrix;
+	if (cameraPt.z < mNearClip)
+	{
+		return { 0, 0, cameraPt.z };
+	}
+
+	// Now transform into viewport (2D) space
+	CVector4 viewportPt = cameraPt * mProjectionMatrix;
+
+	viewportPt.x /= viewportPt.w;
+	viewportPt.y /= viewportPt.w;
+
+	float x = (viewportPt.x + 1.0f) * viewportWidth  * 0.5f;
+	float y = (1.0f - viewportPt.y) * viewportHeight * 0.5f;
+
+	return { x, y, cameraPt.z };
+}
+
+
+// Return the size of a pixel in world space at the given Z distance. Allows us to convert the 2D size of areas on the screen to actualy sizes in the world
+// Pass the viewport width and height
+CVector2 CCamera::PixelSizeInWorldSpace(float Z, unsigned int viewportWidth, unsigned int viewportHeight)
+{
+	CVector2 size;
+
+	// Size of the entire viewport in world space at the near clip distance - uses same geometry work that was shown in the camera picking lecture
+	CVector2 viewportSizeAtNearClip;
+    viewportSizeAtNearClip.x = 2 * mNearClip * std::tan(mFOVx * 0.5f);
+    viewportSizeAtNearClip.y = viewportSizeAtNearClip.x /  mAspectRatio;
+
+	// Size of the entire viewport in world space at the given Z distance
+	CVector2 viewportSizeAtZ = viewportSizeAtNearClip * Z / mNearClip;
+	
+	// Return world size of single pixel at given Z distance
+	return { viewportSizeAtZ.x / viewportWidth, viewportSizeAtZ.y / viewportHeight };
+}

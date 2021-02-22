@@ -73,6 +73,19 @@ struct SimplePixelShaderInput
     float2 uv : uv;
 };
 
+
+
+// The vertex data received by each post-process shader. Just the 2d projected position (pixel coordinate on screen), 
+// and two sets of UVs - one for accessing the texture showing the scene, one refering to the area being affected (see the 2DQuad_pp.hlsl file for diagram & details)
+struct PostProcessingInput
+{
+    float4 projectedPosition : SV_Position;
+    noperspective float2 sceneUV : sceneUV; // "noperspective" is needed for polygon processing or the sampling of the scene texture doesn't work correctly (ask tutor if you are interested)
+    float2 areaUV : areaUV;
+};
+
+
+
 struct sLight
 {
     float3 position;
@@ -178,3 +191,49 @@ cbuffer PerFramePointLights : register(b5)
 {
     sPointLight gPointLights[MAX_LIGHTS];
 }
+
+
+
+//**************************
+
+// This is where we receive post-processing settings from the C++ side
+// These variables must match exactly the gPostProcessingConstants structure in Scene.cpp
+// Note that this buffer reuses the same index (register) as the per-model buffer above since they won't be used together
+cbuffer PostProcessingConstants : register(b1)
+{
+    float2 gArea2DTopLeft; // Top-left of post-process area on screen, provided as coordinate from 0.0->1.0 not as a pixel coordinate
+    float2 gArea2DSize; // Size of post-process area on screen, provided as sizes from 0.0->1.0 (1 = full screen) not as a size in pixels
+    float gArea2DDepth; // Depth buffer value for area (0.0 nearest to 1.0 furthest). Full screen post-processing uses 0.0f
+    float3 paddingA; // Pad things to collections of 4 floats (see notes in earlier labs to read about padding)
+
+    float4 gPolygon2DPoints[4]; // Four points of a polygon in 2D viewport space for polygon post-processing. Matrix transformations already done on C++ side
+
+	// Tint post-process settings
+    float3 gTintColour;
+    float paddingB;
+
+	// Grey noise post-process settings
+    float2 gNoiseScale;
+    float2 gNoiseOffset;
+
+	// Burn post-process settings
+    float gBurnHeight;
+    float3 paddingC;
+
+	// Distort post-process settings
+    float gDistortLevel;
+    float3 paddingD;
+
+	// Spiral post-process settings
+    float gSpiralLevel;
+    float3 paddingE;
+
+	// Heat haze post-process settings
+    float gHeatHazeTimer;
+    float heatEffectStrength;
+    float heatSoftEdge;
+    float paddingF;
+}
+
+//**************************
+

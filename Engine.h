@@ -14,6 +14,8 @@ class CDXEngine
 
 public:
 
+	void RenderGui();
+
 	CDXEngine(HINSTANCE hInstance, int nCmdShow);
 
 	bool Update();

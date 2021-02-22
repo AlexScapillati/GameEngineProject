@@ -7,6 +7,9 @@
 #ifndef _CVECTOR2_H_DEFINED_
 #define _CVECTOR2_H_DEFINED_
 
+#include "MathHelpers.h"
+#include <cmath>
+
 class CVector2
 {
 // Concrete class - public access
@@ -30,15 +33,16 @@ public:
     }
 
     // Construct using a pointer to 2 floats
-    CVector2(const float* pfElts)
+    CVector2(const float* elts)
     {
-        x = pfElts[0];
-        y = pfElts[1];
+        x = elts[0];
+        y = elts[1];
     }
 
+    float* GetValuesArray();
 
     /*-----------------------------------------------------------------------------------------
-    Member functions
+        Member functions
     -----------------------------------------------------------------------------------------*/
 
     // Addition of another vector to this one, e.g. Position += Velocity
@@ -52,6 +56,12 @@ public:
 
     // Plus sign in front of vector - called unary positive and usually does nothing. Included for completeness (e.g. Velocity = +Velocity)
     CVector2& operator+ ();
+
+	// Multiply vector by scalar (scales vector);
+    CVector2& operator*= (float s);
+
+	// Divide vector by scalar (scales vector);
+    CVector2& operator/= (float s);
 };
 
 
@@ -64,6 +74,11 @@ CVector2 operator+ (const CVector2& v, const CVector2& w);
 
 // Vector-vector subtraction
 CVector2 operator- (const CVector2& v, const CVector2& w);
+
+// Vector-scalar multiplication & division
+CVector2 operator* (const CVector2& v, float s);
+CVector2 operator* (float s, const CVector2& v);
+CVector2 operator/ (const CVector2& v, float s);
 
 
 /*-----------------------------------------------------------------------------------------

@@ -7,6 +7,7 @@
 #define _CMATRIX4X4_H_DEFINED_
 
 #include "CVector3.h"
+#include "CVector4.h"
 
 
 // Matrix class
@@ -31,29 +32,41 @@ public:
 
     // Get a single row (range 0-3) of the matrix into a CVector3. Fourth element is ignored
     // Can be used to access position or x,y,z axes from a matrix
-    CVector3 GetRow(int iRow) const;
+    CVector3 GetRow(int iRow);
 
     // Initialise this matrix with a pointer to 16 floats 
     void SetValues(float* matrixValues)  { *this = *reinterpret_cast<CMatrix4x4*>(matrixValues); }
 
  
     // Helper functions
-    CVector3 GetXAxis() const { return GetRow(0); }
-    CVector3 GetYAxis() const { return GetRow(1); }
-    CVector3 GetZAxis() const { return GetRow(2); }
-    CVector3 GetPosition() const  { return GetRow(3); }
-    CVector3 GetEulerAngles() const;
-    CVector3 GetScale() const  { return { Length(GetXAxis()), Length(GetYAxis()) , Length(GetZAxis()) }; }
+    CVector3 GetXAxis()     { return GetRow(0); }
+    CVector3 GetYAxis()     { return GetRow(1); }
+    CVector3 GetZAxis()     { return GetRow(2); }
+    CVector3 GetPosition()  { return GetRow(3); }
+    CVector3 GetEulerAngles() ;
+    CVector3 GetScale()      { return { Length(GetXAxis()), Length(GetYAxis()) , Length(GetZAxis()) }; }
+
+    float* GetArray() {
+        float* m[] = 
+        {
+            &e00, &e01, &e02, &e03,
+            &e10, &e11, &e12, &e13,
+            &e20, &e21, &e22, &e23,
+            &e30, &e31, &e32, &e33,
+        };
+        return *m;
+    }
 
     // Post-multiply this matrix by the given one
     CMatrix4x4& operator*=(const CMatrix4x4& m);
+
+    CVector4 operator*=(const CVector4& v);
 
     // Make this matrix an affine 3D transformation matrix to face from current position to given
     // target (in the Z direction). Can pass up vector for the constructed matrix and specify
     // handedness (right-handed Z axis will face away from target)
     // Will retain the matrix's current scaling
     void FaceTarget(const CVector3& target);
-
 
     // Transpose the matrix (rows become columns). There are two ways to store a matrix, by rows or by columns.
     // Different apps use different methods. Use Transpose to swap when necessary.
@@ -62,11 +75,14 @@ public:
 
 
 /*-----------------------------------------------------------------------------------------
-    Operators
+    Non Member Operators
 -----------------------------------------------------------------------------------------*/
 
 // Matrix-matrix multiplication
 CMatrix4x4 operator*(const CMatrix4x4& m1, const CMatrix4x4& m2);
+
+// Return the given CVector4 transformed by the given matrix
+CVector4 operator*(const CVector4& v, const CMatrix4x4& m);
 
 
 /*-----------------------------------------------------------------------------------------

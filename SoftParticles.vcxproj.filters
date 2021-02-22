@@ -94,6 +94,12 @@
     <ClCompile Include="LevelImporter.cpp">
       <Filter>Engine</Filter>
     </ClCompile>
+    <ClCompile Include="Math\CVector4.cpp">
+      <Filter>Engine\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="External\imgui\ImGuizmo.cpp">
+      <Filter>Engine\GUI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Utility\ColourRGBA.h">
@@ -213,6 +219,12 @@
     <ClInclude Include="LevelImporter.h">
       <Filter>Engine</Filter>
     </ClInclude>
+    <ClInclude Include="Math\CVector4.h">
+      <Filter>Engine\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="External\imgui\ImGuizmo.h">
+      <Filter>Engine\GUI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Engine">
@@ -238,6 +250,9 @@
     </Filter>
     <Filter Include="Engine\Objects\Lights">
       <UniqueIdentifier>{91ceb4a8-e3bd-4b14-a123-0675e77474ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\PostProcessing">
+      <UniqueIdentifier>{4c18bcfa-cef5-452e-a056-dd5945010aa9}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -267,6 +282,33 @@
     </FxCompile>
     <FxCompile Include="Shaders\PBRDepthOnly_ps.hlsl">
       <Filter>Engine\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="PostProcessing\2DPolygon_pp.hlsl">
+      <Filter>Engine\PostProcessing</Filter>
+    </FxCompile>
+    <FxCompile Include="PostProcessing\2DQuad_pp.hlsl">
+      <Filter>Engine\PostProcessing</Filter>
+    </FxCompile>
+    <FxCompile Include="PostProcessing\Burn_pp.hlsl">
+      <Filter>Engine\PostProcessing</Filter>
+    </FxCompile>
+    <FxCompile Include="PostProcessing\Copy_pp.hlsl">
+      <Filter>Engine\PostProcessing</Filter>
+    </FxCompile>
+    <FxCompile Include="PostProcessing\Distort_pp.hlsl">
+      <Filter>Engine\PostProcessing</Filter>
+    </FxCompile>
+    <FxCompile Include="PostProcessing\GreyNoise_pp.hlsl">
+      <Filter>Engine\PostProcessing</Filter>
+    </FxCompile>
+    <FxCompile Include="PostProcessing\HeatHaze_pp.hlsl">
+      <Filter>Engine\PostProcessing</Filter>
+    </FxCompile>
+    <FxCompile Include="PostProcessing\Tint_pp.hlsl">
+      <Filter>Engine\PostProcessing</Filter>
+    </FxCompile>
+    <FxCompile Include="PostProcessing\Spiral_pp.hlsl">
+      <Filter>Engine\PostProcessing</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>

@@ -16,7 +16,7 @@
 // Can be used to set position or x,y,z axes in a matrix
 void CMatrix4x4::SetRow(int iRow, const CVector3& v)
 {
-	auto pfElts = &e00 + iRow * 4;
+    float* pfElts = &e00 + iRow * 4;
     pfElts[0] = v.x;
     pfElts[1] = v.y;
     pfElts[2] = v.z;
@@ -24,10 +24,10 @@ void CMatrix4x4::SetRow(int iRow, const CVector3& v)
 
 // Get a single row (range 0-3) of the matrix into a CVector3. Fourth element is ignored
 // Can be used to access position or x,y,z axes from a matrix
-CVector3 CMatrix4x4::GetRow(int iRow) const
+CVector3 CMatrix4x4::GetRow(int iRow)
 {
-	auto pfElts = &e00 + iRow * 4;
-    return CVector3(pfElts[0], pfElts[1], pfElts[2]);
+    float* pfElts = &e00 + iRow * 4;
+    return { pfElts[0], pfElts[1], pfElts[2] };
 }
 
 
@@ -79,8 +79,22 @@ CMatrix4x4& CMatrix4x4::operator*=(const CMatrix4x4& m)
 }
 
 
+// Return the given CVector4 transformed by this matrix
+CVector4 CMatrix4x4::operator*=(const CVector4& v)
+{
+    CVector4 vOut;
+
+	vOut.x = v.x * e00 + v.y * e10 + v.z * e20 + v.w * e30;
+	vOut.y = v.x * e01 + v.y * e11 + v.z * e21 + v.w * e31;
+	vOut.z = v.x * e02 + v.y * e12 + v.z * e22 + v.w * e32;
+	vOut.w = v.x * e03 + v.y * e13 + v.z * e23 + v.w * e33;
+
+	return vOut;
+}
+
+
 /*-----------------------------------------------------------------------------------------
-    Operators
+    Non-member Operators
 -----------------------------------------------------------------------------------------*/
 
 // Matrix-matrix multiplication
@@ -111,6 +125,18 @@ CMatrix4x4 operator*(const CMatrix4x4& m1, const CMatrix4x4& m2)
     return mOut;
 }
 
+// Return the given CVector4 transformed by the given matrix
+CVector4 operator*(const CVector4& v, const CMatrix4x4& m)
+{
+    CVector4 vOut;
+
+	vOut.x = v.x * m.e00 + v.y * m.e10 + v.z * m.e20 + v.w * m.e30;
+	vOut.y = v.x * m.e01 + v.y * m.e11 + v.z * m.e21 + v.w * m.e31;
+	vOut.z = v.x * m.e02 + v.y * m.e12 + v.z * m.e22 + v.w * m.e32;
+	vOut.w = v.x * m.e03 + v.y * m.e13 + v.z * m.e23 + v.w * m.e33;
+
+	return vOut;
+}
 
 
 /*-----------------------------------------------------------------------------------------
@@ -143,8 +169,8 @@ CMatrix4x4 MatrixTranslation(const CVector3& t)
 // Return an X-axis rotation matrix of the given angle (in radians)
 CMatrix4x4 MatrixRotationX(float x)
 {
-	const auto sX = std::sin(x);
-	const auto cX = std::cos(x);
+    float sX = std::sin(x);
+    float cX = std::cos(x);
 
     return CMatrix4x4{ 1,   0,   0,  0,
                        0,  cX,  sX,  0,
@@ -155,8 +181,8 @@ CMatrix4x4 MatrixRotationX(float x)
 // Return a Y-axis rotation matrix of the given angle (in radians)
 CMatrix4x4 MatrixRotationY(float y)
 {
-	const auto sY = std::sin(y);
-	const auto cY = std::cos(y);
+    float sY = std::sin(y);
+    float cY = std::cos(y);
 
     return CMatrix4x4{ cY,   0, -sY,  0,
                         0,   1,   0,  0,
@@ -167,8 +193,8 @@ CMatrix4x4 MatrixRotationY(float y)
 // Return a Z-axis rotation matrix of the given angle (in radians)
 CMatrix4x4 MatrixRotationZ(float z)
 {
-	const auto sZ = std::sin(z);
-	const auto cZ = std::cos(z);
+    float sZ = std::sin(z);
+    float cZ = std::cos(z);
 
     return CMatrix4x4{ cZ,  sZ,  0,  0,
                       -sZ,  cZ,  0,  0,
@@ -203,13 +229,13 @@ CMatrix4x4 InverseAffine(const CMatrix4x4& m)
     CMatrix4x4 mOut;
 
     // Calculate determinant of upper left 3x3
-    const auto det0 = m.e11*m.e22 - m.e12*m.e21;
-    const auto det1 = m.e12*m.e20 - m.e10*m.e22;
-    const auto det2 = m.e10*m.e21 - m.e11*m.e20;
-    const auto det = m.e00*det0 + m.e01*det1 + m.e02*det2;
+    float det0 = m.e11*m.e22 - m.e12*m.e21;
+    float det1 = m.e12*m.e20 - m.e10*m.e22;
+    float det2 = m.e10*m.e21 - m.e11*m.e20;
+    float det = m.e00*det0 + m.e01*det1 + m.e02*det2;
 
     // Calculate inverse of upper left 3x3
-    const auto invDet = 1.0f / det;
+    float invDet = 1.0f / det;
     mOut.e00 = invDet * det0;
     mOut.e10 = invDet * det1;
     mOut.e20 = invDet * det2;
@@ -251,7 +277,7 @@ void CMatrix4x4::FaceTarget(const CVector3& target)
 
     // Set rows of matrix, restoring existing scale. Position will be unchanged, 4th column
     // taken from unit matrix
-    const auto scale = GetScale();
+    CVector3 scale = GetScale();
     SetRow(0, axisX * scale.x);
     SetRow(1, axisY * scale.y);
     SetRow(2, axisZ * scale.z);
@@ -259,17 +285,17 @@ void CMatrix4x4::FaceTarget(const CVector3& target)
 
 
 // Return the rotation stored in this matrix as Euler angles
-CVector3 CMatrix4x4::GetEulerAngles() const
+CVector3 CMatrix4x4::GetEulerAngles()
 {
 	// Calculate matrix scaling
-	const auto scaleX = sqrt( e00*e00 + e01*e01 + e02*e02 );
-	const auto scaleY = sqrt( e10*e10 + e11*e11 + e12*e12 );
-	const auto scaleZ = sqrt( e20*e20 + e21*e21 + e22*e22 );
+	float scaleX = sqrt( e00*e00 + e01*e01 + e02*e02 );
+	float scaleY = sqrt( e10*e10 + e11*e11 + e12*e12 );
+	float scaleZ = sqrt( e20*e20 + e21*e21 + e22*e22 );
 
 	// Calculate inverse scaling to extract rotational values only
-	const auto invScaleX = 1.0f / scaleX;
-	const auto invScaleY = 1.0f / scaleY;
-	const auto invScaleZ = 1.0f / scaleZ;
+	float invScaleX = 1.0f / scaleX;
+	float invScaleY = 1.0f / scaleY;
+	float invScaleZ = 1.0f / scaleZ;
 
 	float sX, cX, sY, cY, sZ, cZ;
 
@@ -279,7 +305,7 @@ CVector3 CMatrix4x4::GetEulerAngles() const
     // If no gimbal lock...
     if (abs(cX) > 0.001f)
     {
-	    const auto invCX = 1.0f / cX;
+	    float invCX = 1.0f / cX;
 	    sZ = e01 * invCX * invScaleX;
 	    cZ = e11 * invCX * invScaleY;
 	    sY = e20 * invCX * invScaleZ;

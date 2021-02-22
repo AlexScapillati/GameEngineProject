@@ -4,6 +4,7 @@
 #include "External\imgui\imgui.h"
 #include "External\imgui\imgui_impl_dx11.h"
 #include "External\imgui\imgui_impl_win32.h"
+#include "External\imgui\ImGuizmo.h"
 
 void InitGui()
 {
@@ -13,12 +14,13 @@ void InitGui()
 
 
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
+	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
-	//io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows //super broken
+	//io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows //super broken
 
 	io.ConfigDockingWithShift = false;
+	io.ConfigWindowsMoveFromTitleBarOnly = true;
 
 	// Setup Platform/Renderer bindings
 	ImGui_ImplDX11_Init(gD3DDevice, gD3DContext);
@@ -27,16 +29,11 @@ void InitGui()
 	ImGui::StyleColorsDark();
 }
 
-extern void DisplayObjects();
 
-void RenderGui()
+void CDXEngine::RenderGui()
 {
 
-	if (ImGui::Begin("Objects"))
-	{
-		DisplayObjects();
-	}
-	ImGui::End();
+	mMainScene->DisplayObjects();
 
 }
 
@@ -125,6 +122,8 @@ bool CDXEngine::Update()
 			ImGui_ImplDX11_NewFrame();
 			ImGui_ImplWin32_NewFrame();
 			ImGui::NewFrame();
+			ImGuizmo::BeginFrame();
+
 
 			if (ImGui::BeginMainMenuBar())
 			{
@@ -132,12 +131,7 @@ bool CDXEngine::Update()
 				ImGui::EndMainMenuBar();
 			}
 
-			//ImGui::Begin("Engine", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_MenuBar);
-			//ImGui::SetWindowPos({ 0.0,0.0 });
-			//ImGui::SetWindowSize({ (float)gViewportWidth, (float)gViewportHeight });
-
-
-			if (ImGui::Begin("Viewport", nullptr, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_MenuBar))
+			if (ImGui::Begin("Viewport", nullptr, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_MenuBar /*| ImGuiWindowFlags_NoMove*/))
 			{
 				if (ImGui::BeginMenuBar())
 				{

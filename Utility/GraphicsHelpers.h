@@ -30,6 +30,14 @@ inline void UpdateModelConstantBuffer(ID3D11Buffer* buffer, PerModelConstants& b
 	gD3DContext->Unmap(buffer, 0);
 }
 
+inline void UpdatePostProcessingConstBuffer(ID3D11Buffer* buffer, PostProcessingConstants& bufferData)
+{
+	D3D11_MAPPED_SUBRESOURCE cb;
+	gD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
+	memcpy(cb.pData, &bufferData, sizeof(PostProcessingConstants));
+	gD3DContext->Unmap(buffer, 0);
+}
+
 inline void UpdateFrameConstantBuffer(ID3D11Buffer* buffer, PerFrameConstants& bufferData)
 {
 	D3D11_MAPPED_SUBRESOURCE cb;
