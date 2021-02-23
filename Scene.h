@@ -114,6 +114,8 @@ private:
 		Distort,
 		Spiral,
 		HeatHaze,
+		ChromaticAberration,
+		GaussionBlur
 	} mCurrPostProcess;
 
 	enum class PostProcessMode

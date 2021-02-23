@@ -133,7 +133,6 @@ bool CDXEngine::Update()
 
 			if (ImGui::Begin("Engine"))
 			{
-
 				if (ImGui::Begin("Viewport", nullptr,
 					ImGuiWindowFlags_NoScrollbar |
 					ImGuiWindowFlags_NoCollapse |

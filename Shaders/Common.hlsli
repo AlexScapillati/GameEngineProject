@@ -210,11 +210,13 @@ cbuffer PostProcessingConstants : register(b1)
 
 	// Tint post-process settings
     float3 gTintColour;
-    float paddingB;
 
 	// Grey noise post-process settings
+    float gNoiseStrength;
     float2 gNoiseScale;
     float2 gNoiseOffset;
+    float gNoiseEdge;
+    float2 paddingB;
 
 	// Burn post-process settings
     float gBurnHeight;
@@ -232,7 +234,16 @@ cbuffer PostProcessingConstants : register(b1)
     float gHeatHazeTimer;
     float heatEffectStrength;
     float heatSoftEdge;
-    float paddingF;
+    
+    // Chromatic Aberration settings
+    float gCAAmount;
+    
+    //gaussian blur settings
+    float gBlurDirections = 16.0; // BLUR DIRECTIONS (Default 16.0 - More is better but slower)
+    float gBlurQuality = 3.0; // BLUR QUALITY (Default 4.0 - More is better but slower)
+    float gBlurSize = 8.0; // BLUR SIZE (Radius)
+    float pad;
+    
 }
 
 //**************************

@@ -66,6 +66,8 @@ extern ID3D11PixelShader* gBurnPostProcess;
 extern ID3D11PixelShader* gDistortPostProcess;
 extern ID3D11PixelShader* gSpiralPostProcess;
 extern ID3D11PixelShader* gHeatHazePostProcess;
+extern ID3D11PixelShader* gChromaticAberrationPostProcess;
+extern ID3D11PixelShader* gGaussionBlurPostProcess;
 
 CGameObjectManager* GOM;
 
@@ -761,7 +763,7 @@ void CScene::PostProcessingPass()
 			//one is for the type of PP 
 			//one is for the mode
 
-			auto items = "None\0Tint\0GrayNoise\0Burn\0Distort\0Spiral\0HeatHaze";
+			auto items = "None\0Tint\0GrayNoise\0Burn\0Distort\0Spiral\0HeatHaze\0ChromaticAberration\0GaussionBlur";
 
 			static int select = 0;
 
@@ -769,13 +771,15 @@ void CScene::PostProcessingPass()
 			{
 				switch (select)
 				{
-				case 0: mCurrPostProcess = PostProcess::None; break;
-				case 1: mCurrPostProcess = PostProcess::Tint; break;
-				case 2: mCurrPostProcess = PostProcess::GreyNoise; break;
-				case 3: mCurrPostProcess = PostProcess::Burn; break;
-				case 4: mCurrPostProcess = PostProcess::Distort; break;
-				case 5: mCurrPostProcess = PostProcess::Spiral; break;
-				case 6: mCurrPostProcess = PostProcess::HeatHaze; break;
+				case 0: mCurrPostProcess = PostProcess::None;					break;
+				case 1: mCurrPostProcess = PostProcess::Tint;					break;
+				case 2: mCurrPostProcess = PostProcess::GreyNoise;				break;
+				case 3: mCurrPostProcess = PostProcess::Burn;					break;
+				case 4: mCurrPostProcess = PostProcess::Distort;				break;
+				case 5: mCurrPostProcess = PostProcess::Spiral;					break;
+				case 6: mCurrPostProcess = PostProcess::HeatHaze;				break;
+				case 7: mCurrPostProcess = PostProcess::ChromaticAberration;	break;
+				case 8: mCurrPostProcess = PostProcess::GaussionBlur;			break;
 				}
 			}
 
@@ -963,6 +967,12 @@ void CScene::SelectPostProcessShaderAndTextures(PostProcess postProcess)
 		// The noise offset is randomised to give a constantly changing noise effect (like tv static)
 		gPostProcessingConstants.noiseOffset = { Random(0.0f, 1.0f), Random(0.0f, 1.0f) };
 
+		//The noise strength (default is 0.5)
+		ImGui::DragFloat("Noise Strength", &gPostProcessingConstants.noiseStrength, 0.001f, 0.0f, 1.0f, "%.4f");
+
+		//the distance between the centre of the texture and the beginning of the edge
+		ImGui::DragFloat("Edge Distance", &gPostProcessingConstants.noiseEdge, 0.01f, 0.0f, 1.0f, "%.4f");
+
 		break;
 
 	case CScene::PostProcess::Burn:
@@ -1007,6 +1017,24 @@ void CScene::SelectPostProcessShaderAndTextures(PostProcess postProcess)
 		ImGui::SliderFloat("Soft Edge", &heatSoftEdge, 0.001f, 0.25f);
 
 		gPostProcessingConstants.heatSoftEdge = heatSoftEdge;
+
+		break;
+
+	case CScene::PostProcess::ChromaticAberration:
+
+		gD3DContext->PSSetShader(gChromaticAberrationPostProcess, nullptr, 0);
+
+		ImGui::DragFloat("Amount", &gPostProcessingConstants.caAmount, 0.0001f,NULL,NULL,"%.5f");
+		break;
+
+	case CScene::PostProcess::GaussionBlur:
+
+		gD3DContext->PSSetShader(gGaussionBlurPostProcess, nullptr, 0);
+		
+		ImGui::DragFloat("Directions",&gPostProcessingConstants.blurDirections,0.1f,0.01f,64.0f);
+		ImGui::DragFloat("Quality"	 ,&gPostProcessingConstants.blurQuality,0.1,1.0f,64.0f);
+		ImGui::DragFloat("Size"		 ,&gPostProcessingConstants.blurSize,0.1f);
+
 
 		break;
 	}

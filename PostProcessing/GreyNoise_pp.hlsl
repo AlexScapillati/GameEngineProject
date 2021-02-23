@@ -25,8 +25,6 @@ SamplerState TrilinearWrap : register(s1);
 // Post-processing shader that tints the scene texture to a given colour
 float4 main(PostProcessingInput input) : SV_Target
 {
-	const float NoiseStrength = 0.5f; // How noticable the noise is
-
 	// Get scene pixel colour and average r, g & b to get a single grey value
 	float3 sceneColour = SceneTexture.Sample(PointSample, input.sceneUV).rgb;
 	float grey = (sceneColour.r + sceneColour.g + sceneColour.b) / 3.0f;
@@ -34,13 +32,13 @@ float4 main(PostProcessingInput input) : SV_Target
 	// Get noise UV by scaling and offseting scene texture UV. Scaling adjusts how fine the noise is.
 	// The offset is randomised every frame (in C++) to give a constantly changing noise effect (like tv static)
 	float2 noiseUV = input.sceneUV * gNoiseScale + gNoiseOffset;
-	grey += NoiseStrength * (NoiseMap.Sample(TrilinearWrap, noiseUV).r - 0.5f); // Noise can increase or decrease grey value hence the -0.5f
+	grey += gNoiseStrength * (NoiseMap.Sample(TrilinearWrap, noiseUV).r - 0.5f); // Noise can increase or decrease grey value hence the -0.5f
 
 	// Calculate alpha to display the effect in a softened circle, could use a texture rather than calculations for the same task.
 	// Uses the second set of area texture coordinates, which range from (0,0) to (1,1) over the area being processed
 	float softEdge = 0.20f; // Softness of the edge of the circle - range 0.001 (hard edge) to 0.25 (very soft)
-	float2 centreVector = input.areaUV - float2(0.5f, 0.5f);
-	float centreLengthSq = dot(centreVector, centreVector);
+    float2 centreVector = input.areaUV - float2(0.5f,0.5f);
+	float centreLengthSq = dot(centreVector, centreVector) * gNoiseEdge;
 	float alpha = 1.0f - saturate((centreLengthSq - 0.25f + softEdge) / softEdge); // Soft circle calculation based on fact that this circle has a radius of 0.5 (as area UVs go from 0->1)
 																					   
 	// Output final colour

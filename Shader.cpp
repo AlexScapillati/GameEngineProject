@@ -26,6 +26,9 @@ ID3D11PixelShader*  gBurnPostProcess       = nullptr;
 ID3D11PixelShader*  gDistortPostProcess    = nullptr;
 ID3D11PixelShader*  gSpiralPostProcess     = nullptr;
 ID3D11PixelShader*  gHeatHazePostProcess   = nullptr;
+ID3D11PixelShader*  gChromaticAberrationPostProcess   = nullptr;
+ID3D11PixelShader*  gGaussionBlurPostProcess   = nullptr;
+
 
 
 // Load a vertex shader, include the file in the project and pass the name (without the .hlsl extension)
@@ -237,16 +240,18 @@ void LoadDefaultShaders()
 	gDistortPostProcess    = LoadPixelShader ("PostProcessing/Distort_pp");
 	gSpiralPostProcess     = LoadPixelShader ("PostProcessing/Spiral_pp");
 	gHeatHazePostProcess   = LoadPixelShader ("PostProcessing/HeatHaze_pp");
-
+	gChromaticAberrationPostProcess   = LoadPixelShader ("PostProcessing/ChromaticAberration_pp");
+	gGaussionBlurPostProcess = LoadPixelShader("PostProcessing/GaussionBlur_pp");
 
 	if (!(gDepthOnlyPixelShader = LoadPixelShader("Shaders/DepthOnly_ps")) ||
 		!(gBasicTransformVertexShader = LoadVertexShader("Shaders/BasicTransform_vs")) ||
-		!(gPbrDepthOnlyPixelShader = LoadPixelShader("Shaders/PBRDepthOnly_ps"))||
-		g2DQuadVertexShader         == nullptr || gCopyPostProcess           == nullptr ||
-		gTintPostProcess            == nullptr || gHeatHazePostProcess       == nullptr ||
-		gGreyNoisePostProcess       == nullptr || gBurnPostProcess           == nullptr ||
-		gDistortPostProcess         == nullptr || gSpiralPostProcess         == nullptr ||
-		g2DPolygonVertexShader      == nullptr)
+		!(gPbrDepthOnlyPixelShader = LoadPixelShader("Shaders/PBRDepthOnly_ps")) ||
+		g2DQuadVertexShader == nullptr || gCopyPostProcess == nullptr ||
+		gTintPostProcess == nullptr || gHeatHazePostProcess == nullptr ||
+		gGreyNoisePostProcess == nullptr || gBurnPostProcess == nullptr ||
+		gDistortPostProcess == nullptr || gSpiralPostProcess == nullptr ||
+		g2DPolygonVertexShader == nullptr || gChromaticAberrationPostProcess == nullptr ||
+		gGaussionBlurPostProcess == nullptr)
 	{
 		throw std::runtime_error("Error loading default shaders");
 	}
@@ -254,18 +259,20 @@ void LoadDefaultShaders()
 
 void ReleaseDefaultShaders()
 {
-	if (gDepthOnlyPixelShader)		  gDepthOnlyPixelShader			->Release();
-	if (gBasicTransformVertexShader)  gBasicTransformVertexShader	->Release();
-	if (gPbrDepthOnlyPixelShader)	  gPbrDepthOnlyPixelShader		->Release();
-	if (gHeatHazePostProcess)         gHeatHazePostProcess			->Release();
-	if (gSpiralPostProcess)           gSpiralPostProcess			->Release();
-	if (gDistortPostProcess)          gDistortPostProcess			->Release();
-	if (gBurnPostProcess)             gBurnPostProcess				->Release();
-	if (gGreyNoisePostProcess)        gGreyNoisePostProcess			->Release();
-	if (gTintPostProcess)             gTintPostProcess				->Release();
-	if (gCopyPostProcess)             gCopyPostProcess				->Release();
-	if (g2DPolygonVertexShader)       g2DPolygonVertexShader		->Release();
-	if (g2DQuadVertexShader)          g2DQuadVertexShader			->Release();
+	if (gDepthOnlyPixelShader)				gDepthOnlyPixelShader			->Release();
+	if (gBasicTransformVertexShader)		gBasicTransformVertexShader		->Release();
+	if (gPbrDepthOnlyPixelShader)			gPbrDepthOnlyPixelShader		->Release();
+	if (gHeatHazePostProcess)				gHeatHazePostProcess			->Release();
+	if (gSpiralPostProcess)					gSpiralPostProcess				->Release();
+	if (gDistortPostProcess)				gDistortPostProcess				->Release();
+	if (gBurnPostProcess)					gBurnPostProcess				->Release();
+	if (gGreyNoisePostProcess)				gGreyNoisePostProcess			->Release();
+	if (gTintPostProcess)					gTintPostProcess				->Release();
+	if (gCopyPostProcess)					gCopyPostProcess				->Release();
+	if (g2DPolygonVertexShader)				g2DPolygonVertexShader			->Release();
+	if (g2DQuadVertexShader)				g2DQuadVertexShader				->Release();
+	if (gChromaticAberrationPostProcess)	gChromaticAberrationPostProcess	->Release();
+	if (gGaussionBlurPostProcess)			gGaussionBlurPostProcess		->Release();
 }
 
 // Create and return a constant buffer of the given size
