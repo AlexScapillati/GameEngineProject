@@ -68,6 +68,8 @@ extern ID3D11PixelShader* gSpiralPostProcess;
 extern ID3D11PixelShader* gHeatHazePostProcess;
 extern ID3D11PixelShader* gChromaticAberrationPostProcess;
 extern ID3D11PixelShader* gGaussionBlurPostProcess;
+extern ID3D11PixelShader* gSsaoPostProcess;
+extern ID3D11PixelShader* gBloomPostProcess;
 
 CGameObjectManager* GOM;
 
@@ -80,7 +82,7 @@ void CScene::DisplayObjects()
 
 	static bool showBounds = false;
 
-	if (ImGui::Begin("Objects"))
+	if (ImGui::Begin("Objects", 0, ImGuiWindowFlags_NoBringToFrontOnFocus))
 	{
 		//	static bool addObj = false;
 
@@ -368,7 +370,6 @@ void CScene::DisplayObjects()
 	}
 }
 
-
 void CScene::LoadPostProcessingImages()
 {
 	if (!LoadTexture("Noise.png", &mNoiseMap, &mNoiseMapSRV) ||
@@ -392,6 +393,7 @@ CScene::CScene(std::string fileName)
 	mTextureSRV = nullptr;
 	mDepthStencil = nullptr;
 	mDepthStencilView = nullptr;
+	mDepthStencilSRV = nullptr;
 
 	mViewportX = 1024;
 	mViewportY = 720;
@@ -400,103 +402,23 @@ CScene::CScene(std::string fileName)
 
 	GOM = mObjManager.get();
 
-	gCameraOrbitRadius = 60.0f;
-	gCameraOrbitSpeed = 1.2f;
 	gAmbientColour = { 0.3f, 0.3f, 0.4f };
 	gSpecularPower = 256; // Specular power //will be removed since it will be dependent on the material
 	mLockFPS = true;
 	gBackgroundColor = { 0.3f, 0.3f, 0.4f, 1.0f };
 
-	mCurrPostProcess = PostProcess::None;
-	mCurrPostProcessMode = PostProcessMode::Fullscreen;
-
-	// We also need a depth buffer to go with our texture
-	D3D11_TEXTURE2D_DESC textureDesc = {};
-	textureDesc.Width = mViewportX; // Size of the "screen"
-	textureDesc.Height = mViewportY;
-	textureDesc.MipLevels = 1; // 1 level, means just the main texture, no additional mip-maps. Usually don't use mip-maps when rendering to textures (or we would have to render every level)
-	textureDesc.ArraySize = 1;
-	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	textureDesc.SampleDesc.Count = 1;
-	textureDesc.SampleDesc.Quality = 0;
-	textureDesc.Usage = D3D11_USAGE_DEFAULT;
-	textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE; // Indicate we will use texture as a depth buffer and also pass it to shaders
-	textureDesc.CPUAccessFlags = 0;
-	textureDesc.MiscFlags = 0;
-	if (FAILED(gD3DDevice->CreateTexture2D(&textureDesc, NULL, &mTextrue)))
+	try
 	{
-		throw std::runtime_error("Error creating scene texture");
+
+		//create all the textures needed for the scene rendering
+		InitTextures();
+
+	}
+	catch (const std::runtime_error& e)
+	{
+		throw std::runtime_error(e.what());
 	}
 
-	if (FAILED(gD3DDevice->CreateTexture2D(&textureDesc, NULL, &mFinalTextrue)))
-	{
-		throw std::runtime_error("Error creating scene texture");
-	}
-
-	D3D11_RENDER_TARGET_VIEW_DESC rtvDesc;
-	rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-	rtvDesc.Texture2D.MipSlice = 0;
-
-	// We created the scene texture above, now we get a "view" of it as a render target, i.e. get a special pointer to the texture that
-	// we use when rendering to it (see RenderScene function below)
-	if (FAILED(gD3DDevice->CreateRenderTargetView(mTextrue, &rtvDesc, &mTargetView)))
-	{
-		gLastError = "Error creating scene render target view";
-	}
-
-	if (FAILED(gD3DDevice->CreateRenderTargetView(mFinalTextrue, &rtvDesc, &mFinalTargetView)))
-	{
-		gLastError = "Error creating scene render target view";
-	}
-
-	// We also need to send this texture (resource) to the shaders. To do that we must create a shader-resource "view"
-	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MostDetailedMip = 0;
-	srvDesc.Texture2D.MipLevels = 1;
-	if (FAILED(gD3DDevice->CreateShaderResourceView(mTextrue, &srvDesc, &mTextureSRV)))
-	{
-		throw std::runtime_error("Error creating scene texture shader resource view");
-	}
-
-	if (FAILED(gD3DDevice->CreateShaderResourceView(mFinalTextrue, &srvDesc, &mFinalTextureSRV)))
-	{
-		throw std::runtime_error("Error creating scene texture shader resource view");
-	}
-
-	//create depth stencil
-	D3D11_TEXTURE2D_DESC dsDesc = {};
-	dsDesc.Width = textureDesc.Width;
-	dsDesc.Height = textureDesc.Height;
-	dsDesc.MipLevels = 1;
-	dsDesc.ArraySize = 1;
-	dsDesc.Format = DXGI_FORMAT_R32_TYPELESS;
-	dsDesc.SampleDesc.Count = 1;
-	dsDesc.SampleDesc.Quality = 0;
-	dsDesc.Usage = D3D11_USAGE_DEFAULT;
-	dsDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-	dsDesc.CPUAccessFlags = 0;
-	dsDesc.MiscFlags = 0;
-
-	//create it
-	if (FAILED(gD3DDevice->CreateTexture2D(&dsDesc, NULL, &mDepthStencil)))
-	{
-		throw std::runtime_error("Error creating depth stencil");
-	}
-
-	//create depth stencil view
-	D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-	dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
-	dsvDesc.Flags = 0;
-	dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-	dsvDesc.Texture2D.MipSlice = 0;
-
-	if (FAILED(gD3DDevice->CreateDepthStencilView(mDepthStencil, &dsvDesc, &mDepthStencilView)))
-	{
-		throw std::runtime_error("Error creating depth stencil view ");
-	}
 
 	//--------------------------------------------------------------------------------------
 	// Initialise scene geometry, constant buffers and states
@@ -654,19 +576,10 @@ ID3D11ShaderResourceView* CScene::RenderScene(float frameTime)
 	// If using post-processing then render to the scene texture, otherwise to the usual back buffer
 	// Also clear the render target to a fixed colour and the depth buffer to the far distance
 
-	//if (mCurrPostProcess != PostProcess::None)
-	//{
-	//	gD3DContext->OMSetRenderTargets(1, &mFinalTargetView, mDepthStencilView);
-	//	gD3DContext->ClearRenderTargetView(mFinalTargetView, &gBackgroundColor.r);
-	//}
-	//else
-	//{
 	gD3DContext->OMSetRenderTargets(1, &mTargetView, mDepthStencilView);
 	gD3DContext->ClearRenderTargetView(mTargetView, &gBackgroundColor.r);
-	//}
 
 	gD3DContext->ClearDepthStencilView(mDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-
 
 	// Setup the viewport to the size of the main window
 	D3D11_VIEWPORT vp;
@@ -681,18 +594,14 @@ ID3D11ShaderResourceView* CScene::RenderScene(float frameTime)
 	// Render the scene from the main camera
 	RenderSceneFromCamera(mCamera.get());
 
+	RenderToDepthMap();
+
 	//PostProcessing pass
 	PostProcessingPass();
 
-	if (mCurrPostProcess != PostProcess::None)
-	{
-		return mFinalTextureSRV;
-	}
-	else
-	{
-		return mTextureSRV;
-	}
+	return mTextureSRV;
 }
+
 //--------------------------------------------------------------------------------------
 // Scene Update
 //--------------------------------------------------------------------------------------
@@ -751,184 +660,571 @@ void CScene::UpdateScene(float frameTime)
 	}
 }
 
+CScene::~CScene()
+{
+	ReleaseStates();
+	if (gPerModelConstantBuffer)			gPerModelConstantBuffer->Release();
+	if (gPerFrameConstantBuffer)			gPerFrameConstantBuffer->Release();
+	if (gPerFrameLightsConstBuffer)			gPerFrameLightsConstBuffer->Release();
+	if (gPerFrameSpotLightsConstBuffer)		gPerFrameSpotLightsConstBuffer->Release();
+	if (gPerFrameDirLightsConstBuffer)		gPerFrameDirLightsConstBuffer->Release();
+	if (gPerFramePointLightsConstBuffer)	gPerFramePointLightsConstBuffer->Release();
+	if (mTargetView)						mTargetView->Release();
+	if (mTextrue)							mTextrue->Release();
+	if (mTextureSRV)						mTextureSRV->Release();
+	if (mDepthStencil)						mDepthStencil->Release();
+	if (mDepthStencilView)					mDepthStencilView->Release();
+
+	if (mFinalTargetView)	mFinalTargetView->Release();
+	if (mFinalTextrue)		mFinalTextrue->Release();
+	if (mFinalTextureSRV)	mFinalTextureSRV->Release();
+
+	if (mNoiseMap)		mNoiseMap->Release();
+	if (mNoiseMapSRV)		mNoiseMapSRV->Release();
+	if (mBurnMap)		mBurnMap->Release();
+	if (mBurnMapSRV)		mBurnMapSRV->Release();
+	if (mDistortMap)		mDistortMap->Release();
+	if (mDistortMapSRV)		mDistortMapSRV->Release();
+
+
+	ReleaseDefaultShaders();
+}
+
+void CScene::Resize(UINT newX, UINT newY)
+{
+	//set aspect ratio with the new window size
+	//broken
+	mCamera->SetAspectRatio(float(newX) / float(newY));
+
+	//set the scene viewport size to the new size
+	mViewportX = newX;
+	mViewportY = newY;
+
+	//release the textures
+	mDepthStencil->Release();
+	mDepthStencilView->Release();
+	mDepthStencilSRV->Release();
+
+	mFinalDepthStencil->Release();
+	mFinalDepthStencilView->Release();
+	mFinalDepthStencilSRV->Release();
+
+	mTextrue->Release();
+	mTargetView->Release();
+	mTextureSRV->Release();
+
+	mFinalTargetView->Release();
+	mFinalTextrue->Release();
+	mFinalTextureSRV->Release();
+
+	//recreate all the texture with the updated size
+	InitTextures();
+}
+
+void CScene::InitTextures()
+{
+
+	// We create a new texture for the scene with new size
+	D3D11_TEXTURE2D_DESC textureDesc = {};
+	textureDesc.Width = mViewportX; // Size of the "screen"
+	textureDesc.Height = mViewportY;
+	textureDesc.MipLevels = 1; // 1 level, means just the main texture, no additional mip-maps. Usually don't use mip-maps when rendering to textures (or we would have to render every level)
+	textureDesc.ArraySize = 1;
+	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.SampleDesc.Quality = 0;
+	textureDesc.Usage = D3D11_USAGE_DEFAULT;
+	textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE; // Indicate we will use texture as a depth buffer and also pass it to shaders
+	textureDesc.CPUAccessFlags = 0;
+	textureDesc.MiscFlags = 0;
+	if (FAILED(gD3DDevice->CreateTexture2D(&textureDesc, NULL, &mTextrue)))
+	{
+		throw std::runtime_error("Error creating scene texture");
+	}
+
+	if (FAILED(gD3DDevice->CreateTexture2D(&textureDesc, NULL, &mFinalTextrue)))
+	{
+		throw std::runtime_error("Error creating scene texture");
+	}
+
+
+	D3D11_RENDER_TARGET_VIEW_DESC rtvDesc;
+	rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+	rtvDesc.Texture2D.MipSlice = 0;
+
+
+	// We created the scene texture above, now we get a "view" of it as a render target, i.e. get a special pointer to the texture that
+	// we use when rendering to it (see RenderScene function below)
+	if (FAILED(gD3DDevice->CreateRenderTargetView(mTextrue, &rtvDesc, &mTargetView)))
+	{
+		gLastError = "Error creating scene render target view";
+	}
+
+	if (FAILED(gD3DDevice->CreateRenderTargetView(mFinalTextrue, &rtvDesc, &mFinalTargetView)))
+	{
+		gLastError = "Error creating scene render target view";
+	}
+
+	// We also need to send this texture (resource) to the shaders. To do that we must create a shader-resource "view"
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.MipLevels = 1;
+	if (FAILED(gD3DDevice->CreateShaderResourceView(mTextrue, &srvDesc, &mTextureSRV)))
+	{
+		throw std::runtime_error("Error creating scene texture shader resource view");
+	}
+
+	if (FAILED(gD3DDevice->CreateShaderResourceView(mFinalTextrue, &srvDesc, &mFinalTextureSRV)))
+	{
+		throw std::runtime_error("Error creating scene texture shader resource view");
+	}
+
+
+	//create depth stencil
+	D3D11_TEXTURE2D_DESC dsDesc = {};
+	dsDesc.Width = textureDesc.Width;
+	dsDesc.Height = textureDesc.Height;
+	dsDesc.MipLevels = 1;
+	dsDesc.ArraySize = 1;
+	dsDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+	dsDesc.SampleDesc.Count = 1;
+	dsDesc.SampleDesc.Quality = 0;
+	dsDesc.Usage = D3D11_USAGE_DEFAULT;
+	dsDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+	dsDesc.CPUAccessFlags = 0;
+	dsDesc.MiscFlags = 0;
+
+	if (FAILED(gD3DDevice->CreateTexture2D(&dsDesc, NULL, &mDepthStencil)))
+	{
+		throw std::runtime_error("Error creating depth stencil");
+	}
+
+	if (FAILED(gD3DDevice->CreateTexture2D(&dsDesc, NULL, &mFinalDepthStencil)))
+	{
+		throw std::runtime_error("Error creating depth stencil");
+	}
+
+	//create depth stencil view
+	D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+	dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	dsvDesc.Flags = 0;
+	dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	dsvDesc.Texture2D.MipSlice = 0;
+
+	if (FAILED(gD3DDevice->CreateDepthStencilView(mDepthStencil, &dsvDesc, &mDepthStencilView)))
+	{
+		throw std::runtime_error("Error creating depth stencil view ");
+	}
+
+	if (FAILED(gD3DDevice->CreateDepthStencilView(mFinalDepthStencil, &dsvDesc, &mFinalDepthStencilView)))
+	{
+		throw std::runtime_error("Error creating depth stencil view ");
+	}
+
+	//create the depth stencil shader view
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC dsSrvDesc = {};
+	dsSrvDesc.Format = DXGI_FORMAT_R32_FLOAT;
+	dsSrvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	dsSrvDesc.Texture2D.MostDetailedMip = 0;
+	dsSrvDesc.Texture2D.MipLevels = -1;
+
+	if (FAILED(gD3DDevice->CreateShaderResourceView(mDepthStencil, &dsSrvDesc, &mDepthStencilSRV)))
+	{
+		throw std::runtime_error("Error creating depth stencil shader resource view");
+	}
+
+	if (FAILED(gD3DDevice->CreateShaderResourceView(mFinalDepthStencil, &dsSrvDesc, &mFinalDepthStencilSRV)))
+	{
+		throw std::runtime_error("Error creating depth stencil shader resource view");
+	}
+}
+
+//--------------------------------------------------------------------------------------
+// Post Pocessing 
+//--------------------------------------------------------------------------------------
+
 void CScene::PostProcessingPass()
 {
 	//show the postprocessing window
 	if (!gViewportFullscreen)
 	{
-		//Render a window with all the postprocessing 
-		if (ImGui::Begin("PostProcessing", 0))
+		//display the post processing effects in a window
+		DisplayPostProcessingEffects();
+
+		//iterate through the effects array
+		auto filter = mPostProcessingFilters.begin();
+
+		while (filter != mPostProcessingFilters.end())
 		{
-			//render two table 
-			//one is for the type of PP 
-			//one is for the mode
-
-			auto items = "None\0Tint\0GrayNoise\0Burn\0Distort\0Spiral\0HeatHaze\0ChromaticAberration\0GaussionBlur";
-
-			static int select = 0;
-
-			if (ImGui::Combo("Type", &select, items))
+			// Run any post-processing steps
+			if (filter->type != PostProcess::None)
 			{
-				switch (select)
+				if (filter->mode == PostProcessMode::Fullscreen)
 				{
-				case 0: mCurrPostProcess = PostProcess::None;					break;
-				case 1: mCurrPostProcess = PostProcess::Tint;					break;
-				case 2: mCurrPostProcess = PostProcess::GreyNoise;				break;
-				case 3: mCurrPostProcess = PostProcess::Burn;					break;
-				case 4: mCurrPostProcess = PostProcess::Distort;				break;
-				case 5: mCurrPostProcess = PostProcess::Spiral;					break;
-				case 6: mCurrPostProcess = PostProcess::HeatHaze;				break;
-				case 7: mCurrPostProcess = PostProcess::ChromaticAberration;	break;
-				case 8: mCurrPostProcess = PostProcess::GaussionBlur;			break;
+					FullScreenPostProcess(filter->type);
 				}
+				else if (filter->mode == PostProcessMode::Area)
+				{
+					//select an object using ImGui
+					static CGameObject* select = nullptr;
+
+					//select the object with ImGui
+					if (select == nullptr)
+					{
+						if (ImGui::Begin("Select Object"))
+						{
+							for (auto obj : GOM->mObjects)
+							{
+								if (ImGui::Button(obj->GetName().c_str()))
+								{
+									select = obj;
+								}
+							}
+						}
+						ImGui::End();
+					}
+					else
+					{
+
+						static CVector3 areaPos = { 0,0,0 };
+						static CVector2 areaSize = { 0,0 };
+
+						ImGui::DragFloat3("Postion", areaPos.GetValuesArray());
+						ImGui::DragFloat2("Size", areaSize.GetValuesArray());
+
+						// Pass a 3D point for the centre of the affected area and the size of the (rectangular) area in world units
+						AreaPostProcess(filter->type, areaPos, areaSize);
+
+						//display the selected obj name and a button to change it
+						auto selectedText = "Selected: " + select->GetName();
+						ImGui::Text(selectedText.c_str());
+						ImGui::SameLine();
+						if (ImGui::Button("Change"))
+						{
+							select = nullptr;
+						}
+					}
+				}
+				else if (filter->mode == PostProcessMode::Polygon)
+				{
+					static CGameObject* select = nullptr;
+
+					//select the object with ImGui
+					if (select == nullptr)
+					{
+						if (ImGui::Begin("Select Object"))
+						{
+							for (auto obj : GOM->mObjects)
+							{
+								if (ImGui::Button(obj->GetName().c_str()))
+								{
+									select = obj;
+								}
+							}
+						}
+						ImGui::End();
+					}
+					else
+					{
+						// An array of four points in world space - a tapered square centred at the origin
+						static std::array<CVector3, 4> points = { {{-5,5,0}, {-5,-5,0}, {5,5,0}, {5,-5,0} } };
+
+						ImGui::Separator();
+						ImGui::Text("Edit Area");
+						ImGui::DragFloat3("Top Left", points[0].GetValuesArray());
+						ImGui::DragFloat3("Bottom Left", points[1].GetValuesArray());
+						ImGui::DragFloat3("Top Right", points[2].GetValuesArray());
+						ImGui::DragFloat3("Bottom Right", points[3].GetValuesArray());
+						ImGui::Separator();
+
+						static CMatrix4x4 polyMatrix = MatrixTranslation({ select->Position() });
+
+						// Pass an array of 4 points and a matrix. Only supports 4 points.
+						PolygonPostProcess(filter->type, points, polyMatrix);
+
+						//display the selected obj name and a button to change it
+						auto selectedText = "Selected: " + select->GetName();
+						ImGui::Text(selectedText.c_str());
+						ImGui::SameLine();
+						if (ImGui::Button("Change"))
+						{
+							select = nullptr;
+						}
+					}
+				}
+
+				//These lines unbind the scene texture from the pixel shader to stop DirectX issuing a warning when we try to render to it again next frame
+				ID3D11ShaderResourceView* nullSRV = nullptr;
+				gD3DContext->PSSetShaderResources(0, 1, &nullSRV);
+
+				if (filter->type == PostProcess::SSAO)
+					gD3DContext->PSSetShaderResources(1, 1, &nullSRV);
+
+
+				filter++;
+			}
+		}
+	}
+}
+
+void CScene::RenderToDepthMap()
+{
+
+	// Select the shadow map texture as the current depth buffer. We will not be rendering any pixel colours
+	// Also clear the the shadow map depth buffer to the far distance
+	gD3DContext->OMSetRenderTargets(0, nullptr, mFinalDepthStencilView);
+	gD3DContext->ClearDepthStencilView(mFinalDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+	//render just the objects that can cast shadows
+	for (auto it : GOM->mObjects)
+	{
+		//basic geometry rendered, that means just render the model's geometry, leaving all the fancy shaders
+		it->Render(true);
+	}
+}
+
+
+void CScene::DisplayPostProcessingEffects()
+{
+	static bool choosePP = false;
+	static bool editProperties = false;
+
+	//Render a window with all the postprocessing 
+	if (ImGui::Begin("PostProcessing", 0, ImGuiWindowFlags_NoBringToFrontOnFocus))
+	{
+		//show a button "new"
+		if (ImGui::Button("New"))
+		{
+			choosePP = true;
+		}
+
+		auto filter = mPostProcessingFilters.begin();
+
+		//display every ppfilter with a button
+		while (filter != mPostProcessingFilters.end())
+		{
+			//****| INFO |*******************************************************************************************//
+			//	The next variable is for the buttons management in ImGui. 
+			//	If there are multiple button witht the same lable, imgui will not recognise them.
+			//	This problem is being avoided with the "position" of the filter in the list, hence using the std::distance function,
+			//	added it to the button lable. The hashtags are used to not show the id in the GUI.
+			//	The name of the filter can be used. However, if the user will input two of the same filters,
+			//	than the id of the button(lable) would be the same.
+			//*******************************************************************************************************//
+
+			char buttonId = std::distance(mPostProcessingFilters.begin(), filter);
+
+			if (ImGui::Button(mPostProcessStrings[(int)filter->type].c_str()))
+			{
+				//if the button is clicked, you can edit its properties
+				editProperties = true;
+			}
+
+
+			if (mPostProcessingFilters.size() > 1)
+			{
+				if (filter != --mPostProcessingFilters.end())
+				{
+					ImGui::SameLine();
+
+					std::string label = "Move Down##";
+
+					label+=(buttonId);
+
+					if (ImGui::Button(label.c_str()))
+					{
+						std::iter_swap(++filter, filter);
+					}
+
+				}
+
+				if (filter != mPostProcessingFilters.begin())
+				{
+					ImGui::SameLine();
+
+					std::string label = "Move Up##";
+
+					label+=(buttonId);
+
+					if (ImGui::Button(label.c_str()))
+					{
+						//mPostProcessingFilters.splice(++filter, mPostProcessingFilters, --filter);
+
+						std::iter_swap(--filter, filter);
+					}
+				}
+			}
+
+			ImGui::SameLine();
+
+			std::string label = "Remove##";
+
+					label+=(buttonId);
+
+			if (ImGui::Button(label.c_str()))
+			{
+				filter = mPostProcessingFilters.erase(filter);
+			}
+			else
+				filter++;
+		}
+
+		ImGui::End();
+	}
+
+	//open a window that lets the user choose the post processing filter
+	if (choosePP)
+	{
+		if (ImGui::Begin("Choose"))
+		{
+			static PostProcessFilter newPostProcess;
+
+			std::string items = "";
+
+			for (auto s : mPostProcessStrings)
+			{
+				if (s == "Copy") continue;
+				items += s + '\0';
+			}
+
+			static int selectType = 0;
+
+			if (ImGui::Combo("Type", &selectType, items.c_str()))
+			{
+				newPostProcess.type = PostProcess(selectType + 1);
 			}
 
 			static int selectMode = 0;
 
-			auto modes = "FullScreen\0Area\0Polygon";
+			std::string modes = "";
 
-			if (ImGui::Combo("Mode", &selectMode, modes))
+			for (auto s : mPostProcessModeStrings)
+			{
+				modes += s + '\0';
+			}
+
+			if (ImGui::Combo("Mode", &selectMode, modes.c_str()))
 			{
 				switch (selectMode)
 				{
-				case 0: mCurrPostProcessMode = PostProcessMode::Fullscreen; break;
-				case 1: mCurrPostProcessMode = PostProcessMode::Area; break;
-				case 2: mCurrPostProcessMode = PostProcessMode::Polygon; break;
+					newPostProcess.mode = PostProcessMode(selectMode);
+				}
+			}
+
+			if (ImGui::Button("OK"))
+			{
+				if (newPostProcess.type != PostProcess::None && newPostProcess.type != PostProcess::Copy)
+				{
+					mPostProcessingFilters.push_back(newPostProcess);
+					choosePP = false;
 				}
 			}
 		}
+		ImGui::End();
 	}
-
-	// Run any post-processing steps
-	if (mCurrPostProcess != PostProcess::None)
-	{
-		//These lines unbind the scene texture from the pixel shader to stop DirectX issuing a warning when we try to render to it again next frame
-		ID3D11ShaderResourceView* const pSRV[1] = { NULL };
-		gD3DContext->PSSetShaderResources(0, 1, pSRV);
-
-		if (mCurrPostProcessMode == PostProcessMode::Fullscreen)
-		{
-			FullScreenPostProcess(mCurrPostProcess);
-		}
-		else if (mCurrPostProcessMode == PostProcessMode::Area)
-		{
-
-			//select an object using ImGui
-			static CGameObject* select = nullptr;
-
-			//select the object with ImGui
-			if (select == nullptr)
-			{
-				if (ImGui::Begin("Select Object"))
-				{
-					for (auto obj : GOM->mObjects)
-					{
-						if (ImGui::Button(obj->GetName().c_str()))
-						{
-							select = obj;
-						}
-					}
-				}
-				ImGui::End();
-			}
-			else
-			{
-
-				static CVector3 areaPos = { 0,0,0 };
-				static CVector2 areaSize = { 0,0 };
-
-				ImGui::DragFloat3("Postion", areaPos.GetValuesArray());
-				ImGui::DragFloat2("Size", areaSize.GetValuesArray());
-
-				// Pass a 3D point for the centre of the affected area and the size of the (rectangular) area in world units
-				AreaPostProcess(mCurrPostProcess, areaPos, areaSize);
-
-				//display the selected obj name and a button to change it
-				auto selectedText = "Selected: " + select->GetName();
-				ImGui::Text(selectedText.c_str());
-				ImGui::SameLine();
-				if (ImGui::Button("Change"))
-				{
-					select = nullptr;
-				}
-			}
-		}
-		else if (mCurrPostProcessMode == PostProcessMode::Polygon)
-		{
-			static CGameObject* select = nullptr;
-
-			//select the object with ImGui
-			if (select == nullptr)
-			{
-				if (ImGui::Begin("Select Object"))
-				{
-					for (auto obj : GOM->mObjects)
-					{
-						if (ImGui::Button(obj->GetName().c_str()))
-						{
-							select = obj;
-						}
-					}
-				}
-				ImGui::End();
-			}
-			else
-			{
-
-				// An array of four points in world space - a tapered square centred at the origin
-				static std::array<CVector3, 4> points = { {{-5,5,0}, {-5,-5,0}, {5,5,0}, {5,-5,0} } };
-
-				ImGui::Separator();
-				ImGui::Text("Edit Area");
-				ImGui::DragFloat3("Top Left", points[0].GetValuesArray());
-				ImGui::DragFloat3("Bottom Left", points[1].GetValuesArray());
-				ImGui::DragFloat3("Top Right", points[2].GetValuesArray());
-				ImGui::DragFloat3("Bottom Right", points[3].GetValuesArray());
-				ImGui::Separator();
-
-				static CMatrix4x4 polyMatrix = MatrixTranslation({ select->Position() });
-
-				// Pass an array of 4 points and a matrix. Only supports 4 points.
-				PolygonPostProcess(mCurrPostProcess, points, polyMatrix);
-
-				//display the selected obj name and a button to change it
-				auto selectedText = "Selected: " + select->GetName();
-				ImGui::Text(selectedText.c_str());
-				ImGui::SameLine();
-				if (ImGui::Button("Change"))
-				{
-					select = nullptr;
-				}
-			}
-		}
-
-
-		//These lines unbind the scene texture from the pixel shader to stop DirectX issuing a warning when we try to render to it again next frame
-		ID3D11ShaderResourceView* nullSRV = nullptr;
-		gD3DContext->PSSetShaderResources(0, 1, &nullSRV);
-
-	}
-	ImGui::End();
-}
-
-// Select the appropriate shader plus any additional textures required for a given post-process
-// Helper function shared by full-screen, area and polygon post-processing functions below
-
-void CScene::SelectPostProcessShaderAndTextures(PostProcess postProcess)
-{
-
-	//colour
-
-	static float tint[] = { 0.5,0.5,0.5 };
 
 	// Noise scaling adjusts how fine the grey noise is.
 	static float grainSize = 140; // Fineness of the noise grain
 
-	static float distorsionLevel = 0.03f; //distorsion level for the dirstorsion effect
+	//open a window that lets the user modify the post processing properties
+	if (editProperties && mPostProcessingFilters.size())
+	{
+		if (ImGui::Begin("Properties", &editProperties))
+		{
+			//for each effect 
+			for (auto postProcess : mPostProcessingFilters)
+			{
+				//go through the type and display the properties 
+				switch (postProcess.type)
+				{
+				case CScene::PostProcess::None:
+					break;
 
-	static float heatStrenght = 0.01f;
-	static float heatSoftEdge = 0.25f; // Softness of the edge of the circle - range 0.001 (hard edge) to 0.25 (very soft)
+				case CScene::PostProcess::Copy:
+					break;
 
+				case CScene::PostProcess::Tint:
+
+					ImGui::ColorEdit3("Pick colour", gPostProcessingConstants.tintColour.GetValuesArray());
+
+					break;
+
+				case CScene::PostProcess::GreyNoise:
+
+					ImGui::DragFloat("Grain size", &grainSize, 1.0f, 0.0f);
+
+					//set the texture noise scale
+					gPostProcessingConstants.noiseScale = { mViewportX / grainSize, mViewportY / grainSize };
+
+					//The noise strength (default is 0.5)
+					ImGui::DragFloat("Noise Strength", &gPostProcessingConstants.noiseStrength, 0.001f, 0.0f, 1.0f, "%.4f");
+
+					//the distance between the centre of the texture and the beginning of the edge
+					ImGui::DragFloat("Edge Distance", &gPostProcessingConstants.noiseEdge, 0.01f, 0.0f, 1.0f, "%.4f");
+
+					break;
+
+				case CScene::PostProcess::Burn:
+					break;
+
+				case CScene::PostProcess::Distort:
+
+					ImGui::DragFloat("Distorsion Level", &gPostProcessingConstants.distortLevel, 0.001f);
+
+					break;
+
+				case CScene::PostProcess::Spiral:
+					break;
+
+				case CScene::PostProcess::HeatHaze:
+
+					ImGui::DragFloat("Strength", &gPostProcessingConstants.heatEffectStrength, 0.0001f);
+
+					ImGui::SliderFloat("Soft Edge", &gPostProcessingConstants.heatSoftEdge, 0.001f, 0.25f);
+
+					break;
+
+				case CScene::PostProcess::ChromaticAberration:
+
+					ImGui::DragFloat("Amount", &gPostProcessingConstants.caAmount, 0.0001f, NULL, NULL, "%.5f");
+
+					break;
+
+				case CScene::PostProcess::GaussionBlur:
+
+					ImGui::DragFloat("Directions", &gPostProcessingConstants.blurDirections, 0.1f, 0.01f, 64.0f);
+					ImGui::DragFloat("Quality", &gPostProcessingConstants.blurQuality, 0.1, 1.0f, 64.0f);
+					ImGui::DragFloat("Size", &gPostProcessingConstants.blurSize, 0.1f);
+
+					break;
+
+				case CScene::PostProcess::SSAO:
+
+					break;
+
+				case CScene::PostProcess::Bloom:
+
+					break;
+				}
+			}
+
+			if (ImGui::Button("OK"))
+			{
+				editProperties = false;
+			}
+		}
+		ImGui::End();
+	}
+}
+
+// Select the appropriate shader plus any additional textures required for a given post-process
+// Helper function shared by full-screen, area and polygon post-processing functions below
+void CScene::SelectPostProcessShaderAndTextures(PostProcess postProcess)
+{
 	switch (postProcess)
 	{
 	case CScene::PostProcess::None:
@@ -944,34 +1240,18 @@ void CScene::SelectPostProcessShaderAndTextures(PostProcess postProcess)
 
 		gD3DContext->PSSetShader(gTintPostProcess, nullptr, 0);
 
-
-		ImGui::ColorEdit3("Pick colour", tint);
-
-		gPostProcessingConstants.tintColour = tint;
-
 		break;
 
 	case CScene::PostProcess::GreyNoise:
 
 		gD3DContext->PSSetShader(gGreyNoisePostProcess, nullptr, 0);
 
-		// Give pixel shader access to the noise texture
-		gD3DContext->PSSetShaderResources(1, 1, &mNoiseMapSRV);
-		gD3DContext->PSSetSamplers(1, 1, &gTrilinearSampler);
-
-		ImGui::DragFloat("Grain size", &grainSize, 1.0f, 0.0f);
-
-		//set the texture noise scale
-		gPostProcessingConstants.noiseScale = { mViewportX / grainSize, mViewportY / grainSize };
-
 		// The noise offset is randomised to give a constantly changing noise effect (like tv static)
 		gPostProcessingConstants.noiseOffset = { Random(0.0f, 1.0f), Random(0.0f, 1.0f) };
 
-		//The noise strength (default is 0.5)
-		ImGui::DragFloat("Noise Strength", &gPostProcessingConstants.noiseStrength, 0.001f, 0.0f, 1.0f, "%.4f");
-
-		//the distance between the centre of the texture and the beginning of the edge
-		ImGui::DragFloat("Edge Distance", &gPostProcessingConstants.noiseEdge, 0.01f, 0.0f, 1.0f, "%.4f");
+		// Give pixel shader access to the noise texture
+		gD3DContext->PSSetShaderResources(1, 1, &mNoiseMapSRV);
+		gD3DContext->PSSetSamplers(1, 1, &gTrilinearSampler);
 
 		break;
 
@@ -993,11 +1273,6 @@ void CScene::SelectPostProcessShaderAndTextures(PostProcess postProcess)
 		gD3DContext->PSSetShaderResources(1, 1, &mDistortMapSRV);
 		gD3DContext->PSSetSamplers(1, 1, &gTrilinearSampler);
 
-		ImGui::DragFloat("Distorsion Level", &distorsionLevel, 0.001f);
-
-		// Set the level of distortion
-		gPostProcessingConstants.distortLevel = distorsionLevel;
-
 		break;
 
 	case CScene::PostProcess::Spiral:
@@ -1010,31 +1285,31 @@ void CScene::SelectPostProcessShaderAndTextures(PostProcess postProcess)
 
 		gD3DContext->PSSetShader(gHeatHazePostProcess, nullptr, 0);
 
-		ImGui::DragFloat("Strength", &heatStrenght, 0.0001f);
-
-		gPostProcessingConstants.heatEffectStrength = heatStrenght;
-
-		ImGui::SliderFloat("Soft Edge", &heatSoftEdge, 0.001f, 0.25f);
-
-		gPostProcessingConstants.heatSoftEdge = heatSoftEdge;
-
 		break;
 
 	case CScene::PostProcess::ChromaticAberration:
 
 		gD3DContext->PSSetShader(gChromaticAberrationPostProcess, nullptr, 0);
 
-		ImGui::DragFloat("Amount", &gPostProcessingConstants.caAmount, 0.0001f,NULL,NULL,"%.5f");
 		break;
 
 	case CScene::PostProcess::GaussionBlur:
 
 		gD3DContext->PSSetShader(gGaussionBlurPostProcess, nullptr, 0);
-		
-		ImGui::DragFloat("Directions",&gPostProcessingConstants.blurDirections,0.1f,0.01f,64.0f);
-		ImGui::DragFloat("Quality"	 ,&gPostProcessingConstants.blurQuality,0.1,1.0f,64.0f);
-		ImGui::DragFloat("Size"		 ,&gPostProcessingConstants.blurSize,0.1f);
 
+		break;
+
+	case CScene::PostProcess::SSAO:
+
+		gD3DContext->PSSetShader(gSsaoPostProcess, nullptr, 0);
+
+		gD3DContext->PSSetShaderResources(1, 1, &mFinalDepthStencilSRV);
+
+		break;
+
+	case CScene::PostProcess::Bloom:
+
+		gD3DContext->PSSetShader(gBloomPostProcess, nullptr, 0);
 
 		break;
 	}
@@ -1047,15 +1322,16 @@ void CScene::FullScreenPostProcess(PostProcess postProcess)
 
 	// Give the pixel shader (post-processing shader) access to the scene texture 
 	gD3DContext->PSSetShaderResources(0, 1, &mTextureSRV);
-	gD3DContext->PSSetSamplers(0, 1, &gPointSampler); // Use point sampling (no bilinear, trilinear, mip-mapping etc. for most post-processes)
 
+	// Use point sampling (no bilinear, trilinear, mip-mapping etc. for most post-processes)
+	gD3DContext->PSSetSamplers(0, 1, &gPointSampler);
 
 	// Using special vertex shader that creates its own data for a 2D screen quad
 	gD3DContext->VSSetShader(g2DQuadVertexShader, nullptr, 0);
 	gD3DContext->GSSetShader(nullptr, nullptr, 0);  // Switch off geometry shader when not using it (pass nullptr for first parameter)
 
 
-	// States - no blending, don't write to depth buffer and ignore back-face culling
+	// States - no blending, write to depth buffer and ignore back-face culling
 	gD3DContext->OMSetBlendState(gNoBlendingState, nullptr, 0xffffff);
 	gD3DContext->OMSetDepthStencilState(gDepthReadOnlyState, 0);
 	gD3DContext->RSSetState(gCullNoneState);
@@ -1069,7 +1345,6 @@ void CScene::FullScreenPostProcess(PostProcess postProcess)
 	// Select shader and textures needed for the required post-processes (helper function above)
 	SelectPostProcessShaderAndTextures(postProcess);
 
-
 	// Set 2D area for full-screen post-processing (coordinates in 0->1 range)
 	gPostProcessingConstants.area2DTopLeft = { 0, 0 }; // Top-left of entire screen
 	gPostProcessingConstants.area2DSize = { 1, 1 }; // Full size of screen
@@ -1081,13 +1356,33 @@ void CScene::FullScreenPostProcess(PostProcess postProcess)
 	gD3DContext->VSSetConstantBuffers(1, 1, &gPostProcessingConstBuffer);
 	gD3DContext->PSSetConstantBuffers(1, 1, &gPostProcessingConstBuffer);
 
-
 	// Draw a quad
 	gD3DContext->Draw(4, 0);
+
+	//These lines unbind the scene texture from the pixel shader to stop DirectX issuing a warning when we try to render to it again next frame
+	ID3D11ShaderResourceView* nullSRV = nullptr;
+	gD3DContext->PSSetShaderResources(0, 1, &nullSRV);
+
+	//now that the post processing is applied 
+	//set back the main target view 
+
+	// Select the back buffer to use for rendering. Not going to clear the back-buffer because we're going to overwrite it all
+	gD3DContext->OMSetRenderTargets(1, &mTargetView, mDepthStencilView);
+
+	//set the copy shader
+	gD3DContext->PSSetShader(gCopyPostProcess, nullptr, 0);
+
+	//set the final texture as a shader resource 
+	gD3DContext->PSSetShaderResources(0, 1, &mFinalTextureSRV);
+
+	//draw a quad 
+	gD3DContext->Draw(4, 0);
+
+	//unbind the texture from the pixel shader
+	gD3DContext->PSSetShaderResources(0, 1, &nullSRV);
 }
 
 // Perform an area post process from "scene texture" to back buffer at a given point in the world, with a given size (world units)
-
 void CScene::AreaPostProcess(PostProcess postProcess, CVector3 worldPoint, CVector2 areaSize)
 {
 	// First perform a full-screen copy of the scene to back-buffer
@@ -1183,135 +1478,4 @@ void CScene::PolygonPostProcess(PostProcess postProcess, const std::array<CVecto
 	// Select the special 2D polygon post-processing vertex shader and draw the polygon
 	gD3DContext->VSSetShader(g2DPolygonVertexShader, nullptr, 0);
 	gD3DContext->Draw(4, 0);
-}
-
-CScene::~CScene()
-{
-	ReleaseStates();
-	if (gPerModelConstantBuffer)			gPerModelConstantBuffer->Release();
-	if (gPerFrameConstantBuffer)			gPerFrameConstantBuffer->Release();
-	if (gPerFrameLightsConstBuffer)			gPerFrameLightsConstBuffer->Release();
-	if (gPerFrameSpotLightsConstBuffer)		gPerFrameSpotLightsConstBuffer->Release();
-	if (gPerFrameDirLightsConstBuffer)		gPerFrameDirLightsConstBuffer->Release();
-	if (gPerFramePointLightsConstBuffer)	gPerFramePointLightsConstBuffer->Release();
-	if (mTargetView)						mTargetView->Release();
-	if (mTextrue)							mTextrue->Release();
-	if (mTextureSRV)						mTextureSRV->Release();
-	if (mDepthStencil)						mDepthStencil->Release();
-	if (mDepthStencilView)					mDepthStencilView->Release();
-
-	if (mFinalTargetView)	mFinalTargetView->Release();
-	if (mFinalTextrue)		mFinalTextrue->Release();
-	if (mFinalTextureSRV)	mFinalTextureSRV->Release();
-
-	ReleaseDefaultShaders();
-}
-
-void CScene::Resize(UINT newX, UINT newY)
-{
-	//set aspect ratio with the new window size
-	//broken
-	//mCamera->SetAspectRatio(float(newY) / float(newX));
-
-	//set the scene viewport size to the new size
-	mViewportX = newX;
-	mViewportY = newY;
-
-	//release the textures
-	mTextrue->Release();
-	mDepthStencil->Release();
-	mDepthStencilView->Release();
-	mTargetView->Release();
-	mTextureSRV->Release();
-
-	// We create a new texture for the scene with new size
-	D3D11_TEXTURE2D_DESC textureDesc = {};
-	textureDesc.Width = newX; // Size of the "screen"
-	textureDesc.Height = newY;
-	textureDesc.MipLevels = 1; // 1 level, means just the main texture, no additional mip-maps. Usually don't use mip-maps when rendering to textures (or we would have to render every level)
-	textureDesc.ArraySize = 1;
-	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	textureDesc.SampleDesc.Count = 1;
-	textureDesc.SampleDesc.Quality = 0;
-	textureDesc.Usage = D3D11_USAGE_DEFAULT;
-	textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE; // Indicate we will use texture as a depth buffer and also pass it to shaders
-	textureDesc.CPUAccessFlags = 0;
-	textureDesc.MiscFlags = 0;
-	if (FAILED(gD3DDevice->CreateTexture2D(&textureDesc, NULL, &mTextrue)))
-	{
-		throw std::runtime_error("Error creating scene texture");
-	}
-
-	if (FAILED(gD3DDevice->CreateTexture2D(&textureDesc, NULL, &mFinalTextrue)))
-	{
-		throw std::runtime_error("Error creating scene texture");
-	}
-
-
-	D3D11_RENDER_TARGET_VIEW_DESC rtvDesc;
-	rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-	rtvDesc.Texture2D.MipSlice = 0;
-
-
-	// We created the scene texture above, now we get a "view" of it as a render target, i.e. get a special pointer to the texture that
-	// we use when rendering to it (see RenderScene function below)
-	if (FAILED(gD3DDevice->CreateRenderTargetView(mTextrue, &rtvDesc, &mTargetView)))
-	{
-		gLastError = "Error creating scene render target view";
-	}
-
-	if (FAILED(gD3DDevice->CreateRenderTargetView(mFinalTextrue, &rtvDesc, &mFinalTargetView)))
-	{
-		gLastError = "Error creating scene render target view";
-	}
-
-	// We also need to send this texture (resource) to the shaders. To do that we must create a shader-resource "view"
-	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MostDetailedMip = 0;
-	srvDesc.Texture2D.MipLevels = 1;
-	if (FAILED(gD3DDevice->CreateShaderResourceView(mTextrue, &srvDesc, &mTextureSRV)))
-	{
-		throw std::runtime_error("Error creating scene texture shader resource view");
-	}
-
-	if (FAILED(gD3DDevice->CreateShaderResourceView(mFinalTextrue, &srvDesc, &mFinalTextureSRV)))
-	{
-		throw std::runtime_error("Error creating scene texture shader resource view");
-	}
-
-
-	//create depth stencil
-	D3D11_TEXTURE2D_DESC dsDesc = {};
-	dsDesc.Width = textureDesc.Width;
-	dsDesc.Height = textureDesc.Height;
-	dsDesc.MipLevels = 1;
-	dsDesc.ArraySize = 1;
-	dsDesc.Format = DXGI_FORMAT_R32_TYPELESS;
-	dsDesc.SampleDesc.Count = 1;
-	dsDesc.SampleDesc.Quality = 0;
-	dsDesc.Usage = D3D11_USAGE_DEFAULT;
-	dsDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-	dsDesc.CPUAccessFlags = 0;
-	dsDesc.MiscFlags = 0;
-
-	//create it
-	if (FAILED(gD3DDevice->CreateTexture2D(&dsDesc, NULL, &mDepthStencil)))
-	{
-		throw std::runtime_error("Error creating depth stencil");
-	}
-
-	//create depth stencil view
-	D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-	dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
-	dsvDesc.Flags = 0;
-	dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-	dsvDesc.Texture2D.MipSlice = 0;
-
-	if (FAILED(gD3DDevice->CreateDepthStencilView(mDepthStencil, &dsvDesc, &mDepthStencilView)))
-	{
-		throw std::runtime_error("Error creating depth stencil view ");
-	}
 }

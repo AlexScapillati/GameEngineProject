@@ -20,6 +20,8 @@ public:
 
 	bool Update();
 
+	~CDXEngine();
+
 private:
 
 	std::unique_ptr<CScene> mMainScene;

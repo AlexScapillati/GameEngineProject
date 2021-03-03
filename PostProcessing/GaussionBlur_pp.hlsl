@@ -13,14 +13,6 @@ Texture2D SceneTexture : register(t0);
 SamplerState PointSample : register(s0); // We don't usually want to filter (bilinear, trilinear etc.) the scene texture when
                                           // post-processing so this sampler will use "point sampling" - no filtering
 
-
-const float offset[] = { 0.0, 1.0, 2.0, 3.0, 4.0 };
-const float weight[] =
-{
-    0.2270270270, 0.1945945946, 0.1216216216, 0.0540540541, 0.0162162162
-};
- 
-
 //--------------------------------------------------------------------------------------
 // Shader code
 //--------------------------------------------------------------------------------------

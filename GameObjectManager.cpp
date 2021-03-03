@@ -218,7 +218,7 @@ bool CGameObjectManager::RemoveDirLight(int pos)
 
 void DisplayShadowMaps()
 {
-	if (ImGui::Begin("ShadowMaps"))
+	if (ImGui::Begin("ShadowMaps",0,ImGuiWindowFlags_NoBringToFrontOnFocus))
 	{
 		if (ImGui::BeginTable("", 6))
 		{

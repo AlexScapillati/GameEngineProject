@@ -29,6 +29,9 @@ void InitGui()
 	ImGui::StyleColorsDark();
 }
 
+CDXEngine::~CDXEngine()
+{
+}
 
 void CDXEngine::RenderGui()
 {
@@ -131,7 +134,7 @@ bool CDXEngine::Update()
 			ImGui::SetNextWindowPos({ 0,0 });
 			ImGui::SetNextWindowSize({ (float)gViewportWidth,(float)gViewportHeight });
 
-			if (ImGui::Begin("Engine"))
+			if (ImGui::Begin("Engine",0,ImGuiWindowFlags_NoBringToFrontOnFocus))
 			{
 				if (ImGui::Begin("Viewport", nullptr,
 					ImGuiWindowFlags_NoScrollbar |

@@ -243,7 +243,6 @@ cbuffer PostProcessingConstants : register(b1)
     float gBlurQuality = 3.0; // BLUR QUALITY (Default 4.0 - More is better but slower)
     float gBlurSize = 8.0; // BLUR SIZE (Radius)
     float pad;
-    
 }
 
 //**************************

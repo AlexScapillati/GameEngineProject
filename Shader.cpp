@@ -27,7 +27,9 @@ ID3D11PixelShader*  gDistortPostProcess    = nullptr;
 ID3D11PixelShader*  gSpiralPostProcess     = nullptr;
 ID3D11PixelShader*  gHeatHazePostProcess   = nullptr;
 ID3D11PixelShader*  gChromaticAberrationPostProcess   = nullptr;
-ID3D11PixelShader*  gGaussionBlurPostProcess   = nullptr;
+ID3D11PixelShader*  gGaussionBlurPostProcess	= nullptr;
+ID3D11PixelShader* gSsaoPostProcess				= nullptr;
+ID3D11PixelShader* gBloomPostProcess			= nullptr;
 
 
 
@@ -241,7 +243,10 @@ void LoadDefaultShaders()
 	gSpiralPostProcess     = LoadPixelShader ("PostProcessing/Spiral_pp");
 	gHeatHazePostProcess   = LoadPixelShader ("PostProcessing/HeatHaze_pp");
 	gChromaticAberrationPostProcess   = LoadPixelShader ("PostProcessing/ChromaticAberration_pp");
-	gGaussionBlurPostProcess = LoadPixelShader("PostProcessing/GaussionBlur_pp");
+	gGaussionBlurPostProcess	= LoadPixelShader("PostProcessing/GaussionBlur_pp");
+	gSsaoPostProcess			= LoadPixelShader("PostProcessing/SSAO_pp");
+	gBloomPostProcess			= LoadPixelShader("PostProcessing/Bloom_pp");
+
 
 	if (!(gDepthOnlyPixelShader = LoadPixelShader("Shaders/DepthOnly_ps")) ||
 		!(gBasicTransformVertexShader = LoadVertexShader("Shaders/BasicTransform_vs")) ||
@@ -251,7 +256,8 @@ void LoadDefaultShaders()
 		gGreyNoisePostProcess == nullptr || gBurnPostProcess == nullptr ||
 		gDistortPostProcess == nullptr || gSpiralPostProcess == nullptr ||
 		g2DPolygonVertexShader == nullptr || gChromaticAberrationPostProcess == nullptr ||
-		gGaussionBlurPostProcess == nullptr)
+		gGaussionBlurPostProcess == nullptr || gSsaoPostProcess == nullptr ||
+		gBloomPostProcess == nullptr)
 	{
 		throw std::runtime_error("Error loading default shaders");
 	}
@@ -273,6 +279,7 @@ void ReleaseDefaultShaders()
 	if (g2DQuadVertexShader)				g2DQuadVertexShader				->Release();
 	if (gChromaticAberrationPostProcess)	gChromaticAberrationPostProcess	->Release();
 	if (gGaussionBlurPostProcess)			gGaussionBlurPostProcess		->Release();
+	if (gBloomPostProcess)					gBloomPostProcess				->Release();
 }
 
 // Create and return a constant buffer of the given size
