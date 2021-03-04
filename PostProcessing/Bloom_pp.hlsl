@@ -12,13 +12,24 @@
 Texture2D SceneTexture : register(t0);
 SamplerState PointSample : register(s0); // We don't usually want to filter (bilinear, trilinear etc.) the scene texture when
 
+float luminance(float3 col)
+{
+    //relative luminance formula 
+    // source : https://en.wikipedia.org/wiki/Relative_luminance
+    return
+    0.2126 * col.r +
+    0.7152 * col.g +
+    0.0722 * col.b;
+}
 
 float4 main(PostProcessingInput input) : SV_TARGET
 {
-    float3 col;
+    float3 col = SceneTexture.Sample(PointSample, input.sceneUV).rgb;
     
-    
-    
-    
-	return float4(col, 1.0f);
+    if (luminance(col) > gBloomThreshold)
+    {
+        return float4(col, 1.0f);
+    }
+    else
+        return 0;
 }

@@ -242,7 +242,11 @@ cbuffer PostProcessingConstants : register(b1)
     float gBlurDirections = 16.0; // BLUR DIRECTIONS (Default 16.0 - More is better but slower)
     float gBlurQuality = 3.0; // BLUR QUALITY (Default 4.0 - More is better but slower)
     float gBlurSize = 8.0; // BLUR SIZE (Radius)
-    float pad;
+    
+    
+    //bloom settings
+    float gBloomThreshold = 0.5f;
+    
 }
 
 //**************************

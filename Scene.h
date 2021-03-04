@@ -8,9 +8,9 @@
 #include "Camera.h"
 #include "GameObjectManager.h"
 
-#include "CVector3.h" 
+#include "CVector3.h"
 #include "GraphicsHelpers.h" // Helper functions to unclutter the code here
-#include "ColourRGBA.h" 
+#include "ColourRGBA.h"
 #include "tinyxml2/tinyxml2.h"
 
 #include <sstream>
@@ -19,12 +19,9 @@
 #include <stdexcept>
 #include <utility>
 
-
 class CScene
 {
-
 public:
-
 
 	CScene(std::string fileName);
 
@@ -40,7 +37,6 @@ public:
 
 	// frameTime is the time passed since the last frame
 	void UpdateScene(float frameTime);
-
 
 	void DisplayObjects();
 
@@ -73,29 +69,23 @@ public:
 
 	void DisplayPostProcessingEffects();
 
-
 private:
 
 	//--------------------------------------------------------------------------------------
 	// Scene Data
 	//--------------------------------------------------------------------------------------
 
-
-
 	// Variables controlling light1's orbiting of the particle emitter
 	float gCameraOrbitRadius;
 	float gCameraOrbitSpeed;
-
 
 	// Additional light information
 	CVector3 gAmbientColour; // Background level of light (slightly bluish to match the far background, which is dark blue)
 	float    gSpecularPower; // Specular power controls shininess - same for all models in this app
 
-
 	// Variables controlling light1's orbiting of the cube
 	float gLightOrbitRadius;
 	float gLightOrbitSpeed;
-
 
 	ID3D11Texture2D* mTextrue;
 	ID3D11ShaderResourceView* mTextureSRV;
@@ -109,7 +99,6 @@ private:
 	ID3D11ShaderResourceView* mFinalTextureSRV;
 	ID3D11RenderTargetView* mFinalTargetView;
 
-	
 	ID3D11Texture2D* mFinalDepthStencil;
 	ID3D11ShaderResourceView* mFinalDepthStencilSRV;
 	ID3D11DepthStencilView* mFinalDepthStencilView;
@@ -133,7 +122,7 @@ private:
 		Bloom
 	};
 
-	std::vector<std::string> mPostProcessStrings = 
+	std::vector<std::string> mPostProcessStrings =
 	{
 		"None",
 		"Copy",
@@ -149,7 +138,6 @@ private:
 		"Bloom"
 	};
 
-
 	enum class PostProcessMode
 	{
 		Fullscreen,
@@ -164,7 +152,6 @@ private:
 		"Polygon"
 	};
 
-
 	//********************
 
 	struct PostProcessFilter
@@ -177,7 +164,6 @@ private:
 
 		ID3D11Texture2D* tex = nullptr;			//not used
 		ID3D11ShaderResourceView* texSRV = nullptr;	//not used
-
 	};
 
 	std::list<PostProcessFilter> mPostProcessingFilters;
@@ -186,15 +172,17 @@ private:
 	// Post processing textures
 
 	// Additional textures used for specific post-processes
-	ID3D11Resource*				mNoiseMap		= nullptr;
-	ID3D11ShaderResourceView*	mNoiseMapSRV	= nullptr;
-	ID3D11Resource*				mBurnMap		= nullptr;
-	ID3D11ShaderResourceView*	mBurnMapSRV		= nullptr;
-	ID3D11Resource*				mDistortMap		= nullptr;
-	ID3D11ShaderResourceView*	mDistortMapSRV	= nullptr;
+	ID3D11Resource* mNoiseMap = nullptr;
+	ID3D11ShaderResourceView* mNoiseMapSRV = nullptr;
+	ID3D11Resource* mBurnMap = nullptr;
+	ID3D11ShaderResourceView* mBurnMapSRV = nullptr;
+	ID3D11Resource* mDistortMap = nullptr;
+	ID3D11ShaderResourceView* mDistortMapSRV = nullptr;
+	ID3D11Texture2D* mLuminanceMap = nullptr;
+	ID3D11ShaderResourceView* mLuminanceMapSRV = nullptr;
+	ID3D11RenderTargetView* mLuminanceRenderTarget = nullptr;
 
 	//****************************
-
 
 	//--------------------------------------------------------------------------------------
 	// PostProcess Functions
@@ -210,11 +198,9 @@ private:
 	// Perform an area post process from "scene texture" to back buffer at a given point in the world, with a given size (world units)
 	void AreaPostProcess(PostProcess postProcess, CVector3 worldPoint, CVector2 areaSize);
 
-
 	// Perform an post process from "scene texture" to back buffer within the given four-point polygon and a world matrix to position/rotate/scale the polygon
 	void PolygonPostProcess(PostProcess postProcess, const std::array<CVector3, 4>& points, const CMatrix4x4& worldMatrix);
 
 	//to remove
 	void LoadPostProcessingImages();
-
 };

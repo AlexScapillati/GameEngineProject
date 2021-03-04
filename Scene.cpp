@@ -19,7 +19,6 @@
 #include "External\imgui\imgui.h"
 #include "External\imgui\ImGuizmo.h"
 
-
 const float ROTATION_SPEED = 1.5f;
 const float MOVEMENT_SPEED = 50.0f;
 
@@ -52,8 +51,6 @@ ID3D11Buffer* gPerFramePointLightsConstBuffer;
 PostProcessingConstants gPostProcessingConstants;
 ID3D11Buffer* gPostProcessingConstBuffer;
 
-
-
 //*******************************
 //**** Post-processing shader DirectX objects
 // These are also added to Shader.h
@@ -70,12 +67,12 @@ extern ID3D11PixelShader* gChromaticAberrationPostProcess;
 extern ID3D11PixelShader* gGaussionBlurPostProcess;
 extern ID3D11PixelShader* gSsaoPostProcess;
 extern ID3D11PixelShader* gBloomPostProcess;
+extern ID3D11PixelShader* gBloomLastPostProcess;
 
 CGameObjectManager* GOM;
 
 void CScene::DisplayObjects()
 {
-
 	static CGameObject* selectedObj = nullptr;
 
 	static auto mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
@@ -174,7 +171,6 @@ void CScene::DisplayObjects()
 				{
 					throw std::runtime_error(e.what());
 				}
-
 			}
 
 			ImGui::Checkbox("Enabled", selectedObj->Enabled());
@@ -196,7 +192,7 @@ void CScene::DisplayObjects()
 			if (ImGui::RadioButton("Scale", mCurrentGizmoOperation == ImGuizmo::SCALE))
 				mCurrentGizmoOperation = ImGuizmo::SCALE;
 
-			//get the direct access to the position of the model and display it 
+			//get the direct access to the position of the model and display it
 			ImGui::DragFloat3("Position", selectedObj->DirectPosition());
 
 			//acquire the rotation array
@@ -211,7 +207,7 @@ void CScene::DisplayObjects()
 			//display the rotation
 			if (ImGui::DragFloat3("Rotation", rot))
 			{
-				//if the value is changed 
+				//if the value is changed
 				//get back to radians
 				for (int i = 0; i < 3; i++)
 				{
@@ -232,7 +228,6 @@ void CScene::DisplayObjects()
 				selectedObj->SetScale(scale);
 			}
 
-
 			ImGui::Checkbox("Show Bounds", &showBounds);
 
 			//----------------------------------------------------------------
@@ -241,7 +236,6 @@ void CScene::DisplayObjects()
 
 			if (auto light = dynamic_cast<CLight*>(selectedObj))
 			{
-
 				ImGui::Text("Specific settings");
 
 				//light colour edit
@@ -277,13 +271,11 @@ void CScene::DisplayObjects()
 						spotLight->SetFacing(facing);
 					}
 
-
 					//modify cone angle
 					ImGui::DragFloat("Cone Angle", &spotLight->GetConeAngle(), 1.0f, 0.0f, 180.0f);
 
 					//modify shadow map size
 					ImGui::DragInt("ShadowMapsSize", &spotLight->getShadowMapSize(), 1.0f, 2, 16384);
-
 				}
 				else if (auto dirLight = dynamic_cast<CDirLight*>(selectedObj))
 				{
@@ -328,7 +320,6 @@ void CScene::DisplayObjects()
 					}
 				}
 			}
-
 
 			//display the texture
 			ImGui::NewLine();
@@ -382,7 +373,6 @@ void CScene::LoadPostProcessingImages()
 
 CScene::CScene(std::string fileName)
 {
-
 	//--------------------------------------------------------------------------------------
 	// Scene Geometry and Layout
 	//--------------------------------------------------------------------------------------
@@ -409,21 +399,17 @@ CScene::CScene(std::string fileName)
 
 	try
 	{
-
 		//create all the textures needed for the scene rendering
 		InitTextures();
-
 	}
 	catch (const std::runtime_error& e)
 	{
 		throw std::runtime_error(e.what());
 	}
 
-
 	//--------------------------------------------------------------------------------------
 	// Initialise scene geometry, constant buffers and states
 	//--------------------------------------------------------------------------------------
-
 
 	////--------------- Load meshes ---------------////
 
@@ -436,7 +422,7 @@ CScene::CScene(std::string fileName)
 
 		LoadPostProcessingImages();
 
-		//load the scene 
+		//load the scene
 		CLevelImporter importer;
 
 		importer.LoadScene(std::move(fileName), this);
@@ -451,16 +437,13 @@ CScene::CScene(std::string fileName)
 		throw std::runtime_error("No objects loaded");
 	}
 
-
 	////--------------- GPU states ---------------////
-
 
 	// Create all filtering modes, blending modes etc. used by the app (see State.cpp/.h)
 	if (!CreateStates())
 	{
 		throw std::runtime_error("Error creating DirectX states");
 	}
-
 
 	// Create GPU-side constant buffers to receive the gPerFrameConstants and gPerModelConstants structures above
 	// These allow us to pass data from CPU to shaders such as lighting information or matrices
@@ -511,7 +494,7 @@ void CScene::RenderSceneFromCamera(CCamera* camera)
 		gPerFramePointLightsConstBuffer };
 
 	gD3DContext->PSSetConstantBuffers(1, 5, frameCBuffers);
-	gD3DContext->VSSetConstantBuffers(1, 5, frameCBuffers); // First parameter must match constant buffer number in the shader 
+	gD3DContext->VSSetConstantBuffers(1, 5, frameCBuffers); // First parameter must match constant buffer number in the shader
 	gD3DContext->GSSetConstantBuffers(1, 5, frameCBuffers);
 
 	////--------------- Render ordinary models ---------------///
@@ -544,11 +527,9 @@ void CScene::RenderSceneFromCamera(CCamera* camera)
 	}
 }
 
-
 // Rendering the scene
 ID3D11ShaderResourceView* CScene::RenderScene(float frameTime)
 {
-
 	//// Common settings ////
 
 	// Set up the light information in the constant buffer
@@ -609,14 +590,11 @@ ID3D11ShaderResourceView* CScene::RenderScene(float frameTime)
 // Update models and camera. frameTime is the time passed since the last frame
 void CScene::UpdateScene(float frameTime)
 {
-
 	// Post processing settings - all data for post-processes is updated every frame whether in use or not (minimal cost)
-
 
 	// Set and increase the burn level (cycling back to 0 when it reaches 1.0f)
 	const float burnSpeed = 0.2f;
 	gPostProcessingConstants.burnHeight = fmod(gPostProcessingConstants.burnHeight + burnSpeed * frameTime, 1.0f);
-
 
 	// Set and increase the amount of spiral - use a tweaked cos wave to animate
 	static float wiggle = 0.0f;
@@ -669,6 +647,7 @@ CScene::~CScene()
 	if (gPerFrameSpotLightsConstBuffer)		gPerFrameSpotLightsConstBuffer->Release();
 	if (gPerFrameDirLightsConstBuffer)		gPerFrameDirLightsConstBuffer->Release();
 	if (gPerFramePointLightsConstBuffer)	gPerFramePointLightsConstBuffer->Release();
+
 	if (mTargetView)						mTargetView->Release();
 	if (mTextrue)							mTextrue->Release();
 	if (mTextureSRV)						mTextureSRV->Release();
@@ -679,13 +658,16 @@ CScene::~CScene()
 	if (mFinalTextrue)		mFinalTextrue->Release();
 	if (mFinalTextureSRV)	mFinalTextureSRV->Release();
 
-	if (mNoiseMap)		mNoiseMap->Release();
+	if (mNoiseMap)			mNoiseMap->Release();
 	if (mNoiseMapSRV)		mNoiseMapSRV->Release();
-	if (mBurnMap)		mBurnMap->Release();
+	if (mBurnMap)			mBurnMap->Release();
 	if (mBurnMapSRV)		mBurnMapSRV->Release();
 	if (mDistortMap)		mDistortMap->Release();
 	if (mDistortMapSRV)		mDistortMapSRV->Release();
 
+	if (mLuminanceMap)		mLuminanceMap->Release();
+	if (mLuminanceMapSRV)	mLuminanceMapSRV->Release();
+	if (mLuminanceRenderTarget)mLuminanceRenderTarget->Release();
 
 	ReleaseDefaultShaders();
 }
@@ -717,13 +699,16 @@ void CScene::Resize(UINT newX, UINT newY)
 	mFinalTextrue->Release();
 	mFinalTextureSRV->Release();
 
+	mLuminanceMap->Release();
+	mLuminanceMapSRV->Release();
+	mLuminanceRenderTarget->Release();
+
 	//recreate all the texture with the updated size
 	InitTextures();
 }
 
 void CScene::InitTextures()
 {
-
 	// We create a new texture for the scene with new size
 	D3D11_TEXTURE2D_DESC textureDesc = {};
 	textureDesc.Width = mViewportX; // Size of the "screen"
@@ -747,12 +732,15 @@ void CScene::InitTextures()
 		throw std::runtime_error("Error creating scene texture");
 	}
 
+	if (FAILED(gD3DDevice->CreateTexture2D(&textureDesc, NULL, &mLuminanceMap)))
+	{
+		throw std::runtime_error("Error creating luminance texture");
+	}
 
 	D3D11_RENDER_TARGET_VIEW_DESC rtvDesc;
 	rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 	rtvDesc.Texture2D.MipSlice = 0;
-
 
 	// We created the scene texture above, now we get a "view" of it as a render target, i.e. get a special pointer to the texture that
 	// we use when rendering to it (see RenderScene function below)
@@ -764,6 +752,11 @@ void CScene::InitTextures()
 	if (FAILED(gD3DDevice->CreateRenderTargetView(mFinalTextrue, &rtvDesc, &mFinalTargetView)))
 	{
 		gLastError = "Error creating scene render target view";
+	}
+
+	if (FAILED(gD3DDevice->CreateRenderTargetView(mLuminanceMap, &rtvDesc, &mLuminanceRenderTarget)))
+	{
+		gLastError = "Error creating luminance render target view";
 	}
 
 	// We also need to send this texture (resource) to the shaders. To do that we must create a shader-resource "view"
@@ -782,6 +775,10 @@ void CScene::InitTextures()
 		throw std::runtime_error("Error creating scene texture shader resource view");
 	}
 
+	if (FAILED(gD3DDevice->CreateShaderResourceView(mLuminanceMap, &srvDesc, &mLuminanceMapSRV)))
+	{
+		throw std::runtime_error("Error creating luminance shader resource view");
+	}
 
 	//create depth stencil
 	D3D11_TEXTURE2D_DESC dsDesc = {};
@@ -844,7 +841,7 @@ void CScene::InitTextures()
 }
 
 //--------------------------------------------------------------------------------------
-// Post Pocessing 
+// Post Pocessing
 //--------------------------------------------------------------------------------------
 
 void CScene::PostProcessingPass()
@@ -889,7 +886,6 @@ void CScene::PostProcessingPass()
 					}
 					else
 					{
-
 						static CVector3 areaPos = { 0,0,0 };
 						static CVector2 areaSize = { 0,0 };
 
@@ -961,9 +957,8 @@ void CScene::PostProcessingPass()
 				ID3D11ShaderResourceView* nullSRV = nullptr;
 				gD3DContext->PSSetShaderResources(0, 1, &nullSRV);
 
-				if (filter->type == PostProcess::SSAO)
+				if (filter->type == PostProcess::SSAO || filter->type == PostProcess::Bloom)
 					gD3DContext->PSSetShaderResources(1, 1, &nullSRV);
-
 
 				filter++;
 			}
@@ -973,7 +968,6 @@ void CScene::PostProcessingPass()
 
 void CScene::RenderToDepthMap()
 {
-
 	// Select the shadow map texture as the current depth buffer. We will not be rendering any pixel colours
 	// Also clear the the shadow map depth buffer to the far distance
 	gD3DContext->OMSetRenderTargets(0, nullptr, mFinalDepthStencilView);
@@ -987,13 +981,12 @@ void CScene::RenderToDepthMap()
 	}
 }
 
-
 void CScene::DisplayPostProcessingEffects()
 {
 	static bool choosePP = false;
 	static bool editProperties = false;
 
-	//Render a window with all the postprocessing 
+	//Render a window with all the postprocessing
 	if (ImGui::Begin("PostProcessing", 0, ImGuiWindowFlags_NoBringToFrontOnFocus))
 	{
 		//show a button "new"
@@ -1008,7 +1001,7 @@ void CScene::DisplayPostProcessingEffects()
 		while (filter != mPostProcessingFilters.end())
 		{
 			//****| INFO |*******************************************************************************************//
-			//	The next variable is for the buttons management in ImGui. 
+			//	The next variable is for the buttons management in ImGui.
 			//	If there are multiple button witht the same lable, imgui will not recognise them.
 			//	This problem is being avoided with the "position" of the filter in the list, hence using the std::distance function,
 			//	added it to the button lable. The hashtags are used to not show the id in the GUI.
@@ -1024,7 +1017,6 @@ void CScene::DisplayPostProcessingEffects()
 				editProperties = true;
 			}
 
-
 			if (mPostProcessingFilters.size() > 1)
 			{
 				if (filter != --mPostProcessingFilters.end())
@@ -1033,13 +1025,12 @@ void CScene::DisplayPostProcessingEffects()
 
 					std::string label = "Move Down##";
 
-					label+=(buttonId);
+					label += (buttonId);
 
 					if (ImGui::Button(label.c_str()))
 					{
 						std::iter_swap(++filter, filter);
 					}
-
 				}
 
 				if (filter != mPostProcessingFilters.begin())
@@ -1048,7 +1039,7 @@ void CScene::DisplayPostProcessingEffects()
 
 					std::string label = "Move Up##";
 
-					label+=(buttonId);
+					label += (buttonId);
 
 					if (ImGui::Button(label.c_str()))
 					{
@@ -1063,7 +1054,7 @@ void CScene::DisplayPostProcessingEffects()
 
 			std::string label = "Remove##";
 
-					label+=(buttonId);
+			label += (buttonId);
 
 			if (ImGui::Button(label.c_str()))
 			{
@@ -1130,15 +1121,17 @@ void CScene::DisplayPostProcessingEffects()
 	// Noise scaling adjusts how fine the grey noise is.
 	static float grainSize = 140; // Fineness of the noise grain
 
+	static bool showLuminanceMap = false;
+
 	//open a window that lets the user modify the post processing properties
 	if (editProperties && mPostProcessingFilters.size())
 	{
 		if (ImGui::Begin("Properties", &editProperties))
 		{
-			//for each effect 
+			//for each effect
 			for (auto postProcess : mPostProcessingFilters)
 			{
-				//go through the type and display the properties 
+				//go through the type and display the properties
 				switch (postProcess.type)
 				{
 				case CScene::PostProcess::None:
@@ -1207,6 +1200,22 @@ void CScene::DisplayPostProcessingEffects()
 					break;
 
 				case CScene::PostProcess::Bloom:
+
+					ImGui::DragFloat("Threshold", &gPostProcessingConstants.bloomThreshold, 0.001f, 0.f, 3.0f);
+
+					if (ImGui::Button("Show luminance texture"))
+					{
+						showLuminanceMap = !showLuminanceMap;
+					}
+
+					if (showLuminanceMap)
+					{
+						ImGui::Image(mLuminanceMapSRV, { 128.0f,128.0f });
+					}
+
+					ImGui::DragFloat("Directions", &gPostProcessingConstants.blurDirections, 0.1f, 0.01f, 64.0f);
+					ImGui::DragFloat("Quality", &gPostProcessingConstants.blurQuality, 0.1, 1.0f, 64.0f);
+					ImGui::DragFloat("Size", &gPostProcessingConstants.blurSize, 0.1f);
 
 					break;
 				}
@@ -1309,7 +1318,53 @@ void CScene::SelectPostProcessShaderAndTextures(PostProcess postProcess)
 
 	case CScene::PostProcess::Bloom:
 
+		//****| INFO |*******************************************************************************************//
+		//	For the bloom post processing effect there are multiple passes, exactly 4.
+		//	Fist the scene texture gets analysed and a luminance map gets created. This map is contains only the brightest zones of the scene.
+		//	Secondly the luminance map gets blurried, using the Gaussian blur.
+		//	Since the luminance render target and the luminance map are connected, in this pass the render target is the mFinalRenderTarget
+		//	Thirdly there is a copy pass, the finalTexture content gets copyed to the luminance map
+		//	Finally the luminance map and the scene texture are added together.
+		//*******************************************************************************************************//
+
+		// 1st pass - The luminance map gets extracted
+		gD3DContext->OMSetRenderTargets(1, &mLuminanceRenderTarget, nullptr);
+
 		gD3DContext->PSSetShader(gBloomPostProcess, nullptr, 0);
+
+		gD3DContext->Draw(4, 0);
+
+		// 2nd pass - The luminance map gets blurried (rendered in the mFinalMap)
+		gD3DContext->OMSetRenderTargets(1, &mFinalTargetView, mDepthStencilView);
+
+		gD3DContext->PSSetShaderResources(0, 1, &mLuminanceMapSRV);
+
+		gD3DContext->PSSetShader(gGaussionBlurPostProcess, nullptr, 0);
+
+		gD3DContext->Draw(4, 0);
+
+		ID3D11ShaderResourceView* nullSRV = nullptr;
+		gD3DContext->PSSetShaderResources(0, 1, &nullSRV);
+
+		// 3rd pass - the luminance pass gets copied from the FinalTexture in the mLuminanceMap
+		gD3DContext->OMSetRenderTargets(1, &mLuminanceRenderTarget, mDepthStencilView);
+
+		gD3DContext->PSSetShaderResources(0, 1, &mFinalTextureSRV);
+
+		gD3DContext->PSSetShader(gCopyPostProcess, nullptr, 0);
+
+		gD3DContext->Draw(4, 0);
+
+		// 4th pass - the scene texture and the luminance map are added toghether
+		gD3DContext->PSSetShaderResources(0, 1, &nullSRV);
+
+		gD3DContext->OMSetRenderTargets(1, &mFinalTargetView, nullptr);
+
+		gD3DContext->PSSetShaderResources(0, 1, &mTextureSRV);
+
+		gD3DContext->PSSetShaderResources(1, 1, &mLuminanceMapSRV);
+
+		gD3DContext->PSSetShader(gBloomLastPostProcess, nullptr, 0);
 
 		break;
 	}
@@ -1320,7 +1375,7 @@ void CScene::FullScreenPostProcess(PostProcess postProcess)
 	// Select the back buffer to use for rendering. Not going to clear the back-buffer because we're going to overwrite it all
 	gD3DContext->OMSetRenderTargets(1, &mFinalTargetView, mDepthStencilView);
 
-	// Give the pixel shader (post-processing shader) access to the scene texture 
+	// Give the pixel shader (post-processing shader) access to the scene texture
 	gD3DContext->PSSetShaderResources(0, 1, &mTextureSRV);
 
 	// Use point sampling (no bilinear, trilinear, mip-mapping etc. for most post-processes)
@@ -1330,31 +1385,27 @@ void CScene::FullScreenPostProcess(PostProcess postProcess)
 	gD3DContext->VSSetShader(g2DQuadVertexShader, nullptr, 0);
 	gD3DContext->GSSetShader(nullptr, nullptr, 0);  // Switch off geometry shader when not using it (pass nullptr for first parameter)
 
-
 	// States - no blending, write to depth buffer and ignore back-face culling
 	gD3DContext->OMSetBlendState(gNoBlendingState, nullptr, 0xffffff);
 	gD3DContext->OMSetDepthStencilState(gDepthReadOnlyState, 0);
 	gD3DContext->RSSetState(gCullNoneState);
 
-
 	// No need to set vertex/index buffer (see 2D quad vertex shader), just indicate that the quad will be created as a triangle strip
 	gD3DContext->IASetInputLayout(NULL); // No vertex data
 	gD3DContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-
-
-	// Select shader and textures needed for the required post-processes (helper function above)
-	SelectPostProcessShaderAndTextures(postProcess);
 
 	// Set 2D area for full-screen post-processing (coordinates in 0->1 range)
 	gPostProcessingConstants.area2DTopLeft = { 0, 0 }; // Top-left of entire screen
 	gPostProcessingConstants.area2DSize = { 1, 1 }; // Full size of screen
 	gPostProcessingConstants.area2DDepth = 0;        // Depth buffer value for full screen is as close as possible
 
-
 													 // Pass over the above post-processing settings (also the per-process settings prepared in UpdateScene function below)
 	UpdatePostProcessingConstBuffer(gPostProcessingConstBuffer, gPostProcessingConstants);
 	gD3DContext->VSSetConstantBuffers(1, 1, &gPostProcessingConstBuffer);
 	gD3DContext->PSSetConstantBuffers(1, 1, &gPostProcessingConstBuffer);
+
+	// Select shader and textures needed for the required post-processes (helper function above)
+	SelectPostProcessShaderAndTextures(postProcess);
 
 	// Draw a quad
 	gD3DContext->Draw(4, 0);
@@ -1363,8 +1414,8 @@ void CScene::FullScreenPostProcess(PostProcess postProcess)
 	ID3D11ShaderResourceView* nullSRV = nullptr;
 	gD3DContext->PSSetShaderResources(0, 1, &nullSRV);
 
-	//now that the post processing is applied 
-	//set back the main target view 
+	//now that the post processing is applied
+	//set back the main target view
 
 	// Select the back buffer to use for rendering. Not going to clear the back-buffer because we're going to overwrite it all
 	gD3DContext->OMSetRenderTargets(1, &mTargetView, mDepthStencilView);
@@ -1372,10 +1423,10 @@ void CScene::FullScreenPostProcess(PostProcess postProcess)
 	//set the copy shader
 	gD3DContext->PSSetShader(gCopyPostProcess, nullptr, 0);
 
-	//set the final texture as a shader resource 
+	//set the final texture as a shader resource
 	gD3DContext->PSSetShaderResources(0, 1, &mFinalTextureSRV);
 
-	//draw a quad 
+	//draw a quad
 	gD3DContext->Draw(4, 0);
 
 	//unbind the texture from the pixel shader
@@ -1387,7 +1438,6 @@ void CScene::AreaPostProcess(PostProcess postProcess, CVector3 worldPoint, CVect
 {
 	// First perform a full-screen copy of the scene to back-buffer
 	FullScreenPostProcess(PostProcess::Copy);
-
 
 	// Now perform a post-process of a portion of the scene to the back-buffer (overwriting some of the copy above)
 	// Note: The following code relies on many of the settings that were prepared in the FullScreenPostProcess call above, it only
@@ -1402,7 +1452,6 @@ void CScene::AreaPostProcess(PostProcess postProcess, CVector3 worldPoint, CVect
 	// Alpha blending isn't enabled for fullscreen and polygon effects so it doesn't affect those (except heat-haze, which works a bit differently)
 	gD3DContext->OMSetBlendState(gAlphaBlendingState, nullptr, 0xffffff);
 
-
 	// Use picking methods to find the 2D position of the 3D point at the centre of the area effect
 	auto worldPointTo2D = mCamera->PixelFromWorldPt(worldPoint, mViewportX, mViewportY);
 	CVector2 area2DCentre = { worldPointTo2D.x, worldPointTo2D.y };
@@ -1415,7 +1464,6 @@ void CScene::AreaPostProcess(PostProcess postProcess, CVector3 worldPoint, CVect
 	area2DCentre.x /= mViewportX;
 	area2DCentre.y /= mViewportY;
 
-
 	// Using new helper function here - it calculates the world space units covered by a pixel at a certain distance from the camera.
 	// Use this to find the size of the 2D area we need to cover the world space size requested
 	CVector2 pixelSizeAtPoint = mCamera->PixelSizeInWorldSpace(areaDistance, mViewportX, mViewportY);
@@ -1424,7 +1472,6 @@ void CScene::AreaPostProcess(PostProcess postProcess, CVector3 worldPoint, CVect
 	// Again convert the result in pixels to a result to 0->1 coordinates
 	area2DSize.x /= mViewportX;
 	area2DSize.y /= mViewportY;
-
 
 	// Send the area top-left and size into the constant buffer - the 2DQuad vertex shader will use this to create a quad in the right place
 	gPostProcessingConstants.area2DTopLeft = area2DCentre - 0.5f * area2DSize; // Top-left of area is centre - half the size
@@ -1440,7 +1487,6 @@ void CScene::AreaPostProcess(PostProcess postProcess, CVector3 worldPoint, CVect
 	UpdatePostProcessingConstBuffer(gPostProcessingConstBuffer, gPostProcessingConstants);
 	gD3DContext->VSSetConstantBuffers(1, 1, &gPostProcessingConstBuffer);
 	gD3DContext->PSSetConstantBuffers(1, 1, &gPostProcessingConstBuffer);
-
 
 	// Draw a quad
 	gD3DContext->Draw(4, 0);

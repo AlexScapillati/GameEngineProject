@@ -30,6 +30,7 @@ ID3D11PixelShader*  gChromaticAberrationPostProcess   = nullptr;
 ID3D11PixelShader*  gGaussionBlurPostProcess	= nullptr;
 ID3D11PixelShader* gSsaoPostProcess				= nullptr;
 ID3D11PixelShader* gBloomPostProcess			= nullptr;
+ID3D11PixelShader* gBloomLastPostProcess			= nullptr;
 
 
 
@@ -246,6 +247,7 @@ void LoadDefaultShaders()
 	gGaussionBlurPostProcess	= LoadPixelShader("PostProcessing/GaussionBlur_pp");
 	gSsaoPostProcess			= LoadPixelShader("PostProcessing/SSAO_pp");
 	gBloomPostProcess			= LoadPixelShader("PostProcessing/Bloom_pp");
+	gBloomLastPostProcess		= LoadPixelShader("PostProcessing/BloomLast_pp");
 
 
 	if (!(gDepthOnlyPixelShader = LoadPixelShader("Shaders/DepthOnly_ps")) ||
@@ -257,7 +259,7 @@ void LoadDefaultShaders()
 		gDistortPostProcess == nullptr || gSpiralPostProcess == nullptr ||
 		g2DPolygonVertexShader == nullptr || gChromaticAberrationPostProcess == nullptr ||
 		gGaussionBlurPostProcess == nullptr || gSsaoPostProcess == nullptr ||
-		gBloomPostProcess == nullptr)
+		gBloomPostProcess == nullptr || gBloomLastPostProcess == nullptr)
 	{
 		throw std::runtime_error("Error loading default shaders");
 	}
@@ -280,6 +282,7 @@ void ReleaseDefaultShaders()
 	if (gChromaticAberrationPostProcess)	gChromaticAberrationPostProcess	->Release();
 	if (gGaussionBlurPostProcess)			gGaussionBlurPostProcess		->Release();
 	if (gBloomPostProcess)					gBloomPostProcess				->Release();
+	if (gBloomLastPostProcess)				gBloomLastPostProcess			->Release();
 }
 
 // Create and return a constant buffer of the given size

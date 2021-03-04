@@ -224,6 +224,8 @@ struct PostProcessingConstants
 	float blurQuality = 3.0; // BLUR QUALITY (Default 4.0 - More is better but slower)
 	float blurSize = 8.0; // BLUR SIZE (Radius)
 
+	float bloomThreshold = 0.5f;
+
 };
 extern PostProcessingConstants gPostProcessingConstants; // This variable holds the CPU-side constant buffer described above
 extern ID3D11Buffer* gPostProcessingConstBuffer; // This variable controls the GPU-side constant buffer related to the above structure
