@@ -2,13 +2,11 @@
 // Initialisation of Direct3D and main resources (textures, shaders etc.)
 //--------------------------------------------------------------------------------------
 
-
 #include "Direct3DSetup.h"
 #include "Common.h"
 #include <d3d11.h>
 #include <vector>
 #include <stdexcept>
-
 
 //--------------------------------------------------------------------------------------
 // Global Variables
@@ -18,6 +16,7 @@
 // The main Direct3D (D3D) variables
 ID3D11Device* gD3DDevice = nullptr; // D3D device for overall features
 ID3D11DeviceContext* gD3DContext = nullptr; // D3D context for specific rendering tasks
+ID3D11Debug* gD3DDebug = nullptr;
 
 // Swap chain and back buffer
 IDXGISwapChain* gSwapChain = nullptr;
@@ -27,7 +26,6 @@ ID3D11RenderTargetView* gBackBufferRenderTarget = nullptr;
 ID3D11Texture2D* gDepthStencilTexture = nullptr; // The texture holding the depth values
 ID3D11DepthStencilView* gDepthStencil = nullptr; // The depth buffer referencing above texture
 ID3D11ShaderResourceView* gDepthShaderView = nullptr; // Allows access to the depth buffer as a texture for certain specialised shaders
-
 
 //--------------------------------------------------------------------------------------
 // Initialise / uninitialise Direct3D
@@ -83,6 +81,11 @@ bool InitDirect3D()
 		return false;
 	}
 
+	//create debug device
+	if (FAILED(gD3DDevice->QueryInterface(IID_PPV_ARGS(&gD3DDebug))))
+	{
+		throw std::runtime_error("Unable to create debug device");
+	}
 
 	//// Create depth buffer to go along with the back buffer ////
 
@@ -121,7 +124,7 @@ bool InitDirect3D()
 	}
 
 	// Also create a shader resource view for the depth buffer - required when we want to access the depth buffer as a texture (also note the two important comments in above code)
-	// Note the veryt 
+	// Note the veryt
 	D3D11_SHADER_RESOURCE_VIEW_DESC descSRV;
 	descSRV.Format = DXGI_FORMAT_R32_FLOAT;
 	descSRV.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
@@ -136,7 +139,6 @@ bool InitDirect3D()
 
 	return true;
 }
-
 
 // Release the memory held by all objects created
 void ShutdownDirect3D()
@@ -157,11 +159,14 @@ void ShutdownDirect3D()
 	if (gSwapChain)              gSwapChain->Release();
 	if (gD3DDevice)              gD3DDevice->Release();
 
+	//check for memory leaks
+	gD3DDebug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
+
+	if (gD3DDebug) gD3DDebug->Release();
 }
 
 void Resize(UINT w, UINT h)
 {
-
 	gViewportWidth = w;
 	gViewportHeight = h;
 
@@ -172,9 +177,9 @@ void Resize(UINT w, UINT h)
 	// Release all outstanding references to the swap chain's buffers.
 	gBackBufferRenderTarget->Release();
 
-	 gDepthShaderView->Release();
-	 gDepthStencil->Release();
-	 gDepthStencilTexture->Release();
+	gDepthShaderView->Release();
+	gDepthStencil->Release();
+	gDepthStencilTexture->Release();
 
 	//// Create depth buffer to go along with the back buffer ////
 
@@ -213,7 +218,7 @@ void Resize(UINT w, UINT h)
 	}
 
 	// Also create a shader resource view for the depth buffer - required when we want to access the depth buffer as a texture (also note the two important comments in above code)
-	// Note the veryt 
+	// Note the veryt
 	D3D11_SHADER_RESOURCE_VIEW_DESC descSRV;
 	descSRV.Format = DXGI_FORMAT_R32_FLOAT;
 	descSRV.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
@@ -228,7 +233,7 @@ void Resize(UINT w, UINT h)
 
 	// Preserve the existing buffer count and format.
 	// Automatically choose the width and height to match the client rect for HWNDs.
-	hr = gSwapChain->ResizeBuffers(1, w, h, DXGI_FORMAT_R8G8B8A8_UNORM,D3D11_CREATE_DEVICE_DEBUG);
+	hr = gSwapChain->ResizeBuffers(1, w, h, DXGI_FORMAT_R8G8B8A8_UNORM, D3D11_CREATE_DEVICE_DEBUG);
 	if (FAILED(hr))
 	{
 		gLastError = "Error resizing buffer";
@@ -237,7 +242,7 @@ void Resize(UINT w, UINT h)
 
 	// Get buffer and create a render-target-view.
 	ID3D11Texture2D* pBuffer;
-	hr = gSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D),(void**)&pBuffer);
+	hr = gSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&pBuffer);
 	if (FAILED(hr))
 	{
 		gLastError = "Error getting buffer ";

@@ -9,11 +9,10 @@
 #include "CVector3.h"
 #include "CVector4.h"
 
-
 // Matrix class
 class CMatrix4x4
 {
-// Concrete class - public access
+	// Concrete class - public access
 public:
 	// Matrix elements
 	float e00, e01, e02, e03;
@@ -21,61 +20,51 @@ public:
 	float e20, e21, e22, e23;
 	float e30, e31, e32, e33;
 
- 
-    /*-----------------------------------------------------------------------------------------
-        Member functions
-    -----------------------------------------------------------------------------------------*/
+	/*-----------------------------------------------------------------------------------------
+		Member functions
+	-----------------------------------------------------------------------------------------*/
 
 	// Set a single row (range 0-3) of the matrix using a CVector3. Fourth element left unchanged
-    // Can be used to set position or x,y,z axes in a matrix
-    void SetRow(int iRow, const CVector3& v);
+	// Can be used to set position or x,y,z axes in a matrix
+	void SetRow(int iRow, const CVector3& v);
 
-    // Get a single row (range 0-3) of the matrix into a CVector3. Fourth element is ignored
-    // Can be used to access position or x,y,z axes from a matrix
-    CVector3 GetRow(int iRow);
+	// Get a single row (range 0-3) of the matrix into a CVector3. Fourth element is ignored
+	// Can be used to access position or x,y,z axes from a matrix
+	CVector3 GetRow(int iRow);
 
-    // Initialise this matrix with a pointer to 16 floats 
-    void SetValues(float* matrixValues)  { *this = *reinterpret_cast<CMatrix4x4*>(matrixValues); }
+	// Initialise this matrix with a pointer to 16 floats
+	void SetValues(float* matrixValues) { *this = *reinterpret_cast<CMatrix4x4*>(matrixValues); }
 
- 
-    // Helper functions
-    CVector3 GetXAxis()     { return GetRow(0); }
-    CVector3 GetYAxis()     { return GetRow(1); }
-    CVector3 GetZAxis()     { return GetRow(2); }
-    CVector3 GetPosition()  { return GetRow(3); }
-    CVector3 GetEulerAngles() ;
-    CVector3 GetScale()      { return { Length(GetXAxis()), Length(GetYAxis()) , Length(GetZAxis()) }; }
+	// Helper functions
+	CVector3 GetXAxis() { return GetRow(0); }
+	CVector3 GetYAxis() { return GetRow(1); }
+	CVector3 GetZAxis() { return GetRow(2); }
+	CVector3 GetPosition() { return GetRow(3); }
+	CVector3 GetEulerAngles();
+	CVector3 GetScale() { return { Length(GetXAxis()), Length(GetYAxis()) , Length(GetZAxis()) }; }
 
-    float* GetArray() {
-        float* m[] = 
-        {
-            &e00, &e01, &e02, &e03,
-            &e10, &e11, &e12, &e13,
-            &e20, &e21, &e22, &e23,
-            &e30, &e31, &e32, &e33,
-        };
-        return *m;
-    }
+	float* GetArray() {
+		return &e00;
+	}
 
-    // Post-multiply this matrix by the given one
-    CMatrix4x4& operator*=(const CMatrix4x4& m);
+	// Post-multiply this matrix by the given one
+	CMatrix4x4& operator*=(const CMatrix4x4& m);
 
-    CVector4 operator*=(const CVector4& v);
+	CVector4 operator*=(const CVector4& v);
 
-    // Make this matrix an affine 3D transformation matrix to face from current position to given
-    // target (in the Z direction). Can pass up vector for the constructed matrix and specify
-    // handedness (right-handed Z axis will face away from target)
-    // Will retain the matrix's current scaling
-    void FaceTarget(const CVector3& target);
+	// Make this matrix an affine 3D transformation matrix to face from current position to given
+	// target (in the Z direction). Can pass up vector for the constructed matrix and specify
+	// handedness (right-handed Z axis will face away from target)
+	// Will retain the matrix's current scaling
+	void FaceTarget(const CVector3& target);
 
-    // Transpose the matrix (rows become columns). There are two ways to store a matrix, by rows or by columns.
-    // Different apps use different methods. Use Transpose to swap when necessary.
-    void Transpose();
+	// Transpose the matrix (rows become columns). There are two ways to store a matrix, by rows or by columns.
+	// Different apps use different methods. Use Transpose to swap when necessary.
+	void Transpose();
 };
 
-
 /*-----------------------------------------------------------------------------------------
-    Non Member Operators
+	Non Member Operators
 -----------------------------------------------------------------------------------------*/
 
 // Matrix-matrix multiplication
@@ -83,7 +72,6 @@ CMatrix4x4 operator*(const CMatrix4x4& m1, const CMatrix4x4& m2);
 
 // Return the given CVector4 transformed by the given matrix
 CVector4 operator*(const CVector4& v, const CMatrix4x4& m);
-
 
 /*-----------------------------------------------------------------------------------------
   Non-member functions
@@ -99,7 +87,6 @@ CMatrix4x4 MatrixIdentity();
 // Return a translation matrix of the given vector
 CMatrix4x4 MatrixTranslation(const CVector3& t);
 
-
 // Return an X-axis rotation matrix of the given angle (in radians)
 CMatrix4x4 MatrixRotationX(float x);
 
@@ -109,18 +96,14 @@ CMatrix4x4 MatrixRotationY(float y);
 // Return a Z-axis rotation matrix of the given angle (in radians)
 CMatrix4x4 MatrixRotationZ(float z);
 
-
 // Return a matrix that is a scaling in X,Y and Z of the values in the given vector
 CMatrix4x4 MatrixScaling(const CVector3& s);
 
 // Return a matrix that is a uniform scaling of the given amount
 CMatrix4x4 MatrixScaling(const float s);
 
-
-
 // Return the inverse of given matrix assuming that it is an affine matrix
 // Advanced calulation needed to get the view matrix from the camera's positioning matrix
 CMatrix4x4 InverseAffine(const CMatrix4x4& m);
-
 
 #endif // _CMATRIX4X4_H_DEFINED_

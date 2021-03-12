@@ -38,6 +38,10 @@ public:
 	// frameTime is the time passed since the last frame
 	void UpdateScene(float frameTime);
 
+	void AddObjectsMenu();
+
+	void DisplayPropertiesWindow();
+
 	void DisplayObjects();
 
 	//--------------------------------------------------------------------------------------
@@ -47,9 +51,9 @@ public:
 	std::string mDefaultVs;
 	std::string mDefaultPs;
 
-	std::unique_ptr<CGameObjectManager> mObjManager;
+	CGameObjectManager* mObjManager;
 
-	std::unique_ptr<CCamera> mCamera;
+	CCamera* mCamera;
 
 	// Lock FPS to monitor refresh rate, which will typically set it to 60fps. Press 'p' to toggle to full fps
 	bool mLockFPS = true;
@@ -58,6 +62,8 @@ public:
 
 	UINT mViewportX;
 	UINT mViewportY;
+
+	void Save(std::string fileName);
 
 	~CScene();
 
@@ -86,6 +92,8 @@ private:
 	// Variables controlling light1's orbiting of the cube
 	float gLightOrbitRadius;
 	float gLightOrbitSpeed;
+
+	CGameObject* mSelectedObj;
 
 	ID3D11Texture2D* mTextrue;
 	ID3D11ShaderResourceView* mTextureSRV;
@@ -203,4 +211,9 @@ private:
 
 	//to remove
 	void LoadPostProcessingImages();
+
+	void ReleasePostProcessingShaders();
+
+	template<class T>
+	void DisplayDeque(std::deque<T*> deque);
 };

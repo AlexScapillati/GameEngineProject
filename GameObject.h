@@ -24,12 +24,13 @@ public:
 	//-------------------------------------
 	// Construction / Usage
 	//-------------------------------------
-	CGameObject(const CGameObject&);
+
+	CGameObject(CGameObject&);
 
 	CGameObject(std::string mesh, std::string name, std::string& diffuseMap, std::string& vertexShader,
 		std::string& pixelShader, CVector3 position = { 0,0,0 }, CVector3 rotation = { 0,0,0 }, float scale = 1);
 
-	CGameObject(std::string id, std::string name, std::string vs, std::string ps, CVector3 position, CVector3 rotation, float scale);
+	CGameObject(std::string id, std::string name, std::string vs, std::string ps, CVector3 position = { 0,0,0 }, CVector3 rotation = { 0,0,0 }, float scale = 1);
 
 	virtual void Render(bool basicGeometry = false);
 
@@ -55,13 +56,21 @@ public:
 
 	CMesh* GetMesh() const;
 
+	auto GetMeshFileName() { return mMeshFiles.front(); }
+
 	auto GetName() { return mName; }
+
+	auto SetName(std::string n) { mName = n; }
 
 	auto Enabled() { return &mEnabled; }
 
 	auto GetTextureSRV() { return mMaterial->GetTextureSRV(); }
 
 	auto GetTexture() { return mMaterial->GetTexture(); }
+
+	auto GetTextrueFileName() { return mMaterial->GetTextureFileName(); }
+
+	auto GetMaterial() { return mMaterial; }
 
 	// Setters - model only stores matricies , so if user sets position, rotation or scale, just update those aspects of the matrix
 	void SetPosition(CVector3 position, int node = 0);
@@ -95,12 +104,10 @@ public:
 	// Private data / members
 	//-------------------------------------
 
-
 protected:
 
-
 	//the material
-	std::unique_ptr<CMaterial> mMaterial;
+	CMaterial* mMaterial;
 
 	//the meshes that a model has (all the LODS that a model has)
 	std::vector<std::string> mMeshFiles;
@@ -124,14 +131,10 @@ protected:
 		UINT size;
 
 		void Release();
-
 	} mAmbientMap;
-
 
 	// World matrices for the model
 	// Now that meshes have multiple parts, we need multiple matrices. The root matrix (the first one) is the world matrix
 	// for the entire model. The remaining matrices are relative to their parent part. The hierarchy is defined in the mesh (nodes)
 	std::vector<CMatrix4x4> mWorldMatrices;
-
 };
-

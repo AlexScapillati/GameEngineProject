@@ -4,7 +4,6 @@
 // Holds a pointer to a mesh as well as position, rotation and scaling, which are converted to a world matrix when required
 // This is more of a convenience class, the Mesh class does most of the difficult work.
 
-
 #include "GameObject.h"
 #include <codecvt>
 #include "GraphicsHelpers.h"
@@ -14,10 +13,10 @@
 #include "ColourRGBA.h"
 #include "GameObjectManager.h"
 
-CGameObject::CGameObject(const CGameObject& obj)
+CGameObject::CGameObject(CGameObject& obj)
 {
 	mEnabled = true;
-	mMaterial = std::make_unique<CMaterial>(*obj.mMaterial);
+	mMaterial = new CMaterial(*obj.mMaterial);
 	mMeshFiles = obj.mMeshFiles;
 	mMesh = std::make_unique<CMesh>(*obj.mMesh);
 	mName = "new" + obj.mName;
@@ -28,6 +27,10 @@ CGameObject::CGameObject(const CGameObject& obj)
 	mWorldMatrices.resize(mMesh->NumberNodes());
 	for (auto i = 0; i < mWorldMatrices.size(); ++i)
 		mWorldMatrices[i] = mMesh->GetNodeDefaultMatrix(i);
+
+	SetPosition(obj.Position());
+	SetRotation(obj.Rotation());
+	SetScale(obj.Scale());
 }
 
 CGameObject::CGameObject(std::string mesh, std::string name, std::string& diffuseMap, std::string&
@@ -46,7 +49,7 @@ CGameObject::CGameObject(std::string mesh, std::string name, std::string& diffus
 	//import material
 	try
 	{
-		mMaterial = std::make_unique<CMaterial>(diffuseMap, vertexShader, pixelShader);
+		mMaterial = new CMaterial(diffuseMap, vertexShader, pixelShader);
 	}
 	catch (std::exception e)
 	{
@@ -59,6 +62,7 @@ CGameObject::CGameObject(std::string mesh, std::string name, std::string& diffus
 	try
 	{
 		mMesh = std::make_unique<CMesh>(mesh);
+		mMeshFiles.push_back(mesh);
 
 		// Set default matrices from mesh
 		mWorldMatrices.resize(mMesh->NumberNodes());
@@ -77,7 +81,6 @@ CGameObject::CGameObject(std::string mesh, std::string name, std::string& diffus
 	SetScale(scale);
 }
 
-
 void GetFilesWithID(std::string& dirPath, std::vector<std::string>& fileNames, std::string& id)
 {
 	//iterate through the directory
@@ -89,7 +92,6 @@ void GetFilesWithID(std::string& dirPath, std::vector<std::string>& fileNames, s
 	{
 		if (!is_directory(iter->path()))
 		{
-
 			auto filename = iter->path().filename().string();
 
 			if (filename.find(id) != std::string::npos)
@@ -105,7 +107,6 @@ void GetFilesWithID(std::string& dirPath, std::vector<std::string>& fileNames, s
 			throw std::runtime_error("Error accessing " + ec.message());
 		}
 	}
-
 }
 
 CGameObject::CGameObject(std::string id, std::string name, std::string vs, std::string ps, CVector3 position /*= { 0,0,0 }*/, CVector3 rotation /*= { 0,0,0 }*/, float scale /*= 1*/)
@@ -123,7 +124,7 @@ CGameObject::CGameObject(std::string id, std::string name, std::string vs, std::
 	GetFilesWithID(gMediaFolder, files, id);
 
 	//create the material
-	mMaterial = std::make_unique<CMaterial>(files, vs, ps);
+	mMaterial = new CMaterial(files, vs, ps);
 
 	//find meshes trough the files
 	for (auto st : files)
@@ -153,13 +154,11 @@ CGameObject::CGameObject(std::string id, std::string name, std::string vs, std::
 		mWorldMatrices.resize(mMesh->NumberNodes());
 		for (auto i = 0; i < mWorldMatrices.size(); ++i)
 			mWorldMatrices[i] = mMesh->GetNodeDefaultMatrix(i);
-
 	}
 	catch (std::exception& e)
 	{
 		throw std::runtime_error(e.what());
 	}
-
 
 	//geometry loaded, set its position...
 
@@ -178,14 +177,27 @@ void CGameObject::Render(bool basicGeometry)
 	//render the material
 	mMaterial->RenderMaterial(basicGeometry);
 
-	//render the ambient cube map
-	if (mAmbientMap.enabled)
-	{
-		RenderToAmbientMap();
+	// //render the ambient cube map
+	//if (mAmbientMap.enabled)
+	//{
+	//	//store render and depth stencil views
+	//	ID3D11RenderTargetView* prevRenderTarget = nullptr;
+	//	ID3D11DepthStencilView* prevDepthStencil = nullptr;
 
-		//send the cubemap to the shader (slot 5)
-		gD3DContext->PSSetShaderResources(5, 1, &mAmbientMap.mapSRV);
-	}
+	//	gD3DContext->OMGetRenderTargets(1, &prevRenderTarget, &prevDepthStencil);
+
+	//	//render from this object and store into a ambient map
+	//	RenderToAmbientMap();
+
+	//	//restore render target, otherwise the ambient map will not be sent to the shader because it is still bount as a render target
+	//	gD3DContext->OMSetRenderTargets(1, &prevRenderTarget, prevDepthStencil);
+
+	//	//send the cubemap to the shader (slot 5)
+	//	gD3DContext->PSSetShaderResources(5, 1, &mAmbientMap.mapSRV);
+
+		//WIP
+
+	//}
 
 	//TODO render the the correct mesh according to the camera distance
 	mMesh->Render(mWorldMatrices);
@@ -201,7 +213,7 @@ bool CGameObject::Update(float updateTime)
 
 void CGameObject::RenderToAmbientMap()
 {
-	//create the viewport 
+	//create the viewport
 	D3D11_VIEWPORT vp;
 	vp.Width = static_cast<FLOAT>(mAmbientMap.size);
 	vp.Height = static_cast<FLOAT>(mAmbientMap.size);
@@ -211,17 +223,16 @@ void CGameObject::RenderToAmbientMap()
 	vp.TopLeftY = 0;
 	gD3DContext->RSSetViewports(1, &vp);
 
-
-	float mSides[6][3] = {
-			{ 1.0f,	 0.0f,	 0.0f},
-			{-1.0f,	 0.0f,	 0.0f},
-			{ 0.0f,	 1.0f,	 0.0f},
-			{ 0.0f, -1.0f,	 0.0f},
-			{ 0.0f,	 0.0f,	 1.0f},
-			{ 0.0f,	 0.0f,  -1.0f}
+	float mSides[6][3] = {          // Starting from facing down the +ve Z direction, left handed rotations
+			{ 0.0f,	 0.5f,	0.0f},  // +ve X direction (values multiplied by PI)
+			{ 0.0f, -0.5f,	0.0f},  // -ve X direction
+			{-0.5f,	 0.0f,	0.0f},  // +ve Y direction
+			{ 0.5f,	 0.0f,	0.0f},  // -ve Y direction
+			{ 0.0f,	 0.0f,	0.0f},  // +ve Z direction
+			{ 0.0f,	 1.0f,  0.0f}   // -ve Z direction
 	};
 
-	auto matrix = WorldMatrix();
+	const auto& originalRotation = Rotation();
 
 	//for all six faces of the cubemap
 	for (int i = 0; i < 6; ++i)
@@ -252,12 +263,11 @@ void CGameObject::RenderToAmbientMap()
 		}
 	}
 
-	//restore prev matrix
-	SetWorldMatrix(matrix);
+	//restore original rotation
+	SetRotation(originalRotation);
 
 	//generate mipMaps for the cube map
 	gD3DContext->GenerateMips(mAmbientMap.mapSRV);
-
 }
 
 void CGameObject::sAmbientMap::Init()
@@ -265,6 +275,8 @@ void CGameObject::sAmbientMap::Init()
 	//initialize ambient map variables
 	size = 256;
 	enabled = false;
+
+	//http://richardssoftware.net/Home/Post/26
 
 	//initialize the texture map cube
 	D3D11_TEXTURE2D_DESC textureDesc = {};
@@ -323,7 +335,7 @@ void CGameObject::sAmbientMap::Init()
 	dsDesc.Width = size;
 	dsDesc.Height = size;
 	dsDesc.MipLevels = 1;
-	dsDesc.ArraySize = 1; //6 faces
+	dsDesc.ArraySize = 1;
 	dsDesc.Format = DXGI_FORMAT_R32_TYPELESS;
 	dsDesc.SampleDesc.Count = 1;
 	dsDesc.SampleDesc.Quality = 0;
@@ -356,8 +368,10 @@ void CGameObject::sAmbientMap::Init()
 
 CGameObject::~CGameObject()
 {
-}
+	delete mMaterial;
 
+	mAmbientMap.Release();
+}
 
 // Control a given node in the model using keys provided. Amount of motion performed depends on frame time
 void CGameObject::Control(int node, float frameTime, KeyCode turnUp, KeyCode turnDown, KeyCode turnLeft, KeyCode turnRight,
@@ -424,15 +438,8 @@ CMatrix4x4& CGameObject::WorldMatrix(int node) { return mWorldMatrices[node]; }
 
 float* CGameObject::DirectPosition()
 {
-	float* pos[] =
-	{
-		&mWorldMatrices[0].e30,
-		&mWorldMatrices[0].e31,
-		&mWorldMatrices[0].e32,
-	};
-	return *pos;
+	return &mWorldMatrices[0].e30;
 }
-
 
 CMesh* CGameObject::GetMesh() const { return mMesh.get(); }
 
@@ -476,10 +483,8 @@ bool* CGameObject::AmbientMapEnabled()
 
 void CGameObject::sAmbientMap::Release()
 {
-	depthStencilMap->Release();
-	depthStencilView->Release();
-	map->Release();
-	mapSRV->Release();
+	if (depthStencilView != nullptr) depthStencilView->Release();
+	if (mapSRV != nullptr) mapSRV->Release();
 	for (auto it : RTV)
 	{
 		it->Release();

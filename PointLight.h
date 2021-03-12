@@ -5,25 +5,118 @@
 class CPointLight :
 	public CLight
 {
-
 public:
 
 	CPointLight(std::string mesh, std::string name, std::string& diffuse, std::string& vertexShader,
-		std::string& pixelShader, CVector3 colour, float strength, CVector3 position, CVector3 rotation,
-		float scale) :
+		std::string& pixelShader, CVector3 colour, float strength, CVector3 position = { 0.0f,0.0f,0.0f }, CVector3 rotation = { 0.0f,0.0f,0.0f },
+		float scale = 1.0f) :
 		CLight(std::move(mesh), std::move(name), diffuse, vertexShader, pixelShader, colour, strength, position,
 			rotation, scale)
 	{
-		//initialize private values
+		InitTextures();
+	}
+
+	CPointLight(CPointLight& p) : CLight(p)
+	{
+		InitTextures();
+	}
+
+	void Render(bool basicGeometry = false)
+	{
+		CLight::Render(basicGeometry);
+	}
+
+	auto RenderFromThis()
+	{
+		auto originalOrientation = Rotation();
 
 		for (int i = 0; i < 6; ++i)
 		{
-			mShadowMap[i] = nullptr;
-			mShadowMapDepthStencils[i] = nullptr;
-			mShadowMapSRV[i] = nullptr;
+			CVector3 rot = mSides[i];
+
+			SetRotation(rot * PI);
+
+			// Setup the viewport to the size of the shadow map texture
+			D3D11_VIEWPORT vp;
+			vp.Width = static_cast<FLOAT>(mShadowMapSize);
+			vp.Height = static_cast<FLOAT>(mShadowMapSize);
+			vp.MinDepth = 0.0f;
+			vp.MaxDepth = 1.0f;
+			vp.TopLeftX = 0;
+			vp.TopLeftY = 0;
+			gD3DContext->RSSetViewports(1, &vp);
+
+			// Select the shadow map texture as the current depth buffer. We will not be rendering any pixel colours
+			// Also clear the the shadow map depth buffer to the far distance
+			gD3DContext->OMSetRenderTargets(0, nullptr, mShadowMapDepthStencils[i]);
+			gD3DContext->ClearDepthStencilView(mShadowMapDepthStencils[i], D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+			gPerFrameConstants.viewMatrix = InverseAffine(WorldMatrix());
+			gPerFrameConstants.projectionMatrix = MakeProjectionMatrix(1.0f, ToRadians(90.0f));
+			gPerFrameConstants.viewProjectionMatrix = gPerFrameConstants.viewMatrix * gPerFrameConstants.projectionMatrix;
+
+			UpdateFrameConstantBuffer(gPerFrameConstantBuffer, gPerFrameConstants);
+
+			gD3DContext->VSSetConstantBuffers(1, 1, &gPerFrameConstantBuffer);
+
+			//render just the objects that can cast shadows
+			for (auto it : GOM->mObjects)
+			{
+				//basic geometry rendered, that means just render the model's geometry, leaving all the fancy shaders
+				it->Render(true);
+			}
+
+			ID3D11DepthStencilView* nullD = nullptr;
+			gD3DContext->OMSetRenderTargets(0, nullptr, nullD);
 		}
 
-		mShadowMapSize = 1024;
+		//restore original orentation //kind of useless i think
+
+		SetRotation(originalOrientation);
+
+		return mShadowMapSRV;
+	}
+
+	~CPointLight()
+	{
+		for (auto it : mShadowMapDepthStencils)
+			it->Release();
+
+		for (auto it : mShadowMapSRV)
+			it->Release();
+
+		for (auto it : mShadowMap)
+			it->Release();
+	}
+
+	float mSides[6][3] = {          // Starting from facing down the +ve Z direction, left handed rotations
+			{ 0.0f,	 0.5f,	0.0f},  // +ve X direction (values multiplied by PI)
+			{ 0.0f, -0.5f,	0.0f},  // -ve X direction
+			{-0.5f,	 0.0f,	0.0f},  // +ve Y direction
+			{ 0.5f,	 0.0f,	0.0f},  // -ve Y direction
+			{ 0.0f,	 0.0f,	0.0f},  // +ve Z direction
+			{ 0.0f,	 1.0f,  0.0f}   // -ve Z direction
+	};
+
+private:
+
+	int mShadowMapSize;
+
+	ID3D11Texture2D* mShadowMap[6];
+	ID3D11DepthStencilView* mShadowMapDepthStencils[6];
+	ID3D11ShaderResourceView* mShadowMapSRV[6];
+
+	void InitTextures()
+	{
+		//initialize private values
+		for (int i = 0; i < 6; ++i)
+		{
+			mShadowMapDepthStencils[i] = nullptr;
+			mShadowMapSRV[i] = nullptr;
+			mShadowMap[i] = nullptr;
+		}
+
+		mShadowMapSize = 2048;
 
 		//**** Create Shadow Map texture ****//
 
@@ -71,7 +164,7 @@ public:
 		srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 		srvDesc.Texture2D.MostDetailedMip = 0;
 		srvDesc.Texture2D.MipLevels = 1;
-		
+
 		for (int i = 0; i < 6; ++i)
 		{
 			if (FAILED(gD3DDevice->CreateShaderResourceView(mShadowMap[i], &srvDesc, &mShadowMapSRV[i])))
@@ -80,99 +173,4 @@ public:
 			}
 		}
 	}
-
-
-	void Render(bool basicGeometry = false)
-	{
-		CLight::Render(basicGeometry);
-	}
-
-
-	auto RenderFromThis()
-	{
-
-		auto originalOrientation = Rotation();
-
-		for (int i = 0; i < 6; ++i)
-		{
-			CVector3 rot = mSides[i];
-
-			SetRotation( -rot * PI);
-
-			// Setup the viewport to the size of the shadow map texture
-			D3D11_VIEWPORT vp;
-			vp.Width = static_cast<FLOAT>(mShadowMapSize);
-			vp.Height = static_cast<FLOAT>(mShadowMapSize);
-			vp.MinDepth = 0.0f;
-			vp.MaxDepth = 1.0f;
-			vp.TopLeftX = 0;
-			vp.TopLeftY = 0;
-			gD3DContext->RSSetViewports(1, &vp);
-
-
-			// Select the shadow map texture as the current depth buffer. We will not be rendering any pixel colours
-			// Also clear the the shadow map depth buffer to the far distance
-			gD3DContext->OMSetRenderTargets(0, nullptr, mShadowMapDepthStencils[i]);
-			gD3DContext->ClearDepthStencilView(mShadowMapDepthStencils[i], D3D11_CLEAR_DEPTH, 1.0f, 0);
-
-			gPerFrameConstants.viewMatrix = InverseAffine(WorldMatrix());
-			gPerFrameConstants.projectionMatrix = MakeProjectionMatrix(1.0f, ToRadians(90.0f));
-			gPerFrameConstants.viewProjectionMatrix = gPerFrameConstants.viewMatrix * gPerFrameConstants.projectionMatrix;
-
-			UpdateFrameConstantBuffer(gPerFrameConstantBuffer, gPerFrameConstants);
-
-			gD3DContext->VSSetConstantBuffers(1, 1, &gPerFrameConstantBuffer);
-
-			//render just the objects that can cast shadows
-			for (auto it : GOM->mObjects)
-			{
-				//basic geometry rendered, that means just render the model's geometry, leaving all the fancy shaders
-				it->Render(true);
-			}
-
-			ID3D11DepthStencilView* nullD = nullptr;
-			gD3DContext->OMSetRenderTargets(0, nullptr, nullD);
-		}
-
-		//restore original orentation //kind of useless i think
-
-		SetRotation(originalOrientation);
-
-		return mShadowMapSRV;
-	}
-
-	~CPointLight()
-	{
-
-		for (auto it : mShadowMap)
-			it->Release();
-
-		for (auto it : mShadowMapDepthStencils)
-			it->Release();
-
-		for (auto it : mShadowMapSRV)
-			it->Release();
-	}
-
-	float mSides[6][3] = {
-			{ 1.0f,	 0.0f,	 0.0f},
-			{-1.0f,	 0.0f,	 0.0f},
-			{ 0.0f,	 1.0f,	 0.0f},
-			{ 0.0f, -1.0f,	 0.0f},
-			{ 0.0f,	 0.0f,	 1.0f},
-			{ 0.0f,	 0.0f,  -1.0f}
-	};
-
-private:
-
-
-	int mShadowMapSize;
-
-	ID3D11Texture2D* mShadowMap[6];
-	ID3D11DepthStencilView* mShadowMapDepthStencils[6];
-	ID3D11ShaderResourceView* mShadowMapSRV[6];
-
-
-
 };
-

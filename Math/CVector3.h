@@ -6,19 +6,18 @@
 #ifndef _CVECTOR3_H_DEFINED_
 #define _CVECTOR3_H_DEFINED_
 
-
 class CVector3
 {
-// Concrete class - public access
+	// Concrete class - public access
 public:
-    // Vector components
-    float x;
+	// Vector components
+	float x;
 	float y;
 	float z;
 
-    /*-----------------------------------------------------------------------------------------
-        Constructors
-    -----------------------------------------------------------------------------------------*/
+	/*-----------------------------------------------------------------------------------------
+		Constructors
+	-----------------------------------------------------------------------------------------*/
 
 	// Default constructor - leaves values uninitialised (for performance)
 	CVector3() {}
@@ -30,49 +29,46 @@ public:
 		y = yIn;
 		z = zIn;
 	}
-	
-    // Construct using a pointer to three floats
-    CVector3(const float* pfElts)
-    {
-        x = pfElts[0];
-        y = pfElts[1];
-        z = pfElts[2];
-    }
 
-    float* GetValuesArray()
-    {
-        float* out[] = { &x, &y, &z };
+	// Construct using a pointer to three floats
+	CVector3(const float* pfElts)
+	{
+		x = pfElts[0];
+		y = pfElts[1];
+		z = pfElts[2];
+	}
 
-        return *out;
-    }
+	float* GetValuesArray()
+	{
+		return &x;
+	}
 
-    /*-----------------------------------------------------------------------------------------
-        Member functions
-    -----------------------------------------------------------------------------------------*/
+	/*-----------------------------------------------------------------------------------------
+		Member functions
+	-----------------------------------------------------------------------------------------*/
 
-    // Addition of another vector to this one, e.g. Position += Velocity
-    CVector3& operator+= (const CVector3& v);
+	// Addition of another vector to this one, e.g. Position += Velocity
+	CVector3& operator+= (const CVector3& v);
 
-    // Subtraction of another vector from this one, e.g. Velocity -= Gravity
-    CVector3& operator-= (const CVector3& v);
+	// Subtraction of another vector from this one, e.g. Velocity -= Gravity
+	CVector3& operator-= (const CVector3& v);
 
-    // Negate this vector (e.g. Velocity = -Velocity)
-    CVector3& operator- ();
+	// Negate this vector (e.g. Velocity = -Velocity)
+	CVector3& operator- ();
 
-    // Plus sign in front of vector - called unary positive and usually does nothing. Included for completeness (e.g. Velocity = +Velocity)
-    CVector3& operator+ ();
+	// Plus sign in front of vector - called unary positive and usually does nothing. Included for completeness (e.g. Velocity = +Velocity)
+	CVector3& operator+ ();
 
-    CVector3& operator/=(const float v);
+	CVector3& operator/=(const float v);
 
-    // Multiply vector by scalar (scales vector);
-    CVector3& operator*= (const float s);
+	// Multiply vector by scalar (scales vector);
+	CVector3& operator*= (const float s);
 
-    float operator[](const int index);
+	float operator[](const int index);
 };
-	
 
 /*-----------------------------------------------------------------------------------------
-    Non-member operators
+	Non-member operators
 -----------------------------------------------------------------------------------------*/
 
 // Vector-vector addition
@@ -86,7 +82,7 @@ CVector3 operator* (const CVector3& v, float s);
 CVector3 operator* (float s, const CVector3& v);
 
 /*-----------------------------------------------------------------------------------------
-    Non-member functions
+	Non-member functions
 -----------------------------------------------------------------------------------------*/
 
 // Dot product of two given vectors (order not important) - non-member version
@@ -101,5 +97,6 @@ CVector3 Normalise(const CVector3& v);
 // Returns length of a vector
 float Length(const CVector3& v);
 
+CVector3 ToDegrees(CVector3 v);
 
 #endif // _CVECTOR3_H_DEFINED_

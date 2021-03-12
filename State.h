@@ -20,20 +20,20 @@
 // GPU "States" //
 extern ID3D11SamplerState* gPointSampler;
 extern ID3D11SamplerState* gTrilinearSampler;
+extern ID3D11SamplerState* gPointSamplerBorder;
 extern ID3D11SamplerState* gAnisotropic4xSampler;
 
 extern ID3D11BlendState* gNoBlendingState;
 extern ID3D11BlendState* gAdditiveBlendingState;
 extern ID3D11BlendState* gAlphaBlendingState;
 
-extern ID3D11RasterizerState*   gCullBackState;
-extern ID3D11RasterizerState*   gCullFrontState;
-extern ID3D11RasterizerState*   gCullNoneState;
+extern ID3D11RasterizerState* gCullBackState;
+extern ID3D11RasterizerState* gCullFrontState;
+extern ID3D11RasterizerState* gCullNoneState;
 
 extern ID3D11DepthStencilState* gUseDepthBufferState;
 extern ID3D11DepthStencilState* gDepthReadOnlyState;
 extern ID3D11DepthStencilState* gNoDepthBufferState;
-
 
 //--------------------------------------------------------------------------------------
 // State creation / destruction
@@ -44,6 +44,5 @@ bool CreateStates();
 
 // Release DirectX state objects
 void ReleaseStates();
-
 
 #endif //_STATE_H_INCLUDED_

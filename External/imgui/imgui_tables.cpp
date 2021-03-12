@@ -272,12 +272,7 @@ inline ImGuiTableFlags TableFixFlags(ImGuiTableFlags flags, ImGuiWindow* outer_w
         flags |= ImGuiTableFlags_NoSavedSettings;
 
     // Inherit _NoSavedSettings from top-level window (child windows always have _NoSavedSettings set)
-#ifdef IMGUI_HAS_DOCK
-    ImGuiWindow* window_for_settings = outer_window->RootWindowDockStop;
-#else
-    ImGuiWindow* window_for_settings = outer_window->RootWindow;
-#endif
-    if (window_for_settings->Flags & ImGuiWindowFlags_NoSavedSettings)
+    if (outer_window->RootWindow->Flags & ImGuiWindowFlags_NoSavedSettings)
         flags |= ImGuiTableFlags_NoSavedSettings;
 
     return flags;
@@ -538,9 +533,9 @@ void ImGui::TableBeginInitMemory(ImGuiTable* table, int columns_count)
 {
     // Allocate single buffer for our arrays
     ImSpanAllocator<3> span_allocator;
-    span_allocator.ReserveBytes(0, columns_count * sizeof(ImGuiTableColumn));
-    span_allocator.ReserveBytes(1, columns_count * sizeof(ImGuiTableColumnIdx));
-    span_allocator.ReserveBytes(2, columns_count * sizeof(ImGuiTableCellData));
+    span_allocator.Reserve(0, columns_count * sizeof(ImGuiTableColumn));
+    span_allocator.Reserve(1, columns_count * sizeof(ImGuiTableColumnIdx));
+    span_allocator.Reserve(2, columns_count * sizeof(ImGuiTableCellData), 4);
     table->RawData = IM_ALLOC(span_allocator.GetArenaSizeInBytes());
     memset(table->RawData, 0, span_allocator.GetArenaSizeInBytes());
     span_allocator.SetArenaBasePtr(table->RawData);
@@ -2367,7 +2362,7 @@ void ImGui::TableMergeDrawChannels(ImGuiTable* table)
                 if ((merge_group_n & 2) != 0 && (table->Flags & ImGuiTableFlags_NoHostExtendY) == 0)
                     merge_clip_rect.Max.y = ImMax(merge_clip_rect.Max.y, host_rect.Max.y);
 #if 0
-                GetOverlayDrawList()->AddRect(merge_group->ClipRect.Min, merge_group->ClipRect.Max, IM_COL32(255, 0, 0, 200), 0.0f, ~0, 1.0f);
+                GetOverlayDrawList()->AddRect(merge_group->ClipRect.Min, merge_group->ClipRect.Max, IM_COL32(255, 0, 0, 200), 0.0f, 0, 1.0f);
                 GetOverlayDrawList()->AddLine(merge_group->ClipRect.Min, merge_clip_rect.Min, IM_COL32(255, 100, 0, 200));
                 GetOverlayDrawList()->AddLine(merge_group->ClipRect.Max, merge_clip_rect.Max, IM_COL32(255, 100, 0, 200));
 #endif
@@ -2480,7 +2475,7 @@ void ImGui::TableDrawBorders(ImGuiTable* table)
         const ImU32 outer_col = table->BorderColorStrong;
         if ((table->Flags & ImGuiTableFlags_BordersOuter) == ImGuiTableFlags_BordersOuter)
         {
-            inner_drawlist->AddRect(outer_border.Min, outer_border.Max, outer_col, 0.0f, ~0, border_size);
+            inner_drawlist->AddRect(outer_border.Min, outer_border.Max, outer_col, 0.0f, 0, border_size);
         }
         else if (table->Flags & ImGuiTableFlags_BordersOuterV)
         {

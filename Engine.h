@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include "Scene.h"
@@ -8,10 +7,8 @@
 extern BOOL             InitWindow(HINSTANCE, int);
 extern LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
-
 class CDXEngine
 {
-
 public:
 
 	void RenderGui();
@@ -24,8 +21,6 @@ public:
 
 private:
 
-	std::unique_ptr<CScene> mMainScene;
+	CScene* mMainScene;
 	Timer mTimer;
-
-
 };

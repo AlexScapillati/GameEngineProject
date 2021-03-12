@@ -18,7 +18,7 @@ Texture2D DiffuseSpecularMap : register(t0); // Textures here can contain a diff
 SamplerState TexSampler : register(s0); // A sampler is a filter for a texture like bilinear, trilinear or anisotropic - this is the sampler used for the texture above
 TextureCube ambientMap : register(t5);
 
-Texture2DArray ShadowMaps : register(t6);
+Texture2D ShadowMaps[13] : register(t6);
 SamplerState PointClamp : register(s1);
 
 static const int pcfCount = 8;
@@ -35,6 +35,12 @@ float4 main(LightingPixelShaderInput input) : SV_Target
     // Normal might have been scaled by model scaling or interpolation so renormalise
     input.worldNormal = normalize(input.worldNormal);
 
+    
+    int numSpotLights = gLights[0].numLights;
+    int numDirLightsLights = gDirLights[0].numLights;
+    int numPointLightsLights = gPointLights[0].numLights;
+    
+    
 	///////////////////////
 	// Calculate lighting
     
@@ -60,7 +66,6 @@ float4 main(LightingPixelShaderInput input) : SV_Target
     }
 	
 	//calculate lighting from directional lights
-
     const float depthAdjust = 0.0005f;
     
 	//for each spot light
@@ -104,7 +109,7 @@ float4 main(LightingPixelShaderInput input) : SV_Target
 		
 			// Compare pixel depth from light with depth held in shadow map of the light. If shadow map depth is less than something is nearer
 			// to the light than this pixel - so the pixel gets no effect from this light
-            if (depthFromLight < ShadowMaps.Sample(PointClamp, float3(shadowMapUV, j)).r)
+            if (depthFromLight < ShadowMaps[j].Sample(PointClamp, float2(shadowMapUV)).r)
             {
                 const float light1Dist = length(gSpotLights[j].pos - input.worldPosition);
                 float3 diffuseLight = gSpotLights[j].colour * max(dot(input.worldNormal, lightDir), 0) / light1Dist; // Equations from lighting lecture
@@ -142,24 +147,23 @@ float4 main(LightingPixelShaderInput input) : SV_Target
 	
         float total = 0.0f;
 	
-        for (int x = -pcfCount; x <= pcfCount; x++)
-        {
-            for (int y = -pcfCount; y <= pcfCount; y++)
-            {
-                const float objNearestLight = ShadowMaps.Sample(PointClamp, float3(shadowMapUV + float2(x, y) * texelSize, k)).r;
-                if (depthFromLight > objNearestLight)
-                    total += 1.0f;
-            }
-        }
+        //for (int x = -pcfCount; x <= pcfCount; x++)
+        //{
+        //    for (int y = -pcfCount; y <= pcfCount; y++)
+        //    {
+        //        const float objNearestLight = ShadowMaps.Sample(PointClamp, float3(shadowMapUV + float2(x, y) * texelSize, k)).r;
+        //        if (depthFromLight > objNearestLight)
+        //            total += 1.0f;
+        //    }
+        //}
 		
         total /= totalTexels;
 		
         float lightFactor = 1.0f - (total * depthFromLight);
-		
-		
+	
 		// Compare pixel depth from light with depth held in shadow map of the light. If shadow map depth is less than something is nearer
 		// to the light than this pixel - so the pixel gets no effect from this light
-        if (depthFromLight < ShadowMaps.Sample(PointClamp, float3(shadowMapUV, k + gSpotLights[0].numLights)).r)
+        if (depthFromLight < ShadowMaps[k /*+ numSpotLights*/].Sample(PointClamp, shadowMapUV).r)
         {
             float3 diffuseLight = gDirLights[k].colour * max(dot(input.worldNormal, lightDir), 0); // Equations from lighting lecture
             const float3 halfway = normalize(lightDir + cameraDirection);
@@ -212,9 +216,12 @@ float4 main(LightingPixelShaderInput input) : SV_Target
             
 		    // Compare pixel depth from light with depth held in shadow map of the light. If shadow map depth is less than something is nearer
 		    // to the light than this pixel - so the pixel gets no effect from this light
-            if (depthFromLight < ShadowMaps.Sample(PointClamp, float3(shadowMapUV, l + gSpotLights[0].numLights + gDirLights[0].numLights + face)).r)
+            
+            float depth = ShadowMaps[l /*+ gSpotLights[0].numLights + gDirLights[0].numLights */ + face].Sample(PointClamp, shadowMapUV).r;
+           
+            if (depthFromLight > 0 && depthFromLight < depth)
             {
-                const float light1Dist = length(input.worldPosition - gSpotLights[j].pos);
+                const float light1Dist = length(input.worldPosition - gPointLights[l].pos);
                 float3 diffuseLight = (gPointLights[l].colour * max(dot(input.worldNormal, lightDir), 0)) / light1Dist; // Equations from lighting lecture
                 const float3 halfway = normalize(lightDir + cameraDirection);
                 const float3 specularLight = diffuseLight * pow(max(dot(input.worldNormal, halfway), 0), gSpecularPower); // Multiplying by diffuseLight instead of light colour - my own personal preference
@@ -223,7 +230,7 @@ float4 main(LightingPixelShaderInput input) : SV_Target
                 resDiffuse += diffuseLight;
                 resSpecular += specularLight;
             }
-        }
+            }
     }
     
     float4 diffuseIBL = 1;

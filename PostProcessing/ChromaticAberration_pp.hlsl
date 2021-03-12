@@ -21,12 +21,16 @@ SamplerState PointSample : register(s0); // We don't usually want to filter (bil
 float4 main(PostProcessingInput input) : SV_TARGET
 {
     
+    float2 centre = (0.5f, 0.5f);
+    
+    float distFromCentre = input.sceneUV - centre;
+    
     float amount = gCAAmount;
     
     float3 col;
-    col.r = SceneTexture.Sample(PointSample, float2(input.sceneUV.x + amount, input.sceneUV.y)).r;
+    col.r = SceneTexture.Sample(PointSample, float2(input.sceneUV.x + amount * distFromCentre, input.sceneUV.y)).r;
     col.g = SceneTexture.Sample(PointSample, input.sceneUV).g;
-    col.b = SceneTexture.Sample(PointSample, float2(input.sceneUV.x - amount, input.sceneUV.y)).b;
+    col.b = SceneTexture.Sample(PointSample, float2(input.sceneUV.x - amount * distFromCentre, input.sceneUV.y)).b;
 
     col *= (1.0 - amount * 0.5);
     

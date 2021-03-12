@@ -88,9 +88,6 @@
     <ClCompile Include="PointLight.cpp">
       <Filter>Engine\Objects\Lights</Filter>
     </ClCompile>
-    <ClCompile Include="Gui.cpp">
-      <Filter>Engine</Filter>
-    </ClCompile>
     <ClCompile Include="LevelImporter.cpp">
       <Filter>Engine</Filter>
     </ClCompile>
@@ -99,6 +96,15 @@
     </ClCompile>
     <ClCompile Include="External\imgui\ImGuizmo.cpp">
       <Filter>Engine\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="External\imgui\FileBrowser\ImGuiFileBrowser.cpp">
+      <Filter>Engine\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="PostProcessing.cpp">
+      <Filter>Engine\PostProcessing</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI.cpp">
+      <Filter>Engine</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -220,6 +226,9 @@
       <Filter>Engine\Math</Filter>
     </ClInclude>
     <ClInclude Include="External\imgui\ImGuizmo.h">
+      <Filter>Engine\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="External\imgui\FileBrowser\ImGuiFileBrowser.h">
       <Filter>Engine\GUI</Filter>
     </ClInclude>
   </ItemGroup>

@@ -5,7 +5,6 @@
 class CSpotLight :
 	public CLight
 {
-
 public:
 	CSpotLight(std::string mesh,
 		std::string name,
@@ -19,13 +18,15 @@ public:
 		float scale = 1,
 		CVector3 facing = { 0,0,1 });
 
+	CSpotLight(CSpotLight& s);
+
 	void Render(bool basicGeometry = false) override;
 
 	ID3D11ShaderResourceView* RenderFromThis();
 
 	void SetShadowMapsSize(int value);
 
-	int& getShadowMapSize() { return mShadowMapSize; }
+	int& GetShadowMapSize() { return mShadowMapSize; }
 
 	void SetConeAngle(float value);
 
@@ -34,7 +35,7 @@ public:
 		return mConeAngle;
 	}
 
-	CVector3& GetFacing() 
+	CVector3& GetFacing()
 	{
 		return mFacing;
 	}
@@ -59,10 +60,9 @@ private:
 	float mConeAngle;
 	CVector3 mFacing;
 
+	void InitTextures();
 
 	ID3D11Texture2D* mShadowMap;
 	ID3D11DepthStencilView* mShadowMapDepthStencil;
 	ID3D11ShaderResourceView* mShadowMapSRV;
-
 };
-

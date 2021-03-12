@@ -14,7 +14,6 @@
 
 class CGameObjectManager;
 
-
 //--------------------------------------------------------------------------------------
 // Global Variables
 //--------------------------------------------------------------------------------------
@@ -29,12 +28,14 @@ extern HWND gHWnd;
 // Viewport size
 extern UINT gViewportWidth;
 extern UINT gViewportHeight;
+extern CVector2 gViewportWindowPos;
 
 extern bool gViewportFullscreen;
 
 // Important DirectX variables
 extern ID3D11Device* gD3DDevice;
 extern ID3D11DeviceContext* gD3DContext;
+extern ID3D11Debug* gD3DDebug;
 
 extern IDXGISwapChain* gSwapChain;
 extern ID3D11RenderTargetView* gBackBufferRenderTarget; // Back buffer is where we render to
@@ -46,7 +47,6 @@ extern CGameObjectManager* GOM;
 // Input constsnts
 extern const float ROTATION_SPEED;
 extern const float MOVEMENT_SPEED;
-
 
 // A global error message to help track down fatal errors - set it to a useful message
 // when a serious error occurs
@@ -66,14 +66,13 @@ struct sLight
 	uint32_t  numLights;
 };
 
-
 struct sSpotLight
 {
 	CVector3 colour;
 	float enabled;
 	CVector3 pos;
 	uint32_t numLights;
-	CVector3 facing;          //the direction facing of the light 
+	CVector3 facing;          //the direction facing of the light
 	float cosHalfAngle;       //pre calculate this in the c++ side, for performance reasons
 	CMatrix4x4 viewMatrix;    //the light view matrix (as it was a camera)
 	CMatrix4x4 projMatrix;    //--"--
@@ -116,7 +115,6 @@ struct PerFrameConstants
 	CMatrix4x4 viewMatrix;
 	CMatrix4x4 projectionMatrix;
 	CMatrix4x4 viewProjectionMatrix; // The above two matrices multiplied together to combine their effects
-
 
 	CVector3   ambientColour;
 	float      specularPower;
@@ -176,7 +174,6 @@ struct PerModelConstants
 extern PerModelConstants gPerModelConstants;      // This variable holds the CPU-side constant buffer described above
 extern ID3D11Buffer* gPerModelConstantBuffer; // This variable controls the GPU-side constant buffer related to the above structure
 
-
 //**************************
 
 // Settings used by post-processes - must match the similar structure in the Common.hlsli shader file
@@ -225,7 +222,6 @@ struct PostProcessingConstants
 	float blurSize = 8.0; // BLUR SIZE (Radius)
 
 	float bloomThreshold = 0.5f;
-
 };
 extern PostProcessingConstants gPostProcessingConstants; // This variable holds the CPU-side constant buffer described above
 extern ID3D11Buffer* gPostProcessingConstBuffer; // This variable controls the GPU-side constant buffer related to the above structure

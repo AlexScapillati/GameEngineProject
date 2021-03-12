@@ -9,13 +9,11 @@
 #include "Camera.h"
 #include "Plant.h"
 
-
- CLevelImporter::CLevelImporter()
+CLevelImporter::CLevelImporter()
 {
-
 }
 
- bool CLevelImporter::LoadScene(const std::string& level, CScene* scene)
+bool CLevelImporter::LoadScene(const std::string& level, CScene* scene)
 {
 	tinyxml2::XMLDocument doc;
 
@@ -42,18 +40,257 @@
 		}
 
 		element = element->NextSiblingElement();
-
 	}
 
 	return true;
 }
 
- void CLevelImporter::SaveScene()
- {
-	 throw std::runtime_error("Not implemented yet");
- }
+void CLevelImporter::SaveScene(std::string& fileName /* ="" */, CScene* ptrScene)
+{
+	if (fileName == "")
+	{
+		//save the scene in the project folder
+		return;
+	}
 
- bool CLevelImporter::ParseScene(tinyxml2::XMLElement* sceneEl, CScene* scene)
+	tinyxml2::XMLDocument doc;
+
+	auto scene = doc.NewElement("Scene");
+
+	doc.InsertFirstChild(scene);
+
+	auto def = scene->InsertNewChildElement("Default");
+
+	auto defShaders = def->InsertNewChildElement("Shaders");
+
+	defShaders->SetAttribute("VS", "PixelLighting_vs");
+	defShaders->SetAttribute("PS", "PixelLighting_ps");
+
+	auto entities = scene->InsertNewChildElement("Entities");
+
+	SaveObjects(entities, ptrScene);
+
+	doc.InsertEndChild(scene);
+
+	if (doc.SaveFile(fileName.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
+	{
+		throw std::runtime_error("unable to save");
+	}
+}
+
+void CLevelImporter::SaveObjects(tinyxml2::XMLElement* el, CScene* ptrScene)
+{
+	//----------------------------------------------------
+	//	Game Objects
+	//----------------------------------------------------
+
+	for (auto it : GOM->mObjects)
+	{
+		auto obj = el->InsertNewChildElement("Entity");
+
+		if (auto sky = dynamic_cast<CSky*>(it))
+		{
+			obj->SetAttribute("Type", "Sky");
+		}
+		if (auto plant = dynamic_cast<CPlant*>(it))
+		{
+			obj->SetAttribute("Type", "Plant");
+		}
+		else
+		{
+			obj->SetAttribute("Type", "GameObject");
+		}
+
+		obj->SetAttribute("Name", it->GetName().c_str());
+
+		auto childEl = obj->InsertNewChildElement("Geometry");
+
+		if (it->GetMaterial()->IsPbr())
+		{
+			std::string id = it->GetMeshFileName();
+
+			auto pos = id.find_first_of('_');
+
+			id = id.substr(0, pos);
+
+			childEl->SetAttribute("ID", id.c_str());
+			childEl->SetAttribute("VS", "PBR_vs");
+			childEl->SetAttribute("PS", "PBR_ps");
+		}
+		else
+		{
+			childEl->SetAttribute("Mesh", it->GetMeshFileName().c_str());
+			childEl->SetAttribute("Diffuse", it->GetTextrueFileName().c_str());
+		}
+
+		//save position, position and scale
+		childEl = obj->InsertNewChildElement("Position");
+		SaveVector3(it->Position(), childEl);
+		childEl = obj->InsertNewChildElement("Rotation");
+		SaveVector3(ToDegrees(it->Rotation()), childEl);
+		childEl = obj->InsertNewChildElement("Scale");
+		SaveVector3(it->Scale(), childEl);
+	}
+
+	//----------------------------------------------------
+	//	Simple Lights
+	//----------------------------------------------------
+
+	for (auto it : GOM->mLights)
+	{
+		auto obj = el->InsertNewChildElement("Entity");
+		obj->SetAttribute("Type", "Light");
+		obj->SetAttribute("Name", it->GetName().c_str());
+
+		auto childEl = obj->InsertNewChildElement("Geometry");
+
+		childEl->SetAttribute("Mesh", it->GetMeshFileName().c_str());
+		childEl->SetAttribute("Diffuse", it->GetTextrueFileName().c_str());
+		childEl->SetAttribute("VS", "BasicTransform_vs");
+		childEl->SetAttribute("PS", "TintedTexture_ps");
+
+		//save position, position and scale
+		childEl = obj->InsertNewChildElement("Position");
+		SaveVector3(it->Position(), childEl);
+		childEl = obj->InsertNewChildElement("Rotation");
+		SaveVector3(ToDegrees(it->Rotation()), childEl);
+		childEl = obj->InsertNewChildElement("Scale");
+		SaveVector3(it->Scale(), childEl);
+
+		//save colour and strength
+		childEl = obj->InsertNewChildElement("Colour");
+		SaveVector3(it->GetColour(), childEl);
+		childEl = obj->InsertNewChildElement("Strength");
+		childEl->SetAttribute("S", it->GetStrength());
+	}
+
+	//----------------------------------------------------
+	//	Spot Lights
+	//----------------------------------------------------
+
+	for (auto it : GOM->mSpotLights)
+	{
+		auto obj = el->InsertNewChildElement("Entity");
+		obj->SetAttribute("Type", "Light");
+		obj->SetAttribute("Name", it->GetName().c_str());
+
+		auto childEl = obj->InsertNewChildElement("Geometry");
+
+		childEl->SetAttribute("Mesh", it->GetMeshFileName().c_str());
+		childEl->SetAttribute("Diffuse", it->GetTextrueFileName().c_str());
+		childEl->SetAttribute("VS", "BasicTransform_vs");
+		childEl->SetAttribute("PS", "TintedTexture_ps");
+
+		//save position, position and scale
+		childEl = obj->InsertNewChildElement("Position");
+		SaveVector3(it->Position(), childEl);
+		childEl = obj->InsertNewChildElement("Rotation");
+		SaveVector3(ToDegrees(it->Rotation()), childEl);
+		childEl = obj->InsertNewChildElement("Scale");
+		SaveVector3(it->Scale(), childEl);
+
+		//save colour and strength
+		childEl = obj->InsertNewChildElement("Colour");
+		SaveVector3(it->GetColour(), childEl);
+		childEl = obj->InsertNewChildElement("Strength");
+		childEl->SetAttribute("S", it->GetStrength());
+
+		//save facing
+		childEl = obj->InsertNewChildElement("Facing");
+		SaveVector3(it->GetFacing(), childEl);
+	}
+
+	//----------------------------------------------------
+	//	Directional Lights
+	//----------------------------------------------------
+
+	for (auto it : GOM->mDirLights)
+	{
+		auto obj = el->InsertNewChildElement("Entity");
+		obj->SetAttribute("Type", "Light");
+		obj->SetAttribute("Name", it->GetName().c_str());
+
+		auto childEl = obj->InsertNewChildElement("Geometry");
+
+		childEl->SetAttribute("Mesh", it->GetMeshFileName().c_str());
+		childEl->SetAttribute("Diffuse", it->GetTextrueFileName().c_str());
+		childEl->SetAttribute("VS", "BasicTransform_vs");
+		childEl->SetAttribute("PS", "TintedTexture_ps");
+
+		//save rotation and scale
+		//no position, since this is a directional light
+		childEl = obj->InsertNewChildElement("Rotation");
+		SaveVector3(ToDegrees(it->Rotation()), childEl);
+		childEl = obj->InsertNewChildElement("Scale");
+		SaveVector3(it->Scale(), childEl);
+
+		//save colour and strength
+		childEl = obj->InsertNewChildElement("Colour");
+		SaveVector3(it->GetColour(), childEl);
+		childEl = obj->InsertNewChildElement("Strength");
+		childEl->SetAttribute("S", it->GetStrength());
+
+		//save facing
+		childEl = obj->InsertNewChildElement("Facing");
+		SaveVector3(it->GetDirection(), childEl);
+	}
+
+	//----------------------------------------------------
+	//	Point Lights
+	//----------------------------------------------------
+
+	for (auto it : GOM->mPointLights)
+	{
+		auto obj = el->InsertNewChildElement("Entity");
+		obj->SetAttribute("Type", "PointLight");
+		obj->SetAttribute("Name", it->GetName().c_str());
+
+		auto childEl = obj->InsertNewChildElement("Geometry");
+
+		childEl->SetAttribute("Mesh", it->GetMeshFileName().c_str());
+		childEl->SetAttribute("Diffuse", it->GetTextrueFileName().c_str());
+		childEl->SetAttribute("VS", "BasicTransform_vs");
+		childEl->SetAttribute("PS", "TintedTexture_ps");
+
+		//save position, position and scale
+		childEl = obj->InsertNewChildElement("Position");
+		SaveVector3(it->Position(), childEl);
+		childEl = obj->InsertNewChildElement("Rotation");
+		SaveVector3(ToDegrees(it->Rotation()), childEl);
+		childEl = obj->InsertNewChildElement("Scale");
+		SaveVector3(it->Scale(), childEl);
+
+		//save colour and strength
+		childEl = obj->InsertNewChildElement("Colour");
+		SaveVector3(it->GetColour(), childEl);
+		childEl = obj->InsertNewChildElement("Strength");
+		childEl->SetAttribute("S", it->GetStrength());
+	}
+
+	//----------------------------------------------------
+	//	Camera
+	//----------------------------------------------------
+
+	auto camera = ptrScene->mCamera;
+
+	auto obj = el->InsertNewChildElement("Entity");
+	obj->SetAttribute("Type", "Camera");
+
+	//save position, position
+	auto childEl = obj->InsertNewChildElement("Position");
+	SaveVector3(camera->Position(), childEl);
+	childEl = obj->InsertNewChildElement("Rotation");
+	SaveVector3(ToDegrees(camera->Rotation()), childEl);
+}
+
+void CLevelImporter::SaveVector3(CVector3 v, tinyxml2::XMLElement* el)
+{
+	el->SetAttribute("X", v.x);
+	el->SetAttribute("Y", v.y);
+	el->SetAttribute("Z", v.z);
+}
+
+bool CLevelImporter::ParseScene(tinyxml2::XMLElement* sceneEl, CScene* scene)
 {
 	auto element = sceneEl->FirstChildElement();
 
@@ -94,7 +331,7 @@
 	return true;
 }
 
- void CLevelImporter::LoadObject(tinyxml2::XMLElement* currEntity, CScene* scene) const
+void CLevelImporter::LoadObject(tinyxml2::XMLElement* currEntity, CScene* scene) const
 {
 	std::string ID;
 	std::string mesh;
@@ -139,7 +376,6 @@
 			positionEl->FindAttribute("Z")->FloatValue() };
 	}
 
-
 	const auto rotationEl = currEntity->FirstChildElement("Rotation");
 	if (rotationEl)
 	{
@@ -167,7 +403,6 @@
 			auto obj = new CGameObject(ID, name, vertexShader, pixelShader, pos, rot, scale);
 			scene->mObjManager->AddObject(obj);
 		}
-
 	}
 	catch (const std::exception& e)
 	{
@@ -175,7 +410,7 @@
 	}
 }
 
- void CLevelImporter::LoadPointLight(tinyxml2::XMLElement* currEntity, CScene* scene)
+void CLevelImporter::LoadPointLight(tinyxml2::XMLElement* currEntity, CScene* scene)
 {
 	std::string mesh;
 	std::string name;
@@ -216,7 +451,6 @@
 			positionEl->FindAttribute("Y")->FloatValue(),
 			positionEl->FindAttribute("Z")->FloatValue() };
 	}
-
 
 	const auto rotationEl = currEntity->FirstChildElement("Rotation");
 	if (rotationEl)
@@ -246,7 +480,6 @@
 			colourEl->FindAttribute("Z")->FloatValue() };
 	}
 
-
 	try
 	{
 		auto obj = new CPointLight(mesh, name, diffuse, vertexShader, pixelShader, colour, strength, pos, rot, scale);
@@ -259,7 +492,7 @@
 	}
 }
 
- void CLevelImporter::LoadLight(tinyxml2::XMLElement* currEntity, CScene* scene)
+void CLevelImporter::LoadLight(tinyxml2::XMLElement* currEntity, CScene* scene)
 {
 	std::string mesh;
 	std::string name;
@@ -300,7 +533,6 @@
 			positionEl->FindAttribute("Y")->FloatValue(),
 			positionEl->FindAttribute("Z")->FloatValue() };
 	}
-
 
 	const auto rotationEl = currEntity->FirstChildElement("Rotation");
 	if (rotationEl)
@@ -357,7 +589,6 @@
 
 				scene->mObjManager->AddDirLight(obj);
 			}
-
 		}
 		catch (const std::exception& e)
 		{
@@ -379,7 +610,7 @@
 	}
 }
 
- void CLevelImporter::LoadSky(tinyxml2::XMLElement* currEntity, CScene* scene) const
+void CLevelImporter::LoadSky(tinyxml2::XMLElement* currEntity, CScene* scene) const
 {
 	std::string mesh;
 	std::string name;
@@ -420,7 +651,6 @@
 			positionEl->FindAttribute("Z")->FloatValue() };
 	}
 
-
 	const auto rotationEl = currEntity->FirstChildElement("Rotation");
 	if (rotationEl)
 	{
@@ -440,7 +670,6 @@
 		auto obj = new CSky(mesh, name, diffuse, vertexShader, pixelShader, pos, rot, scale);
 
 		scene->mObjManager->AddObject(obj);
-
 	}
 	catch (const std::exception& e)
 	{
@@ -448,7 +677,7 @@
 	}
 }
 
- void CLevelImporter::LoadCamera(tinyxml2::XMLElement* currEntity, CScene* scene)
+void CLevelImporter::LoadCamera(tinyxml2::XMLElement* currEntity, CScene* scene)
 {
 	std::string mesh;
 	std::string name;
@@ -466,7 +695,6 @@
 	const auto entityNameAttr = currEntity->FindAttribute("Name");
 	if (entityNameAttr) name = entityNameAttr->Value();
 
-
 	const auto positionEl = currEntity->FirstChildElement("Position");
 	if (positionEl)
 	{
@@ -474,7 +702,6 @@
 			positionEl->FindAttribute("Y")->FloatValue(),
 			positionEl->FindAttribute("Z")->FloatValue() };
 	}
-
 
 	const auto rotationEl = currEntity->FirstChildElement("Rotation");
 	if (rotationEl)
@@ -484,7 +711,7 @@
 			ToRadians(rotationEl->FindAttribute("Z")->FloatValue()) };
 	}
 
-	scene->mCamera = std::make_unique<CCamera>(pos, rot, FOV, aspectRatio, nearClip, farClip);
+	scene->mCamera = new CCamera(pos, rot, FOV, aspectRatio, nearClip, farClip);
 
 	if (!scene->mCamera)
 	{
@@ -492,7 +719,7 @@
 	}
 }
 
- void CLevelImporter::LoadPlant(tinyxml2::XMLElement* currEntity, CScene* scene) const
+void CLevelImporter::LoadPlant(tinyxml2::XMLElement* currEntity, CScene* scene) const
 {
 	std::string ID;
 	std::string mesh;
@@ -537,7 +764,6 @@
 			positionEl->FindAttribute("Z")->FloatValue() };
 	}
 
-
 	const auto rotationEl = currEntity->FirstChildElement("Rotation");
 	if (rotationEl)
 	{
@@ -556,7 +782,6 @@
 	{
 		if (ID.empty())
 		{
-
 			auto obj = new CPlant(mesh, name, diffuse, vertexShader, pixelShader, pos, rot, scale);
 			scene->mObjManager->AddObject(obj);
 		}
@@ -565,7 +790,6 @@
 			auto obj = new CPlant(ID, name, vertexShader, pixelShader, pos, rot, scale);
 			scene->mObjManager->AddObject(obj);
 		}
-
 	}
 	catch (const std::exception& e)
 	{
@@ -573,9 +797,8 @@
 	}
 }
 
- bool CLevelImporter::ParseEntities(tinyxml2::XMLElement* entitiesEl, CScene* scene)
+bool CLevelImporter::ParseEntities(tinyxml2::XMLElement* entitiesEl, CScene* scene)
 {
-
 	auto currEntity = entitiesEl->FirstChildElement();
 
 	while (currEntity)
@@ -621,7 +844,6 @@
 	return true;
 }
 
- CLevelImporter::~CLevelImporter()
+CLevelImporter::~CLevelImporter()
 {
-
 }

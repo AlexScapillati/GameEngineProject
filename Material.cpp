@@ -1,11 +1,8 @@
 #include "Material.h"
 
-
 #include "State.h"
 
-
 extern std::string gMediaFolder;
-
 
 CMaterial::CMaterial(std::string diffuseMap, std::string vertexShader, std::string pixelShader)
 {
@@ -26,7 +23,6 @@ CMaterial::CMaterial(std::string diffuseMap, std::string vertexShader, std::stri
 	mPbrMaps.Roughness = nullptr;
 	mPbrMaps.RoughnessSRV = nullptr;
 
-
 	mMapsStr.push_back(diffuseMap);
 	mPsStr = pixelShader;
 	mVsStr = vertexShader;
@@ -36,10 +32,8 @@ CMaterial::CMaterial(std::string diffuseMap, std::string vertexShader, std::stri
 	pixelShader = "Shaders\\" + pixelShader;
 	vertexShader = "Shaders\\" + vertexShader;
 
-
 	//the model is not pbr
 	mIsPbr = false;
-
 
 	//just load the diffuse texture
 
@@ -63,7 +57,6 @@ CMaterial::CMaterial(std::string diffuseMap, std::string vertexShader, std::stri
 
 CMaterial::CMaterial(std::vector<std::string> fileMaps, std::string vs, std::string ps)
 {
-
 	mVertexShader = nullptr;
 	mGeometryShader = nullptr;
 	mPixelShader = nullptr;
@@ -81,16 +74,14 @@ CMaterial::CMaterial(std::vector<std::string> fileMaps, std::string vs, std::str
 	mPbrMaps.Roughness = nullptr;
 	mPbrMaps.RoughnessSRV = nullptr;
 
-
 	mMapsStr = fileMaps;
 	mPsStr = ps;
 	mVsStr = vs;
 
-
 	//Add the folder to the VS and PS fileNames
 
-	ps = "Shaders\\" + ps;
-	vs = "Shaders\\" + vs;
+	ps = "Shaders\\PBR_ps" /*+ ps*/;
+	vs = "Shaders\\PBR_vs" /*+ vs*/;
 
 	//the model is pbr
 	mIsPbr = true;
@@ -112,39 +103,37 @@ CMaterial::CMaterial(std::vector<std::string> fileMaps, std::string vs, std::str
 
 CMaterial::CMaterial(CMaterial& m)
 {
+	mVertexShader = nullptr;
+	mGeometryShader = nullptr;
+	mPixelShader = nullptr;
+
+	mHasNormals = false;
+
+	mPbrMaps.Albedo = nullptr;
+	mPbrMaps.AlbedoSRV = nullptr;
+	mPbrMaps.AO = nullptr;
+	mPbrMaps.AoSRV = nullptr;
+	mPbrMaps.Displacement = nullptr;
+	mPbrMaps.DisplacementSRV = nullptr;
+	mPbrMaps.Normal = nullptr;
+	mPbrMaps.NormalSRV = nullptr;
+	mPbrMaps.Roughness = nullptr;
+	mPbrMaps.RoughnessSRV = nullptr;
+
+	mMapsStr = m.mMapsStr;
+	mPsStr = m.mPsStr;
+	mVsStr = m.mVsStr;
+
+	auto ps = mPsStr;
+	auto vs = mVsStr;
+
+	//Add the folder to the VS and PS fileNames
+
+	ps = "Shaders\\" + ps;
+	vs = "Shaders\\" + vs;
+
 	if (m.mIsPbr)
 	{
-
-		mVertexShader = nullptr;
-		mGeometryShader = nullptr;
-		mPixelShader = nullptr;
-
-		mHasNormals = false;
-
-		mPbrMaps.Albedo = nullptr;
-		mPbrMaps.AlbedoSRV = nullptr;
-		mPbrMaps.AO = nullptr;
-		mPbrMaps.AoSRV = nullptr;
-		mPbrMaps.Displacement = nullptr;
-		mPbrMaps.DisplacementSRV = nullptr;
-		mPbrMaps.Normal = nullptr;
-		mPbrMaps.NormalSRV = nullptr;
-		mPbrMaps.Roughness = nullptr;
-		mPbrMaps.RoughnessSRV = nullptr;
-
-
-		mMapsStr = m.mMapsStr;
-		mPsStr = m.mPsStr;
-		mVsStr = m.mPsStr;
-
-		auto ps = mPsStr;
-		auto vs = mVsStr;
-
-		//Add the folder to the VS and PS fileNames
-
-		ps = "Shaders\\" + ps;
-		vs = "Shaders\\" + vs;
-
 		//the model is pbr
 		mIsPbr = false;
 
@@ -168,38 +157,14 @@ CMaterial::CMaterial(CMaterial& m)
 	}
 	else
 	{
-		mVertexShader = nullptr;
-		mGeometryShader = nullptr;
-		mPixelShader = nullptr;
-
-		mHasNormals = false;
-
-		mPbrMaps.Albedo = nullptr;
-		mPbrMaps.AlbedoSRV = nullptr;
-		mPbrMaps.AO = nullptr;
-		mPbrMaps.AoSRV = nullptr;
-		mPbrMaps.Displacement = nullptr;
-		mPbrMaps.DisplacementSRV = nullptr;
-		mPbrMaps.Normal = nullptr;
-		mPbrMaps.NormalSRV = nullptr;
-		mPbrMaps.Roughness = nullptr;
-		mPbrMaps.RoughnessSRV = nullptr;
-
-
-		mMapsStr = m.mMapsStr;
-		mPsStr = m.mPsStr;
-		mVsStr = m.mVsStr;
-
-		auto ps = mPsStr;
-		auto vs = mVsStr;
-		
-		//Add the folder to the VS and PS fileNames
-
-		ps = "Shaders\\" + ps;
-		vs = "Shaders\\" + vs;
-
 		//the model is NOT pbr
 		mIsPbr = false;
+
+		//load the texture
+		if (!(LoadTexture(mMapsStr.front(), &mPbrMaps.Albedo, &mPbrMaps.AlbedoSRV)))
+		{
+			throw std::runtime_error("Error loading texture");
+		}
 
 		// load the shaders
 		if (!(mVertexShader = LoadVertexShader(vs)))
@@ -224,7 +189,7 @@ void CMaterial::RenderMaterial(bool basicGeometry)
 		// Use special depth-only rendering shaders
 		gD3DContext->VSSetShader(mVertexShader, nullptr, 0);
 
-		//even thought we are not using normals we need to set the correct pixel shader 
+		//even thought we are not using normals we need to set the correct pixel shader
 		if (mHasNormals)
 		{
 			gD3DContext->PSSetShader(gPbrDepthOnlyPixelShader, nullptr, 0);
@@ -241,7 +206,7 @@ void CMaterial::RenderMaterial(bool basicGeometry)
 	}
 	else
 	{
-		//check if the current vertex shader is not already set 
+		//check if the current vertex shader is not already set
 
 		ID3D11VertexShader* VS = nullptr;
 
@@ -274,9 +239,8 @@ void CMaterial::RenderMaterial(bool basicGeometry)
 			gD3DContext->PSSetShaderResources(0, 1, &mPbrMaps.AlbedoSRV);
 		}
 
-
 		//************************
-		// Send PBR Maps 
+		// Send PBR Maps
 		//************************
 
 		if (mPbrMaps.AO)
@@ -295,7 +259,6 @@ void CMaterial::RenderMaterial(bool basicGeometry)
 			gD3DContext->PSSetShaderResources(3, 1, &mPbrMaps.NormalSRV);
 		}
 
-
 		if (mPbrMaps.Roughness)
 		{
 			gD3DContext->PSSetShaderResources(4, 1, &mPbrMaps.RoughnessSRV);
@@ -303,12 +266,8 @@ void CMaterial::RenderMaterial(bool basicGeometry)
 	}
 }
 
-
-
-
 CMaterial::~CMaterial()
 {
-
 	if (mPixelShader)				mPixelShader->Release();				mPixelShader = nullptr;
 	if (mVertexShader)				mVertexShader->Release();				mVertexShader = nullptr;
 	if (mGeometryShader)			mGeometryShader->Release();				mGeometryShader = nullptr;
@@ -323,8 +282,6 @@ CMaterial::~CMaterial()
 	if (mPbrMaps.AlbedoSRV)			mPbrMaps.AlbedoSRV->Release();			mPbrMaps.AlbedoSRV = nullptr;
 	if (mPbrMaps.DisplacementSRV)	mPbrMaps.DisplacementSRV->Release();	mPbrMaps.DisplacementSRV = nullptr;
 	if (mPbrMaps.RoughnessSRV)		mPbrMaps.RoughnessSRV->Release();		mPbrMaps.RoughnessSRV = nullptr;
-
-
 }
 
 void CMaterial::LoadMaps(std::vector<std::string>& fileMaps)
@@ -346,13 +303,11 @@ void CMaterial::LoadMaps(std::vector<std::string>& fileMaps)
 		}
 		else if (fileName.find("Roughness") != std::string::npos)
 		{
-
 			//roughness map
 			if (!LoadTexture(originalFileName, &mPbrMaps.Roughness, &mPbrMaps.RoughnessSRV))
 			{
 				throw std::runtime_error("Error Loading: " + fileName);
 			}
-
 		}
 		else if (fileName.find("AO") != std::string::npos)
 		{
@@ -361,7 +316,6 @@ void CMaterial::LoadMaps(std::vector<std::string>& fileMaps)
 			{
 				throw std::runtime_error("Error Loading: " + fileName);
 			}
-
 		}
 		else if (fileName.find("Displacement") != std::string::npos)
 		{
@@ -386,4 +340,3 @@ void CMaterial::LoadMaps(std::vector<std::string>& fileMaps)
 		}
 	}
 }
-

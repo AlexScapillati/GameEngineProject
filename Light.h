@@ -11,10 +11,11 @@ Does not cast shadows
 
 */
 
-
 class CLight : public CGameObject
 {
 public:
+
+	CLight(CLight& l);
 
 	CLight(std::string mesh, std::string name,
 		std::string& diffuse, std::string& vertexShader, std::string& pixelShader,
@@ -23,23 +24,15 @@ public:
 
 	void Render(bool basicGeometry = false);
 
-	void SetColour(CVector3 colour)
-	{
-		mColour = colour;
-	}
+	void SetColour(CVector3 colour) { mColour = colour; }
 
-	void SetStrength(float strength)
-	{
-		mStrength = strength;
-	}
+	void SetStrength(float strength) { mStrength = strength; }
 
 	CVector3& GetColour() { return mColour; }
 
-	float& GetStrength()  { return mStrength; }
-
+	float& GetStrength() { return mStrength; }
 
 private:
 	CVector3 mColour;
 	float mStrength;
 };
-

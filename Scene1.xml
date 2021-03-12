@@ -6,51 +6,67 @@
   <!-- Default Values -->
   <Default>
     <!--Shaders VS="" PS="" TODO GS=""-->
-    <Shaders VS="PixelLighting_vs" PS="PixelLighting_ps"/>
+    <Shaders VS="PixelLighting_vs" PS="PixelLighting_ps" />
   </Default>
 
   <!-- Objects -->
   <Entities>
     <!--Cube Map-->
     <Entity Type ="Sky" Name="Stars">
-      <Geometry Mesh ="Stars.x" Diffuse ="Stars.jpg"/>
-      <Rotation X="1.0" Y="0.0" Z="0.0"/>
-      <Scale X="800.0" Y="800.0" Z="800.0"/>
+      <Geometry Mesh ="Stars.x" Diffuse ="Stars.jpg" />
+      <Rotation X="1.0" Y="0.0" Z="0.0" />
+      <Scale X="800.0" Y="800.0" Z="800.0" />
     </Entity>
 
     <!--Basic Objects-->
     <Entity Type="GameObject" Name="Ground">
-      <Geometry Mesh ="Hills.x" Diffuse ="GrassDiffuseSpecular.dds"/>
+      <Geometry Mesh ="Hills.x" Diffuse ="GrassDiffuseSpecular.dds" />
     </Entity>
     <Entity Type="GameObject" Name="Crate">
-      <Geometry Mesh ="CargoContainer.x" Diffuse ="CargoA.dds"/>
-      <Position X="-10.0" Y="0.0" Z="90.0"/>
-      <Rotation X="0.0" Y="40.0" Z="0.0"/>
-      <Scale    X="6.0" Y="6.0" Z="6.0"/>
+      <Geometry Mesh ="CargoContainer.x" Diffuse ="CargoA.dds" />
+      <Position X="-10.0" Y="0.0" Z="90.0" />
+      <Rotation X="0.0" Y="40.0" Z="0.0" />
+      <Scale    X="6.0" Y="6.0" Z="6.0" />
     </Entity>
     <Entity Type="GameObject" Name="Octopus">
-      <Geometry Mesh="Octopus.x" Diffuse ="brick1.jpg"/>
-      <Position X="0" Y="0" Z="20"/>
-      <Rotation X="-90" Y="0" Z="0"/>
-      <Scale X="5" Y="0" Z="0"/>
+      <Geometry Mesh="Octopus.x" Diffuse ="brick1.jpg" />
+      <Position X="0" Y="0" Z="20" />
+      <Rotation X="-90" Y="0" Z="0" />
+      <Scale X="5" Y="0" Z="0" />
     </Entity>
 
     <!-- Lights -->
     <Entity Type="Light" Name="SimpleLight">
-      <Geometry Mesh="Light.x" Diffuse="Flare.jpg" VS="BasicTransform_vs" PS="TintedTexture_ps"/>
-      <Colour X="0.8" Y="0.8" Z="0.8"/>
-      <Strength S="100"/>
-      <Position X="30.0" Y="10.0" Z="90.0"/>
-      <Scale    X="0.3" Y="0.3" Z="0.3"/>
+      <Geometry Mesh="Light.x" Diffuse="Flare.jpg" VS="BasicTransform_vs" PS="TintedTexture_ps" />
+      <Colour X="0.8" Y="0.8" Z="0.8" />
+      <Strength S="100" />
+      <Position X="30.0" Y="10.0" Z="90.0" />
+      <Scale    X="0.3" Y="0.3" Z="0.3" />
     </Entity>
-    <Entity Type="PointLight" Name="Omidirectional Light">
-      <Geometry Mesh ="Light.x" Diffuse ="Flare.jpg" VS="BasicTransform_vs" PS="TintedTexture_ps"/>
-      <Colour   X="0.8" Y="0.8" Z="1.0"/>
-      <Strength S="100"/>
-      <Position X="30.0" Y="10.0" Z="90.0"/>
-      <Scale    X="0.3" Y="0.3" Z="0.3"/>
-    </Entity>
+    <!--<Entity Type="PointLight" Name="Omidirectional Light">
+      <Geometry Mesh ="Light.x" Diffuse ="Flare.jpg" VS="BasicTransform_vs" PS="TintedTexture_ps" />
+      <Colour   X="0.8" Y="0.8" Z="1.0" />
+      <Strength S="100" />
+      <Position X="30.0" Y="10.0" Z="90.0" />
+      <Scale    X="0.3" Y="0.3" Z="0.3" />
+    </Entity>-->
     <!--<Entity Type="Light" Name="Spot Light">
+      <Geometry Mesh="Light.x" Diffuse="Flare.jpg" VS="BasicTransform_vs" PS="TintedTexture_ps" />
+      <Colour X="0.8" Y="0.8" Z="0.8" />
+      <Strength S="100" />
+      <Position X="-20" Y="10" Z="40" />
+      <Facing X="1.0" Y="0.0" Z="1.0" /> That means it is a spotlight
+      <Scale X="0.3" Y="0.3" Z="0.3" />
+    </Entity>
+    <Entity Type="Light" Name="Spot Light1">
+      <Geometry Mesh="Light.x" Diffuse="Flare.jpg" VS="BasicTransform_vs" PS="TintedTexture_ps" />
+      <Colour X="0.8" Y="0.8" Z="0.8" />
+      <Strength S="100" />
+      <Position X="-20" Y="10" Z="40" />
+      <Facing X="1.0" Y="0.0" Z="1.0" /> That means it is a spotlight
+      <Scale X="0.3" Y="0.3" Z="0.3" />
+    </Entity>
+    <Entity Type="Light" Name="Spot Light3">
       <Geometry Mesh="Light.x" Diffuse="Flare.jpg" VS="BasicTransform_vs" PS="TintedTexture_ps" />
       <Colour X="0.8" Y="0.8" Z="0.8" />
       <Strength S="100" />
@@ -59,52 +75,52 @@
       <Scale X="0.3" Y="0.3" Z="0.3" />
     </Entity>-->
     <!--<Entity Type="Light" Name="Sun">
-      <Geometry Mesh ="Light.x" Diffuse ="Flare.jpg" VS="BasicTransform_vs" PS="TintedTexture_ps"/>
-      <Colour   X="1.0" Y="0.8" Z="0.2"/>
-      <Strength S="200"/>
-      <Facing   X="-1" Y="0" Z="-1"/> Facing vector but no position, Directional Light!
-      <Scale    X="0.7" Y="0.7" Z="0.7"/>
+      <Geometry Mesh ="Light.x" Diffuse ="Flare.jpg" VS="BasicTransform_vs" PS="TintedTexture_ps" />
+      <Colour   X="1.0" Y="0.8" Z="0.2" />
+      <Strength S="200" />
+      <Facing   X="-1" Y="0" Z="-1" /> Facing vector but no position, Directional Light!
+      <Scale    X="0.7" Y="0.7" Z="0.7" />
     </Entity>-->
 
     <!-- PBR Objects -->
-    <!--<Entity Type="GameObject" Name="rock" >
-      <Geometry ID="ubrleesiw" VS="PBR_vs" PS="PBR_ps"/>
-      <Position X="10.0" Y="2.0" Z="30.0"/>
+    <!--<Entity Type="GameObject" Name="rock">
+      <Geometry ID="ubrleesiw" VS="PBR_vs" PS="PBR_ps" />
+      <Position X="10.0" Y="2.0" Z="30.0" />
     </Entity>
     <Entity Type="Plant" Name ="cactus">
-      <Geometry ID="uenpefhfa" VS="PBR_vs" PS="PBR_ps"/>
-      <Position X="50.0" Y="0" Z="50"/>
-      <Scale X="0.1" Y="0.1" Z="0.1"/>
+      <Geometry ID="uenpefhfa" VS="PBR_vs" PS="PBR_ps" />
+      <Position X="50.0" Y="0" Z="50" />
+      <Scale X="0.1" Y="0.1" Z="0.1" />
     </Entity>
     <Entity Type="Plant" Name="plant">
-      <Geometry ID="uc0oceo"/>
-      <Position X="50.0" Y="0.0" Z="30.0"/>
+      <Geometry ID="uc0oceo" />
+      <Position X="50.0" Y="0.0" Z="30.0" />
     </Entity>
     <Entity Type="GameObject" Name="rock2">
       <Geometry ID="ubxgfexiw" VS="PBR_vs" PS="PBR_ps" />
-      <Position X="20.0" Y="4.0" Z="10.0"/>
+      <Position X="20.0" Y="4.0" Z="10.0" />
     </Entity>-->
     <!--<Entity Type="GameObject" Name="Cliff">
-      <Geometry ID ="ub3sahcda" VS="PBR_vs" PS="PBR_ps"/>
-      <Position X="42.0" Y="5.0" Z="200.0"/>
+      <Geometry ID ="ub3sahcda" VS="PBR_vs" PS="PBR_ps" />
+      <Position X="42.0" Y="5.0" Z="200.0" />
     </Entity>-->
     <!--<Entity Type="GameObject" Name="Door">
-      <Geometry ID="ugymbhrdw" VS="PBR_vs" PS="PBR_ps"/>
-      <Position X="90.0" Y="5.0" Z="30.0"/>
-      <Rotation X="0.0" Y="90.0" Z="0.0"/>
-      <Scale X="0.1" Y="0.1" Z="0.1"/>
+      <Geometry ID="ugymbhrdw" VS="PBR_vs" PS="PBR_ps" />
+      <Position X="90.0" Y="5.0" Z="30.0" />
+      <Rotation X="0.0" Y="90.0" Z="0.0" />
+      <Scale X="0.1" Y="0.1" Z="0.1" />
     </Entity>
     <Entity Type="GameObject" Name="FirePlace">
-      <Geometry ID="ujjtcjnfa" VS="PBR_vs" PS="PBR_ps"/>
-      <Position X="90.0" Y="10.0" Z="0.0"/>
-      <Rotation X="0.0" Y="180.0" Z="0.0"/>
-      <Scale X="0.1" Y="0.1" Z="0.1"/>
+      <Geometry ID="ujjtcjnfa" VS="PBR_vs" PS="PBR_ps" />
+      <Position X="90.0" Y="10.0" Z="0.0" />
+      <Rotation X="0.0" Y="180.0" Z="0.0" />
+      <Scale X="0.1" Y="0.1" Z="0.1" />
     </Entity>-->
 
     <!-- CAMERA -->
     <Entity Type="Camera">
-      <Position X="25.0" Y="18.0" Z="-45.0"/>
-      <Rotation X="10.0" Y="-20.0" Z="0.0"/>
+      <Position X="25.0" Y="18.0" Z="-45.0" />
+      <Rotation X="10.0" Y="-20.0" Z="0.0" />
     </Entity>
   </Entities>
 </Scene>

@@ -14,8 +14,8 @@ CDirLight::CDirLight(std::string mesh, std::string name, std::string& diffuse, s
 	mWidth = 1000.0f;
 	mHeight = 1000.0f;
 	mFarClip = 1000.0f;
-	
-	SetPosition({100.0f,100.0f,0.0f});
+
+	SetPosition({ 100.0f,100.0f,0.0f });
 
 	//**** Create Shadow Map texture ****//
 
@@ -48,7 +48,6 @@ CDirLight::CDirLight(std::string mesh, std::string name, std::string& diffuse, s
 		throw std::runtime_error("Error creating shadow map depth stencil view");
 	}
 
-
 	// We also need to send this texture (resource) to the shaders. To do that we must create a shader-resource "view"
 	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Format = DXGI_FORMAT_R32_FLOAT; // See "tech gotcha" above. The shaders see textures as colours, so shadow map pixels are not seen as depths
@@ -61,7 +60,6 @@ CDirLight::CDirLight(std::string mesh, std::string name, std::string& diffuse, s
 		throw std::runtime_error("Error creating shadow map shader resource view");
 	}
 }
-
 
 ID3D11ShaderResourceView* CDirLight::RenderFromThis()
 {
@@ -81,9 +79,8 @@ ID3D11ShaderResourceView* CDirLight::RenderFromThis()
 	gD3DContext->ClearDepthStencilView(mShadowMapDepthStencil, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 	gPerFrameConstants.viewMatrix = InverseAffine(WorldMatrix());
-	gPerFrameConstants.projectionMatrix = MakeOrthogonalMatrix(mWidth, mHeight, mNearClip, mFarClip );
+	gPerFrameConstants.projectionMatrix = MakeOrthogonalMatrix(mWidth, mHeight, mNearClip, mFarClip);
 	gPerFrameConstants.viewProjectionMatrix = gPerFrameConstants.viewMatrix * gPerFrameConstants.projectionMatrix;
-
 
 	UpdateFrameConstantBuffer(gPerFrameConstantBuffer, gPerFrameConstants);
 
@@ -138,7 +135,6 @@ void CDirLight::SetShadowMapSize(int s)
 		throw std::runtime_error("Error creating shadow map depth stencil view");
 	}
 
-
 	// We also need to send this texture (resource) to the shaders. To do that we must create a shader-resource "view"
 	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Format = DXGI_FORMAT_R32_FLOAT; // See "tech gotcha" above. The shaders see textures as colours, so shadow map pixels are not seen as depths
@@ -152,7 +148,6 @@ void CDirLight::SetShadowMapSize(int s)
 	}
 
 	return;
-
 }
 
 CDirLight::~CDirLight()

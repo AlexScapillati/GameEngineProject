@@ -6,7 +6,8 @@
 #include "Light.h"
 #include "GraphicsHelpers.h"
 #include "MathHelpers.h"
-#include "External\imgui\imgui.h"
+
+extern void DisplayShadowMaps();
 
 CGameObjectManager::CGameObjectManager()
 {
@@ -16,7 +17,6 @@ CGameObjectManager::CGameObjectManager()
 
 void CGameObjectManager::AddObject(CGameObject* obj)
 {
-
 	if (mObjects.size() < mMaxSize)
 	{
 		mObjects.push_back(obj);
@@ -27,10 +27,8 @@ void CGameObjectManager::AddObject(CGameObject* obj)
 	}
 }
 
-
 void CGameObjectManager::AddLight(CLight* obj)
 {
-
 	if (mLights.size() < mMaxSize)
 	{
 		mLights.push_back(obj);
@@ -68,7 +66,6 @@ void CGameObjectManager::AddDirLight(CDirLight* obj)
 		mDirLights.push_back(obj);
 	}
 }
-
 
 void CGameObjectManager::UpdateLightsConstBuffer(PerFrameLights* FCB)
 {
@@ -143,9 +140,9 @@ void CGameObjectManager::UpdatePointLightsConstBuffer(PerFramePointLights* FLB)
 
 			for (auto j = 0; j < 6; ++j)
 			{
-				CVector3 rot = mPointLights[i]->mSides[i];
+				CVector3 rot = mPointLights[i]->mSides[j];
 
-				mPointLights[i]->SetRotation(-rot * PI);
+				mPointLights[i]->SetRotation(rot * PI);
 
 				FLB->pointLights[i].viewMatrices[j] = InverseAffine(mPointLights[i]->WorldMatrix());
 			}
@@ -159,10 +156,8 @@ void CGameObjectManager::UpdatePointLightsConstBuffer(PerFramePointLights* FLB)
 	}
 }
 
-
 bool CGameObjectManager::RemoveObject(int pos)
 {
-
 	if (!mObjects.empty())
 	{
 		mObjects.erase(mObjects.begin() + pos);
@@ -174,7 +169,6 @@ bool CGameObjectManager::RemoveObject(int pos)
 
 bool CGameObjectManager::RemoveLight(int pos)
 {
-
 	if (!mLights.empty())
 	{
 		mLights.erase(mLights.begin() + pos);
@@ -215,28 +209,6 @@ bool CGameObjectManager::RemoveDirLight(int pos)
 	}
 	return false;
 }
-
-void DisplayShadowMaps()
-{
-	if (ImGui::Begin("ShadowMaps",0,ImGuiWindowFlags_NoBringToFrontOnFocus))
-	{
-		if (ImGui::BeginTable("", 6))
-		{
-			for (auto tx : GOM->mShadowsMaps)
-			{
-				ImTextureID texId = tx;
-
-				ImGui::TableNextColumn();
-
-				ImGui::Image((void*)texId, { 256, 256 });
-			}
-
-			ImGui::EndTable();
-		}
-	}
-	ImGui::End();
-}
-
 
 bool CGameObjectManager::RenderAllObjects()
 {
@@ -294,7 +266,7 @@ void CGameObjectManager::RenderFromSpotLights()
 			//render from its prospective into a texture
 			auto temp = it->RenderFromThis();
 
-			//put this texture in the texture array that will be passed to the shader	
+			//put this texture in the texture array that will be passed to the shader
 			mShadowsMaps.push_back(temp);
 		}
 	}

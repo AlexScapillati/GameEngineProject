@@ -1,0 +1,43 @@
+<Scene>
+    <Default>
+        <Shaders VS="PixelLighting_vs" PS="PixelLighting_ps"/>
+    </Default>
+    <Entities>
+        <Entity Type="GameObject" Name="Stars">
+            <Geometry Mesh="Stars.x" Diffuse="Stars.jpg"/>
+            <Position X="0" Y="0" Z="0"/>
+            <Rotation X="1" Y="0" Z="0"/>
+            <Scale X="800" Y="800" Z="800"/>
+        </Entity>
+        <Entity Type="GameObject" Name="Ground">
+            <Geometry Mesh="Hills.x" Diffuse="GrassDiffuseSpecular.dds"/>
+            <Position X="0" Y="0" Z="0"/>
+            <Rotation X="-0" Y="0" Z="0"/>
+            <Scale X="1" Y="1" Z="1"/>
+        </Entity>
+        <Entity Type="GameObject" Name="Crate">
+            <Geometry Mesh="CargoContainer.x" Diffuse="CargoA.dds"/>
+            <Position X="-10" Y="0" Z="90"/>
+            <Rotation X="-0" Y="40" Z="0"/>
+            <Scale X="6" Y="6" Z="6"/>
+        </Entity>
+        <Entity Type="GameObject" Name="Octopus">
+            <Geometry Mesh="Octopus.x" Diffuse="brick1.jpg"/>
+            <Position X="0" Y="0" Z="20"/>
+            <Rotation X="-90" Y="-0" Z="0"/>
+            <Scale X="5" Y="5" Z="5"/>
+        </Entity>
+        <Entity Type="Light" Name="SimpleLight">
+            <Geometry Mesh="Light.x" Diffuse="Flare.jpg" VS="BasicTransform_vs" PS="TintedTexture_ps"/>
+            <Position X="30" Y="10" Z="90"/>
+            <Rotation X="-0" Y="0" Z="0"/>
+            <Scale X="30.000002" Y="30.000002" Z="30.000002"/>
+            <Colour X="0.80000001" Y="0.80000001" Z="0.80000001"/>
+            <Strength S="100"/>
+        </Entity>
+        <Entity Type="Camera">
+            <Position X="25" Y="18" Z="-45"/>
+            <Rotation X="10" Y="-20" Z="0"/>
+        </Entity>
+    </Entities>
+</Scene>

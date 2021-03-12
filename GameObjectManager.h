@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include <deque>
@@ -29,7 +28,7 @@ public:
 	void AddDirLight(CDirLight* obj);
 
 	void UpdateLightsConstBuffer(PerFrameLights* FCB);
-	
+
 	void UpdateSpotLightsConstBuffer(PerFrameSpotLights* FLB);
 
 	void UpdateDirLightsConstBuffer(PerFrameDirLights* FLB);
@@ -45,7 +44,7 @@ public:
 	bool RemoveSpotLight(int pos);
 
 	bool RemoveDirLight(int pos);
-	
+
 	bool RenderAllObjects();
 
 	void RenderFromSpotLights();
@@ -71,13 +70,10 @@ public:
 	std::deque<CDirLight*> mDirLights;
 
 	std::vector<ID3D11ShaderResourceView*> mShadowsMaps;
-	
 
 private:
 
 	int mMaxSize;
 
 	int mMaxShadowMaps;
-
 };
-

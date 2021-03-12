@@ -1,5 +1,11 @@
 #include "Light.h"
 
+CLight::CLight(CLight& l) : CGameObject(l)
+{
+	mColour = l.GetColour();
+	mStrength = l.GetStrength();
+}
+
 void CLight::Render(bool basicGeometry)
 {
 	if (basicGeometry)
