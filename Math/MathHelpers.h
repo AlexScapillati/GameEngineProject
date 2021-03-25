@@ -64,4 +64,19 @@ inline double Random(const double a, const double b)
 	return a + (b - a) * (static_cast<double>(rand()) / RAND_MAX);
 }
 
+
+// Get both sin and cos of x, more efficient than calling functions seperately
+inline void SinCos
+(
+	float  x,
+	float* pSin,
+	float* pCos
+)
+{
+    *pSin = sinf( x );
+    *pCos = cosf( x );
+}
+
+
+
 #endif // _MATH_HELPERS_H_DEFINED_

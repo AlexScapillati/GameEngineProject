@@ -45,14 +45,16 @@ extern ID3D11ShaderResourceView* gDepthShaderView;        // Allows access to th
 extern CGameObjectManager* GOM;
 
 // Input constsnts
-extern const float ROTATION_SPEED;
-extern const float MOVEMENT_SPEED;
+extern float ROTATION_SPEED;
+extern float MOVEMENT_SPEED;
 
 // A global error message to help track down fatal errors - set it to a useful message
 // when a serious error occurs
 extern std::string gLastError;
 
 extern std::string gMediaFolder;
+
+
 
 //--------------------------------------------------------------------------------------
 // Light Structures
@@ -63,7 +65,7 @@ struct sLight
 	CVector3 position;
 	float enabled;
 	CVector3 colour;
-	uint32_t  numLights;
+	float intensity;
 };
 
 struct sSpotLight
@@ -71,7 +73,7 @@ struct sSpotLight
 	CVector3 colour;
 	float enabled;
 	CVector3 pos;
-	uint32_t numLights;
+	float intensity;
 	CVector3 facing;          //the direction facing of the light
 	float cosHalfAngle;       //pre calculate this in the c++ side, for performance reasons
 	CMatrix4x4 viewMatrix;    //the light view matrix (as it was a camera)
@@ -83,7 +85,7 @@ struct sDirLights
 	CVector3 colour;
 	float enabled;
 	CVector3 facing;
-	uint32_t numLights;
+	float intensity;
 	CMatrix4x4 viewMatrix;    //the light view matrix (as it was a camera)
 	CMatrix4x4 projMatrix;    //--"--
 };
@@ -93,7 +95,7 @@ struct sPointLights
 	CVector3 colour;
 	float enabled;
 	CVector3 position;
-	uint32_t numLights;
+	float intensity;
 	CMatrix4x4 viewMatrices[6];    //the light view matrix (as it was a camera)
 	CMatrix4x4 projMatrix;    //--"--
 };
@@ -118,6 +120,20 @@ struct PerFrameConstants
 
 	CVector3   ambientColour;
 	float      specularPower;
+
+	float		parallaxMinSamples = 5;
+	float		parallaxMaxSamples = 20;
+	float	parallaxPadding;
+
+	float		gDepthAdjust = 0.0005f;
+
+	float		nLights;
+	float		nDirLight;
+	float		nSpotLights;
+	float		nPointLights;
+
+	uint32_t	nPcfSamples;
+	CVector3	padding2;
 
 	CVector3   cameraPosition;
 	float      frameTime;      // This app does updates on the GPU so we pass over the frame update time
@@ -169,6 +185,15 @@ struct PerModelConstants
 	CVector3   objectColour;  // Allows each light model to be tinted to match the light colour they cast
 	float      parallaxDepth; // Used in the geometry shader to control how much the polygons are exploded outwards
 
+	float		hasOpacityMap;
+	float		hasAoMap;
+	float		hasRoughnessMap;
+	float		hasAmbientMap;
+	float		hasMetallnessMap;
+
+	float       roughness;
+	CVector2    padding;
+
 	CMatrix4x4 boneMatrices[MAX_BONES];
 };
 extern PerModelConstants gPerModelConstants;      // This variable holds the CPU-side constant buffer described above
@@ -187,7 +212,7 @@ struct PostProcessingConstants
 	CVector4 polygon2DPoints[4]; // Four points of a polygon in 2D viewport space for polygon post-processing. Matrix transformations already done on C++ side
 
 	// Tint post-process settings
-	CVector3 tintColour = { 0.5,0.5,0.5 };
+	CVector3 tintColour = { 1,1,1 };
 
 	// Grey noise post-process settings
 	float noiseStrength = 0.5;
@@ -212,16 +237,37 @@ struct PostProcessingConstants
 	float heatHazeTimer;
 	float heatEffectStrength = 0.005f;
 	float heatSoftEdge = 0.125f;// Softness of the edge of the circle - range 0.001 (hard edge) to 0.25 (very soft)
+	float paddingF;
 
 	// Chromatic Aberration settings
 	float caAmount = 0.01f;
+    float   caEdge = 0.5f;
+    float   caFalloff = 0.01f;
+	float paddingG;
 
 	//gaussian blur settings
 	float blurDirections = 16.0; // BLUR DIRECTIONS (Default 16.0 - More is better but slower)
 	float blurQuality = 3.0; // BLUR QUALITY (Default 4.0 - More is better but slower)
 	float blurSize = 8.0; // BLUR SIZE (Radius)
-
+	float paddingH;
+	
+    // Bloom settings
 	float bloomThreshold = 0.5f;
+	CVector3 paddingI;
+	
+    // SSAO settings
+	float ssaoStrenght = 1.0f;
+	float ssaoArea = 0.2f;
+	float ssaoFalloff = 0.000001f;
+	float ssaoRadius = 0.1f;
+	
+    // God Rays Settings
+	CVector2 lightScreenPos;
+    float	 weight		= 0.58767f;
+    float	 decay		= 0.97815f;
+    float	 exposure	= 0.2f;
+    float	 density	= 0.926f;
+    int		 numSamples = 4;
 };
 extern PostProcessingConstants gPostProcessingConstants; // This variable holds the CPU-side constant buffer described above
 extern ID3D11Buffer* gPostProcessingConstBuffer; // This variable controls the GPU-side constant buffer related to the above structure

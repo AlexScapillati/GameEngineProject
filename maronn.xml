@@ -1,43 +1,74 @@
 <Scene>
-    <Default>
-        <Shaders VS="PixelLighting_vs" PS="PixelLighting_ps"/>
-    </Default>
-    <Entities>
-        <Entity Type="GameObject" Name="Stars">
-            <Geometry Mesh="Stars.x" Diffuse="Stars.jpg"/>
-            <Position X="0" Y="0" Z="0"/>
-            <Rotation X="1" Y="0" Z="0"/>
-            <Scale X="800" Y="800" Z="800"/>
-        </Entity>
-        <Entity Type="GameObject" Name="Ground">
-            <Geometry Mesh="Hills.x" Diffuse="GrassDiffuseSpecular.dds"/>
-            <Position X="0" Y="0" Z="0"/>
-            <Rotation X="-0" Y="0" Z="0"/>
-            <Scale X="1" Y="1" Z="1"/>
-        </Entity>
-        <Entity Type="GameObject" Name="Crate">
-            <Geometry Mesh="CargoContainer.x" Diffuse="CargoA.dds"/>
-            <Position X="-10" Y="0" Z="90"/>
-            <Rotation X="-0" Y="40" Z="0"/>
-            <Scale X="6" Y="6" Z="6"/>
-        </Entity>
-        <Entity Type="GameObject" Name="Octopus">
-            <Geometry Mesh="Octopus.x" Diffuse="brick1.jpg"/>
-            <Position X="0" Y="0" Z="20"/>
-            <Rotation X="-90" Y="-0" Z="0"/>
-            <Scale X="5" Y="5" Z="5"/>
-        </Entity>
-        <Entity Type="Light" Name="SimpleLight">
-            <Geometry Mesh="Light.x" Diffuse="Flare.jpg" VS="BasicTransform_vs" PS="TintedTexture_ps"/>
-            <Position X="30" Y="10" Z="90"/>
-            <Rotation X="-0" Y="0" Z="0"/>
-            <Scale X="30.000002" Y="30.000002" Z="30.000002"/>
-            <Colour X="0.80000001" Y="0.80000001" Z="0.80000001"/>
-            <Strength S="100"/>
-        </Entity>
-        <Entity Type="Camera">
-            <Position X="25" Y="18" Z="-45"/>
-            <Rotation X="10" Y="-20" Z="0"/>
-        </Entity>
-    </Entities>
+  <Default>
+    <Shaders VS="PixelLighting_vs" PS="PixelLighting_ps" />
+  </Default>
+  <Entities>
+    <Entity Type ="Sky" Name="Stars">
+      <Geometry Mesh ="Sphere.x" Diffuse ="lauter_waterfall.jpg" />
+      <Rotation X="1.0" Y="0.0" Z="0.0" />
+      <Scale X="800.0" Y="800.0" Z="800.0" />
+    </Entity>
+    <Entity Type="GameObject" Name="Ground">
+      <Geometry ID="grasswild" VS="PBR_vs" PS="PBR_ps" />
+      <Position X="0" Y="0" Z="0" />
+      <Rotation X="-0" Y="0" Z="0" />
+      <Scale X="1" Y="1" Z="1" />
+    </Entity>
+    <Entity Type="GameObject" Name="normalplant_LOD0">
+      <Geometry ID="normalplant" />
+      <Position X="76.144279" Y="0" Z="-10.241789" />
+      <Rotation X="-0.074918583" Y="73.927063" Z="0.1627766" />
+      <Scale X="0.35999981" Y="0.35999978" Z="0.35999981" />
+    </Entity>
+    <!--<Entity Type="GameObject" Name="newnormalplant_LOD0">
+      <Geometry ID="normalplant" />
+      <Position X="55.802322" Y="0" Z="0" />
+      <Rotation X="-0.074918605" Y="73.927063" Z="0.16277659" />
+      <Scale X="0.35999984" Y="0.35999981" Z="0.35999981" />
+    </Entity>
+    <Entity Type="GameObject" Name="newnormalplant_LOD0">
+      <Geometry ID="normalplant" />
+      <Position X="68.268524" Y="0" Z="0" />
+      <Rotation X="-0.074918605" Y="73.927063" Z="0.16277659" />
+      <Scale X="0.35999984" Y="0.35999981" Z="0.35999981" />
+    </Entity>
+    <Entity Type="GameObject" Name="newnormalplant_LOD0">
+      <Geometry ID="normalplant" />
+      <Position X="68.268524" Y="0" Z="-10.241789" />
+      <Rotation X="-0.074918605" Y="73.927063" Z="0.16277659" />
+      <Scale X="0.35999984" Y="0.35999981" Z="0.35999981" />
+    </Entity>-->
+    <Entity Type="GameObject" Name="plant2_LOD0_Var1">
+      <Geometry ID="plant2" VS="PBR_vs" PS="PBR_ps" />
+      <Position X="-11.193899" Y="7.7034631" Z="-9.2776947" />
+      <Rotation X="-0" Y="0" Z="0" />
+      <Scale X="0.54290003" Y="0.54290003" Z="0.54290003" />
+    </Entity>
+    <Entity Type="GameObject" Name="newplant2_LOD0_Var1">
+      <Geometry ID="normalplant" />
+      <Position X="29.889736" Y="0" Z="0" />
+      <Rotation X="-0" Y="0" Z="0" />
+      <Scale X="0.211731" Y="0.211731" Z="0.211731" />
+    </Entity>
+    <Entity Type="Light" Name="SimpleLight">
+      <Geometry Mesh="Light.x" Diffuse="Flare.jpg" VS="BasicTransform_vs" PS="TintedTexture_ps" />
+      <Position X="30" Y="10" Z="90" />
+      <Rotation X="-0" Y="0" Z="0" />
+      <Scale X="35.269516" Y="35.269516" Z="35.269516" />
+      <Colour X="0.80000001" Y="0.80000001" Z="0.80000001" />
+      <Strength S="119" />
+    </Entity>
+    <Entity Type="PointLight" Name="Light">
+      <Geometry Mesh="Light.x" Diffuse="Flare.jpg" VS="BasicTransform_vs" PS="TintedTexture_ps" />
+      <Position X="170.98074" Y="133.62935" Z="17.499908" />
+      <Rotation X="-0" Y="-179.99998" Z="0" />
+      <Scale X="76.954987" Y="76.954987" Z="76.954987" />
+      <Colour X="0.90196079" Y="0.77556074" Z="0.18569782" />
+      <Strength S="439" />
+    </Entity>
+    <Entity Type="Camera">
+      <Position X="39.534401" Y="36.583355" Z="-110.33955" />
+      <Rotation X="15.170026" Y="6.2779708" Z="0" />
+    </Entity>
+  </Entities>
 </Scene>

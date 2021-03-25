@@ -289,17 +289,20 @@ bool CreateStates()
 // Release DirectX state objects
 void ReleaseStates()
 {
-	if (gUseDepthBufferState)    gUseDepthBufferState->Release();
-	if (gDepthReadOnlyState)     gDepthReadOnlyState->Release();
-	if (gPointSamplerBorder)	 gPointSamplerBorder->Release();
-	if (gNoDepthBufferState)     gNoDepthBufferState->Release();
-	if (gCullBackState)          gCullBackState->Release();
-	if (gCullFrontState)         gCullFrontState->Release();
-	if (gCullNoneState)          gCullNoneState->Release();
-	if (gNoBlendingState)        gNoBlendingState->Release();
-	if (gAlphaBlendingState)     gAlphaBlendingState->Release();
-	if (gAdditiveBlendingState)  gAdditiveBlendingState->Release();
-	if (gAnisotropic4xSampler)   gAnisotropic4xSampler->Release();
-	if (gTrilinearSampler)       gTrilinearSampler->Release();
-	if (gPointSampler)           gPointSampler->Release();
+	if (gPointSampler)           gPointSampler->Release();			gPointSampler = nullptr;
+	if (gTrilinearSampler)       gTrilinearSampler->Release();		gTrilinearSampler = nullptr;
+	if (gPointSamplerBorder)	 gPointSamplerBorder->Release();	gPointSamplerBorder = nullptr;
+	if (gAnisotropic4xSampler)   gAnisotropic4xSampler->Release();	gAnisotropic4xSampler = nullptr;
+
+	if (gUseDepthBufferState)    gUseDepthBufferState->Release();	gUseDepthBufferState = nullptr;
+	if (gDepthReadOnlyState)     gDepthReadOnlyState->Release();	gDepthReadOnlyState = nullptr;
+	if (gNoDepthBufferState)     gNoDepthBufferState->Release();	gNoDepthBufferState = nullptr;
+
+	if (gCullNoneState)          gCullNoneState->Release();			gCullNoneState = nullptr;
+	if (gCullBackState)          gCullBackState->Release();			gCullBackState = nullptr;
+	if (gCullFrontState)         gCullFrontState->Release();		gCullFrontState = nullptr;
+
+	if (gNoBlendingState)        gNoBlendingState->Release();		gNoBlendingState = nullptr;
+	if (gAlphaBlendingState)     gAlphaBlendingState->Release();	gAlphaBlendingState = nullptr;
+	if (gAdditiveBlendingState)  gAdditiveBlendingState->Release();	gAdditiveBlendingState = nullptr;
 }

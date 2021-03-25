@@ -18,9 +18,21 @@ public:
 	CLight(CLight& l);
 
 	CLight(std::string mesh, std::string name,
-		std::string& diffuse, std::string& vertexShader, std::string& pixelShader,
+		std::string& diffuse,
 		CVector3 colour = { 0.0f,0.0f,0.0f }, float strength = 0.0f, CVector3 position = { 0,0,0 }, CVector3 rotation = { 0,0,0 }, float scale = 1)
-		: mColour(colour), mStrength(strength), CGameObject(std::move(mesh), std::move(name), diffuse, vertexShader, pixelShader, position, rotation, scale) {}
+		: mColour(colour), mStrength(strength), CGameObject(std::move(mesh), std::move(name), diffuse, position, rotation, scale) 
+	{
+		try
+		{
+			mMaterial->SetVertexShader(gBasicTransformVertexShader);
+			mMaterial->SetPixelShader(gTintedTexturePixelShader);
+		}
+		catch (std::exception e)
+		{
+			throw std::exception(e.what());
+		}
+
+	}
 
 	void Render(bool basicGeometry = false);
 

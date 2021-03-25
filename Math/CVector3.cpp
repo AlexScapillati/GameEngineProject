@@ -81,6 +81,26 @@ CVector3 operator- (const CVector3& v, const CVector3& w)
 	return CVector3{ v.x - w.x, v.y - w.y, v.z - w.z };
 }
 
+CVector3 operator-(const CVector3& v, const float& w)
+{
+	return CVector3{ v.x - w, v.y -w,v.z -w};
+}
+
+CVector3 operator-(const float& w, const CVector3& v)
+{
+	return CVector3{ v.x - w, v.y -w,v.z -w};
+}
+
+CVector3 operator+(const CVector3& v, const float& w)
+{
+	return CVector3{ v.x + w, v.y + w,v.z + w};
+}
+
+CVector3 operator+(const float& w, const CVector3& v)
+{
+	return CVector3{ v.x + w, v.y + w,v.z + w};
+}
+
 // Vector-scalar multiplication
 CVector3 operator* (const CVector3& v, float s)
 {
@@ -90,6 +110,16 @@ CVector3 operator* (const CVector3& v, float s)
 CVector3 operator* (float s, const CVector3& v)
 {
 	return CVector3{ v.x * s, v.y * s, v.z * s };
+}
+
+CVector3 operator/(const CVector3& v, float s)
+{
+	return CVector3{v.x/s,v.y/s,v.z/s};
+}
+
+CVector3 operator/(float s, const CVector3& v)
+{
+	return CVector3{v.x/s,v.y/s,v.z/s};
 }
 
 // Addition of another vector to this one, e.g. Position += Velocity
@@ -142,4 +172,25 @@ float Length(const CVector3& v)
 CVector3 ToDegrees(CVector3 v)
 {
 	return CVector3(ToDegrees(v.x), ToDegrees(v.y), ToDegrees(v.z));
+}
+
+CVector3 ToRadians(CVector3 v)
+{
+	return CVector3(ToRadians(v.x), ToRadians(v.y), ToRadians(v.z));
+}
+
+// Scale between two values (min allowed, max allowed) in the current range (min, max)
+// This overload is fof the values with different current range
+CVector3 ScaleBetween(CVector3 v, float minAllowed, float maxAllowed, CVector3 min, CVector3 max)
+{
+	return CVector3{	(maxAllowed - minAllowed) * (v.x - min.x) / (max.x - min.x) + minAllowed ,
+						(maxAllowed - minAllowed) * (v.y - min.y) / (max.y - min.y) + minAllowed,
+						(maxAllowed - minAllowed) * (v.z - min.z) / (max.z - min.z) + minAllowed };
+}
+
+// Scale between two values (min allowed, max allowed) in the current range (min, max)
+// This overload is fof the values with all the same current range
+CVector3 ScaleBetween(CVector3 v, float minAllowed, float maxAllowed, float min, float max)
+{
+  return (maxAllowed - minAllowed) * (v - min) / (max - min) + minAllowed;
 }

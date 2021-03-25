@@ -9,26 +9,26 @@ class CMaterial
 {
 public:
 
-	CMaterial(std::string diffuseMap, std::string vertexShader, std::string pixelShader);
-
-	CMaterial(std::vector<std::string> fileMaps, std::string vs, std::string ps);
+	CMaterial(std::vector<std::string> fileMaps);
 
 	CMaterial(CMaterial& m);
 
+	//return if the material has a normal map
 	bool HasNormals() { return mHasNormals; }
-	bool IsPbr() { return mIsPbr; }
 
 	void RenderMaterial(bool basicGeometry = false);
+
+	void SetVertexShader(ID3D11VertexShader* s);
+
+	void SetPixelShader(ID3D11PixelShader* s);
 
 	auto GetTextureFileName() { return mMapsStr.front(); }
 	auto GetTexture() { return mPbrMaps.Albedo; }
 	auto GetTextureSRV() { return mPbrMaps.AlbedoSRV; }
 
 	auto GetPtrVertexShader() { return mVertexShader; }
-	auto GetVertexShader() { return mVsStr; }
 
 	auto GetPtrPixelShader() { return mPixelShader; }
-	auto GetPixelShader() { return mPsStr; }
 
 	~CMaterial();
 
@@ -36,12 +36,7 @@ private:
 
 	std::vector<std::string> mMapsStr;
 
-	std::string mVsStr;
-	std::string mPsStr;
-
 	bool mHasNormals;
-
-	bool mIsPbr;
 
 	//for regular models
 	ID3D11VertexShader* mVertexShader;
@@ -61,6 +56,9 @@ private:
 		ID3D11ShaderResourceView* NormalSRV;
 		ID3D11Resource* Roughness;
 		ID3D11ShaderResourceView* RoughnessSRV;
+		ID3D11Resource* Metalness;
+		ID3D11ShaderResourceView* MetalnessSRV;
+
 	} mPbrMaps;
 
 	void LoadMaps(std::vector<std::string>& maps);

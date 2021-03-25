@@ -28,11 +28,11 @@ NormalMappingPixelShaderInput main(TangentVertex modelVertex)
     output.projectedPosition = mul(gProjectionMatrix, viewPosition);
 
     output.worldPosition = worldPosition.xyz; // Also pass world position to pixel shader for lighting
-
-	// Unlike the position, send the model's normal and tangent untransformed (in model space). The pixel shader will do the matrix work on normals
-	output.modelNormal  = modelVertex.normal;
-	output.modelTangent = modelVertex.tangent;
-
+    
+    // Transform normal and tangent to world-space, send all to pixel shader
+    output.worldNormal = mul(float4(modelVertex.normal, 0.0f), gWorldMatrix).xyz;
+    output.worldTangent = mul(float4(modelVertex.tangent, 0.0f), gWorldMatrix).xyz;
+    
     // Pass texture coordinates (UVs) on to the pixel shader, the vertex shader doesn't need them
     output.uv = modelVertex.uv;
 

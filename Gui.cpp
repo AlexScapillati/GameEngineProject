@@ -18,6 +18,9 @@
 #include "PointLight.h"
 #include "DirLight.h"
 #include "Light.h"
+#include "Plant.h"
+#include "Sky.h"
+#include "GraphicsHelpers.h"
 
 void InitGui()
 {
@@ -33,6 +36,7 @@ void InitGui()
 
 	io.ConfigDockingWithShift = false;
 	io.ConfigWindowsMoveFromTitleBarOnly = true;
+	io.Fonts->AddFontFromFileTTF("External\\imgui\\misc\\fonts\\Roboto-Light.ttf", 15);
 
 	// Setup Platform/Renderer bindings
 	ImGui_ImplDX11_Init(gD3DDevice, gD3DContext);
@@ -79,6 +83,7 @@ void CScene::AddObjectsMenu()
 		None,
 		Simple,
 		Pbr,
+		Plant,
 		SimpleLight,
 		SpotLight,
 		DirLight,
@@ -98,6 +103,10 @@ void CScene::AddObjectsMenu()
 			if (ImGui::MenuItem("Pbr Object"))
 			{
 				addType = Pbr;
+			}
+			if (ImGui::MenuItem("Plant"))
+			{
+				addType = Plant;
 			}
 			if (ImGui::BeginMenu("Lights"))
 			{
@@ -128,9 +137,9 @@ void CScene::AddObjectsMenu()
 	static std::string mesh;
 	static std::string tex;
 	static std::string name;
-	static std::string vs = mDefaultVs, ps = mDefaultPs;
 	static bool selectTexture = false;
 	static bool selectNormal = false;
+	static bool selectFolder = false;
 
 	if (addType != None)
 	{
@@ -138,7 +147,7 @@ void CScene::AddObjectsMenu()
 		if (ImGui::Begin("Add Object"), &addObj, ImGuiWindowFlags_NoDocking)
 		{
 			//if the model is not pbr
-			if (addType != Pbr)
+			if (addType != Pbr && addType != Plant)
 			{
 				//show a button that will open a file dialog to open a mesh
 				if (ImGui::Button("Add Mesh"))
@@ -166,6 +175,14 @@ void CScene::AddObjectsMenu()
 				{
 					selectMesh = true;
 				}
+
+				// Show a butto to select a folder
+				 
+				if (ImGui::Button("Select folder"))
+				{
+					selectFolder = true;
+				}
+
 				//show the mesh file name
 				if (mesh != "")
 				{
@@ -186,7 +203,7 @@ void CScene::AddObjectsMenu()
 			static float strenght;
 
 			//if the model is a light (hence not a simple object or pbr)
-			if (addType != Simple && addType != Pbr)
+			if (addType == SimpleLight || addType == DirLight || addType == OmniLight || addType == SpotLight)
 			{
 				ImGui::ColorEdit3("LightColor", col.GetValuesArray());
 				ImGui::DragFloat("Strength", &strenght);
@@ -210,7 +227,7 @@ void CScene::AddObjectsMenu()
 
 					if (mesh != "" && tex != "")
 					{
-						auto newObj = new CGameObject(mesh, name, tex, vs, ps, { 0,0,0 }, { 0,0,0 }, 1);
+						auto newObj = new CGameObject(mesh, name, tex);
 
 						mObjManager->AddObject(newObj);
 
@@ -223,11 +240,21 @@ void CScene::AddObjectsMenu()
 
 					if (mesh != "")
 					{
-						auto pos = mesh.find_first_of('_');
+						auto newObj = new CGameObject(mesh, name);
 
-						auto id = mesh.substr(0, pos);
+						mObjManager->AddObject(newObj);
 
-						auto newObj = new CGameObject(id, name, vs, ps, { 0,0,0 }, { 0,0,0 }, 1);
+						addObj = false;
+					}
+
+					break;
+
+				case Plant:
+
+					if (mesh != "")
+					{
+
+						auto newObj = new CPlant(mesh, name);
 
 						mObjManager->AddObject(newObj);
 
@@ -240,7 +267,7 @@ void CScene::AddObjectsMenu()
 
 					if (mesh != "" & tex != "")
 					{
-						auto newObj = new CLight(mesh, name, tex, vs, ps, col, strenght);
+						auto newObj = new CLight(mesh, name, tex, col, strenght);
 
 						mObjManager->AddLight(newObj);
 
@@ -253,7 +280,7 @@ void CScene::AddObjectsMenu()
 
 					if (mesh != "" & tex != "")
 					{
-						auto newObj = new CSpotLight(mesh, name, tex, vs, ps, col, strenght);
+						auto newObj = new CSpotLight(mesh, name, tex, col, strenght);
 
 						mObjManager->AddSpotLight(newObj);
 
@@ -266,7 +293,7 @@ void CScene::AddObjectsMenu()
 
 					if (mesh != "" & tex != "")
 					{
-						auto newObj = new CDirLight(mesh, name, tex, vs, ps, col, strenght);
+						auto newObj = new CDirLight(mesh, name, tex, col, strenght);
 
 						mObjManager->AddDirLight(newObj);
 
@@ -279,7 +306,7 @@ void CScene::AddObjectsMenu()
 
 					if (mesh != "" & tex != "")
 					{
-						auto newObj = new CPointLight(mesh, name, tex, vs, ps, col, strenght);
+						auto newObj = new CPointLight(mesh, name, tex, col, strenght);
 
 						mObjManager->AddPointLight(newObj);
 
@@ -302,6 +329,10 @@ void CScene::AddObjectsMenu()
 	{
 		ImGui::OpenPopup("Select Texture");
 	}
+	if (selectFolder)
+	{
+		ImGui::OpenPopup("Select Folder");
+	}
 
 	if (fileDialog.showFileDialog("Select Mesh", imgui_addons::ImGuiFileBrowser::DialogMode::OPEN, ImVec2(700, 310), ".x,.fbx"))
 	{
@@ -313,6 +344,12 @@ void CScene::AddObjectsMenu()
 	{
 		selectTexture = false;
 		tex = fileDialog.selected_fn;
+	}
+
+	if (fileDialog.showFileDialog("Select Folder", imgui_addons::ImGuiFileBrowser::DialogMode::SELECT, ImVec2(700, 310)))
+	{
+		selectFolder = false;
+		mesh = fileDialog.selected_fn;
 	}
 }
 
@@ -326,7 +363,7 @@ std::string ChooseTexture(bool& selected, imgui_addons::ImGuiFileBrowser fileDia
 }
 
 template <class T>
-void CScene::DisplayDeque(std::deque<T*> deque)
+void CScene::DisplayDeque(std::deque<T*>& deque)
 {
 	auto it = deque.begin();
 
@@ -347,7 +384,9 @@ void CScene::DisplayDeque(std::deque<T*> deque)
 		if (ImGui::Button(deleteLabel.c_str()))
 		{
 			//delete the current iterator from the container
+			delete* it;
 			it = deque.erase(it);
+			mSelectedObj = nullptr;
 		}
 		else
 		{
@@ -361,11 +400,35 @@ void CScene::DisplayPropertiesWindow()
 {
 	static auto mCurrentGizmoOperation = ImGuizmo::OPERATION::TRANSLATE;
 	static bool showBounds = false;
-
+	static bool bRename = false;
 	static bool show = !(mSelectedObj == nullptr);
+
 	if (ImGui::Begin("Properties", &show))
 	{
+		ImGui::Checkbox("Enabled", mSelectedObj->Enabled());
+
 		ImGuizmo::Enable(mSelectedObj->Enabled());
+
+		if (ImGui::Button("Rename"))
+		{
+			bRename = true;
+		}
+
+		if (bRename)
+		{
+			static char buffer[100] = { 0 };
+
+			ImGui::InputText("Name", buffer, IM_ARRAYSIZE(buffer));
+
+			if (ImGui::Button("OK"))
+			{
+				//set the name
+				mSelectedObj->SetName(buffer);
+
+				//hide the rename text input
+				bRename = false;
+			}
+		}
 
 		ImGui::Separator();
 
@@ -403,9 +466,22 @@ void CScene::DisplayPropertiesWindow()
 				}
 				else
 				{
-					auto obj = new CGameObject(*mSelectedObj);
+					if (auto plant = dynamic_cast<CPlant*>(mSelectedObj))
+					{
+						auto obj = new CPlant(*plant);
+						GOM->AddObject(obj);
+					}
+					else if (auto sky = dynamic_cast<CSky*>(mSelectedObj))
+					{
+						auto obj = new CSky(*sky);
+						GOM->AddObject(obj);
+					}
+					else
+					{
+						auto obj = new CGameObject(*mSelectedObj);
 
-					GOM->AddObject(obj);
+						GOM->AddObject(obj);
+					}
 				}
 			}
 			catch (std::exception& e)
@@ -413,15 +489,6 @@ void CScene::DisplayPropertiesWindow()
 				throw std::runtime_error(e.what());
 			}
 		}
-
-		//auto name = ' ';
-
-		//if (ImGui::InputText("Name", &name, IM_ARRAYSIZE(&name)))
-		//{
-		//	selectedObj->SetName(std::to_string(name));
-		//}
-
-		ImGui::Checkbox("Enabled", mSelectedObj->Enabled());
 
 		ImGui::Checkbox("Toggle ambient Map", mSelectedObj->AmbientMapEnabled());
 
@@ -440,43 +507,41 @@ void CScene::DisplayPropertiesWindow()
 		if (ImGui::RadioButton("Scale", mCurrentGizmoOperation == ImGuizmo::SCALE))
 			mCurrentGizmoOperation = ImGuizmo::SCALE;
 
+		static auto pos = mSelectedObj->Position();
+
 		//get the direct access to the position of the model and display it
-		ImGui::DragFloat3("Position", mSelectedObj->DirectPosition());
-
-		//acquire the rotation array
-		float* rot = mSelectedObj->Rotation().GetValuesArray();
-
-		//convert it to degreese
-		for (int i = 0; i < 3; i++)
+		if (ImGui::DragFloat3("Position", pos.GetValuesArray()))
 		{
-			rot[i] = ToDegrees(rot[i]);
+			mSelectedObj->SetPosition(pos);
 		}
 
-		//display the rotation
-		if (ImGui::DragFloat3("Rotation", rot))
-		{
-			//if the value is changed
-			//get back to radians
-			for (int i = 0; i < 3; i++)
-			{
-				rot[i] = ToRadians(rot[i]);
-			}
+		//acquire the rotation array
+		static auto rot = mSelectedObj->Rotation();
 
+
+		//display the rotation
+		if (ImGui::DragFloat3("Rotation", rot.GetValuesArray(), 0.1f, 0.001f, 360.0f))
+		{
 			//set the rotation
 			mSelectedObj->SetRotation(rot);
 		}
 
-		//get the scale array
-		float* scale = mSelectedObj->Scale().GetValuesArray();
-
 		//display the scale array
-		if (ImGui::DragFloat3("Scale", scale, 0.1f, 0.001f, D3D11_FLOAT32_MAX))
+		static auto scale = mSelectedObj->Scale();
+
+		if (ImGui::DragFloat3("Scale", scale.GetValuesArray(), 0.1f, 0.01f, D3D11_FLOAT32_MAX, "%.3f"))
 		{
-			//if it has changed set the scale
 			mSelectedObj->SetScale(scale);
 		}
 
 		ImGui::Checkbox("Show Bounds", &showBounds);
+
+		if (mSelectedObj->GetMaterial()->HasNormals())
+			ImGui::DragFloat("ParallaxDepth", &mSelectedObj->GetParallaxDepth(), 0.0001f, 0.0f, 1.0f, "%.6f");
+
+		else // TODO: check for the roughness map instead of "not have normals"
+			ImGui::DragFloat("Roughness", &mSelectedObj->GetRoughness(), 0.001f, 0.0f, 1.0f);
+
 
 		//----------------------------------------------------------------
 		// Object Specific settings
@@ -504,13 +569,13 @@ void CScene::DisplayPropertiesWindow()
 			}
 
 			//modify strength
-			ImGui::DragFloat("Strength", &light->GetStrength(), 1.0f, 0.0f, D3D11_FLOAT32_MAX);
+			ImGui::DragFloat("Strength", &light->GetStrength(), 0.1f, 0.0f, D3D11_FLOAT32_MAX);
 
 			//if it is a spotlight let it modify few things
 			if (auto spotLight = dynamic_cast<CSpotLight*>(mSelectedObj))
 			{
 				//modify facing
-				CVector3 facingV = spotLight->GetFacing();
+				static CVector3 facingV = spotLight->GetFacing();
 
 				if (ImGui::DragFloat3("Facing", facingV.GetValuesArray(), 0.001f, -1.0f, 1.0f))
 				{
@@ -522,39 +587,34 @@ void CScene::DisplayPropertiesWindow()
 				ImGui::DragFloat("Cone Angle", &spotLight->GetConeAngle(), 1.0f, 0.0f, 180.0f);
 
 				//modify shadow map size
-				ImGui::DragInt("ShadowMapsSize", &spotLight->GetShadowMapSize(), 1.0f, 2, 16384);
+				static int size = std::log2(spotLight->GetShadowMapSize());
+				if (ImGui::DragInt("ShadowMapsSize", &size, 1, 1, 14))
+				{
+					spotLight->SetShadowMapsSize(pow(2, size));
+				}
 			}
 			else if (auto dirLight = dynamic_cast<CDirLight*>(mSelectedObj))
 			{
 				//modify direction
-
-				auto facingV = dirLight->GetDirection();
+				static auto facingV = dirLight->GetDirection();
 
 				if (ImGui::DragFloat3("Facing", facingV.GetValuesArray(), 0.001f, -1.0f, 1.0f))
 				{
 					CVector3 facing = Normalise(facingV);
 					dirLight->SetDirection(facing);
 				}
+
 				//modify shadow map size
-
-				auto size = dirLight->GetShadowMapSize();
-
-				if (ImGui::DragInt("ShadowMapsSize", &size, 1.0f, 2, 16384))
+				static int size = std::log2(dirLight->GetShadowMapSize());
+				if (ImGui::DragInt("ShadowMapsSize", &size, 1, 1, 14))
 				{
-					if (size < 16384 && size > 2)
-					{
-						dirLight->SetShadowMapSize(size);
-					}
-					else
-					{
-						std::runtime_error("Number Too big!");
-					}
+					dirLight->SetShadowMapSize(pow(2, size));
 				}
 
 				//modify near clip and far clip
 
-				auto nearClip = dirLight->GetNearClip();
-				auto farClip = dirLight->GetFarClip();
+				static auto nearClip = dirLight->GetNearClip();
+				static auto farClip = dirLight->GetFarClip();
 
 				if (ImGui::DragFloat("NearClip", &nearClip, 0.01f, 0.0f, 10.0f))
 				{
@@ -564,6 +624,30 @@ void CScene::DisplayPropertiesWindow()
 				if (ImGui::DragFloat("FarClip", &farClip, 10.0f, 0.0f, D3D11_FLOAT32_MAX))
 				{
 					dirLight->SetFarClip(farClip);
+				}
+
+				//modify the size of the matrix
+
+				static auto width = dirLight->GetWidth();
+				static auto height = dirLight->GetHeight();
+
+				if (ImGui::DragFloat("Height", &height, 10.0f, 1.0f, D3D11_FLOAT32_MAX))
+				{
+					dirLight->SetHeight(height);
+				}
+
+				if (ImGui::DragFloat("Width", &width, 10.0f, 1.0f, D3D11_FLOAT32_MAX))
+				{
+					dirLight->SetWidth(width);
+				}
+			}
+			else if (auto point = dynamic_cast<CPointLight*>(mSelectedObj))
+			{
+				//modify shadow map size
+				static int size = std::log2(point->GetShadowMapSize());
+				if (ImGui::DragInt("ShadowMapsSize", &size, 1, 1, 14))
+				{
+					point->SetShadowMapSize(pow(2, size));
 				}
 			}
 		}
@@ -582,7 +666,29 @@ void CScene::DisplayPropertiesWindow()
 			ImGui::NewLine();
 			ImGui::Text("AmbientMap");
 
-			//ImGui::Image((void*)selectedObj->GetAmbientMap(), {256.f, 256.f});
+			static int size = std::log2(mSelectedObj->GetAmbientMap()->GetSize());
+			if (ImGui::DragInt("Size (base 2)", &size, 1, 1, 12))
+			{
+				mSelectedObj->GetAmbientMap()->SetSize(pow(2,size));
+				mSelectedObj->mChangedPos = true;
+			}
+
+			// Debug porpuses, It saves to file the ambient map, 
+			// if opened with a dds viewer it is possible to see the varius faces of the cubemap 
+			if (ImGui::Button("Dump"))
+			{
+				std::string name = "Ambient.dds";
+
+				ID3D11Resource* res = nullptr;
+
+				mSelectedObj->GetAmbientMapSRV()->GetResource(&res);
+
+				if (!SaveTextureToFile(res, name))
+				{
+					throw std::runtime_error("Unable to dump ambient map");
+				}
+				res->Release();
+			}
 		}
 	}
 	ImGui::End();
@@ -601,6 +707,8 @@ void CScene::DisplayPropertiesWindow()
 
 	ImGuizmo::Manipulate(mCamera->ViewMatrix().GetArray(), mCamera->ProjectionMatrix().GetArray(),
 		mCurrentGizmoOperation, ImGuizmo::WORLD, mSelectedObj->WorldMatrix().GetArray(), 0, 0, showBounds ? bounds : 0);
+
+	if (ImGuizmo::IsUsing()) mSelectedObj->mChangedPos = true;
 }
 
 void CScene::DisplayObjects()
@@ -625,4 +733,28 @@ void CScene::DisplayObjects()
 	{
 		DisplayPropertiesWindow();
 	}
+}
+
+void CScene::DisplaySceneSettings(bool& b)
+{
+	if (ImGui::Begin("Scene Properties", &b))
+	{
+		ImGui::Checkbox("VSync", &mLockFPS);
+
+		ImGui::DragInt("PCF Samples", &mPcfSamples, 1, 0, 64);
+
+		static float bg[] = { mBackgroundColor.r,mBackgroundColor.g,mBackgroundColor.b,mBackgroundColor.a };
+
+		static auto minMax = (&gPerFrameConstants.parallaxMinSamples, &gPerFrameConstants.parallaxMaxSamples);
+		ImGui::DragFloat2("Min/Max parallax occlusion samples", minMax, 1.0f, 0.0f, D3D11_FLOAT32_MAX);
+
+		if (ImGui::ColorEdit4("Background Colour", bg))
+		{
+			mBackgroundColor.Set(bg);
+		}
+
+		ImGui::DragFloat("Depth Adjust", &gPerFrameConstants.gDepthAdjust, 0.00001f, 0.0f, 0.1f, "&.6f");
+
+	}
+	ImGui::End();
 }

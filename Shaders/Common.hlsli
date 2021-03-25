@@ -59,8 +59,8 @@ struct NormalMappingPixelShaderInput
                                             // because the shader needs to identify this important information
     
     float3 worldPosition : worldPosition; // Data required for lighting calculations in the pixel shader
-    float3 modelNormal : modelNormal; // --"--
-    float3 modelTangent : modelTangent; // --"--
+    float3 worldNormal : worldNormal; // --"--
+    float3 worldTangent : worldTangent; // --"--
     
     float2 uv : uv; // UVs are texture coordinates. The artist specifies for every vertex which point on the texture is "pinned" to that vertex.
 };
@@ -91,7 +91,7 @@ struct sLight
     float3 position;
     float enabled;
     float3 colour;
-    int1 numLights;
+    float intensity;
 };
 
 struct sSpotLight
@@ -99,7 +99,7 @@ struct sSpotLight
     float3 colour;
     float enabled;
     float3 pos;
-    int numLights;          //Not smart to use this variable here, but it is using a padding that otherwise would be lost
+    float intensity;
     float3 facing;          //the direction facing of the light 
     float cosHalfAngle;     //pre calculate this in the c++ side, for performance reasons
     float4x4 viewMatrix;    //the light view matrix (as it was a camera)
@@ -112,7 +112,7 @@ struct sDirLight
     float3 colour;
     float enabled;
     float3 facing;
-    int numLights;
+    float intensity;
     float4x4 viewMatrix; //the light view matrix (as it was a camera)
     float4x4 projMatrix; //--"--
 };
@@ -123,7 +123,7 @@ struct sPointLight
     float3 colour;
     float enabled;
     float3 pos;
-    int numLights;
+    float intensity;
     float4x4 viewMatrices[6];
     float4x4 projMatrix;
 };
@@ -148,27 +148,50 @@ static const int MAX_BONES = 64;
 // These variables must match exactly the gPerModelConstants structure in Scene.cpp
 cbuffer PerModelConstants : register(b0) // The b1 gives this constant buffer the number 1 - used in the C++ code
 {
-    float4x4 gWorldMatrix;
+    float4x4    gWorldMatrix;
 
-    float3   gObjectColour;  // Used for tinting light models
-	float    gParallaxDepth; // Used in the pixel shader to control how much the polygons are bumpy
+    float3      gObjectColour;  // Used for tinting light models
+	float       gParallaxDepth; // Used in the pixel shader to control how much the polygons are bumpy
+    
+    float       gHasOpacityMap;
+    float       gHasAoMap;
+    float       gHasRoughnessMap;
+    float       gHasAmbientMap;
+    float       gHasMetallnessMap;
+    
+    float       gRoughness;
+    float2      padding1;
 
-	float4x4 gBoneMatrices[MAX_BONES];
+	float4x4    gBoneMatrices[MAX_BONES];
 }
 
 
 cbuffer PerFrameConstants : register(b1) // The b0 gives this constant buffer the number 0 - used in the C++ code
 {
-	float4x4 gCameraMatrix;         // World matrix for the camera (inverse of the ViewMatrix below) - used in particle rendering geometry shader
-	float4x4 gViewMatrix;
-    float4x4 gProjectionMatrix;
-    float4x4 gViewProjectionMatrix; // The above two matrices multiplied together to combine their effects
+	float4x4    gCameraMatrix;         // World matrix for the camera (inverse of the ViewMatrix below) - used in particle rendering geometry shader
+	float4x4    gViewMatrix;
+    float4x4    gProjectionMatrix;
+    float4x4    gViewProjectionMatrix; // The above two matrices multiplied together to combine their effects
     
-    float3   gAmbientColour;
-    float1   gSpecularPower;
+    float3      gAmbientColour;
+    float1      gSpecularPower;
+    
+    float       gParallaxMinSample;
+    float       gParallaxMaxSample;
+    float       parallaxPad;
+    
+    float       gDepthAdjust;
+    
+    float       gNumLights;
+    float       gNumDirLights;
+    float       gNumSpotLights;
+    float       gNumPointLights;
+    
+    int         gPcfSamples;
+    float3      padding2;
 
-    float3   gCameraPosition;
-	float1   gFrameTime;      // This app does updates on the GPU so we pass over the frame update time
+    float3      gCameraPosition;
+	float1      gFrameTime;      // This app does updates on the GPU so we pass over the frame update time
 }
 // Note constant buffers are not structs: we don't use the name of the constant buffer, these are really just a collection of global variables (hence the 'g')
 
@@ -201,52 +224,70 @@ cbuffer PerFramePointLights : register(b5)
 // Note that this buffer reuses the same index (register) as the per-model buffer above since they won't be used together
 cbuffer PostProcessingConstants : register(b1)
 {
-    float2 gArea2DTopLeft; // Top-left of post-process area on screen, provided as coordinate from 0.0->1.0 not as a pixel coordinate
-    float2 gArea2DSize; // Size of post-process area on screen, provided as sizes from 0.0->1.0 (1 = full screen) not as a size in pixels
-    float gArea2DDepth; // Depth buffer value for area (0.0 nearest to 1.0 furthest). Full screen post-processing uses 0.0f
-    float3 paddingA; // Pad things to collections of 4 floats (see notes in earlier labs to read about padding)
+    float2  gArea2DTopLeft; // Top-left of post-process area on screen, provided as coordinate from 0.0->1.0 not as a pixel coordinate
+    float2  gArea2DSize; // Size of post-process area on screen, provided as sizes from 0.0->1.0 (1 = full screen) not as a size in pixels
+    float   gArea2DDepth; // Depth buffer value for area (0.0 nearest to 1.0 furthest). Full screen post-processing uses 0.0f
+    float3  paddingA; // Pad things to collections of 4 floats (see notes in earlier labs to read about padding)
 
-    float4 gPolygon2DPoints[4]; // Four points of a polygon in 2D viewport space for polygon post-processing. Matrix transformations already done on C++ side
+    float4  gPolygon2DPoints[4]; // Four points of a polygon in 2D viewport space for polygon post-processing. Matrix transformations already done on C++ side
 
 	// Tint post-process settings
-    float3 gTintColour;
+    float3  gTintColour;
 
 	// Grey noise post-process settings
-    float gNoiseStrength;
-    float2 gNoiseScale;
-    float2 gNoiseOffset;
-    float gNoiseEdge;
-    float2 paddingB;
+    float   gNoiseStrength;
+    float2  gNoiseScale;
+    float2  gNoiseOffset;
+    float   gNoiseEdge;
+    float2  paddingB;
 
 	// Burn post-process settings
-    float gBurnHeight;
-    float3 paddingC;
+    float   gBurnHeight;
+    float3  paddingC;
 
 	// Distort post-process settings
-    float gDistortLevel;
-    float3 paddingD;
+    float   gDistortLevel;
+    float3  paddingD;
 
 	// Spiral post-process settings
-    float gSpiralLevel;
-    float3 paddingE;
+    float   gSpiralLevel;
+    float3  paddingE;
 
 	// Heat haze post-process settings
-    float gHeatHazeTimer;
-    float heatEffectStrength;
-    float heatSoftEdge;
+    float   gHeatHazeTimer;
+    float   heatEffectStrength;
+    float   heatSoftEdge;
+    float   paddingF;
     
     // Chromatic Aberration settings
     float gCAAmount;
+    float gCAEdge;
+    float gCAFalloff;
+    float paddingG;
     
-    //gaussian blur settings
-    float gBlurDirections = 16.0; // BLUR DIRECTIONS (Default 16.0 - More is better but slower)
-    float gBlurQuality = 3.0; // BLUR QUALITY (Default 4.0 - More is better but slower)
-    float gBlurSize = 8.0; // BLUR SIZE (Radius)
+    // Gaussian blur settings
+    float   gBlurDirections = 16.0; // BLUR DIRECTIONS (Default 16.0 - More is better but slower)
+    float   gBlurQuality = 3.0; // BLUR QUALITY (Default 4.0 - More is better but slower)
+    float   gBlurSize = 8.0; // BLUR SIZE (Radius)
+    float paddingH;
     
+    // Bloom settings
+    float   gBloomThreshold = 0.5f;
+    float3   paddingI;
+   
+    // SSAO settings
+    float   gSsaoStrenght = 1.0f;
+    float   gSsaoArea = 0.2f;
+    float   gSsaoFalloff = 0.000001f;
+    float   gSsaoRadius = 0.0002f;
     
-    //bloom settings
-    float gBloomThreshold = 0.5f;
-    
+    // God Rays Settings
+    float2  gLightScreenPos;
+    float   gWeight     ;
+    float   gDecay      ;
+    float   gExposure   ;
+    float   gDensity    ;
+    int     gNumSamples;
 }
 
 //**************************

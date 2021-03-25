@@ -27,10 +27,9 @@ public:
 
 	CGameObject(CGameObject&);
 
-	CGameObject(std::string mesh, std::string name, std::string& diffuseMap, std::string& vertexShader,
-		std::string& pixelShader, CVector3 position = { 0,0,0 }, CVector3 rotation = { 0,0,0 }, float scale = 1);
+	CGameObject(std::string mesh, std::string name, std::string& diffuseMap, CVector3 position = { 0,0,0 }, CVector3 rotation = { 0,0,0 }, float scale = 1);
 
-	CGameObject(std::string id, std::string name, std::string vs, std::string ps, CVector3 position = { 0,0,0 }, CVector3 rotation = { 0,0,0 }, float scale = 1);
+	CGameObject(std::string id, std::string name, CVector3 position = { 0,0,0 }, CVector3 rotation = { 0,0,0 }, float scale = 1);
 
 	virtual void Render(bool basicGeometry = false);
 
@@ -62,6 +61,10 @@ public:
 
 	auto SetName(std::string n) { mName = n; }
 
+	auto& GetParallaxDepth() { return mParallaxDepth; }
+
+	auto SetParallaxDepth(float p) { mParallaxDepth = p; }
+
 	auto Enabled() { return &mEnabled; }
 
 	auto GetTextureSRV() { return mMaterial->GetTextureSRV(); }
@@ -70,7 +73,11 @@ public:
 
 	auto GetTextrueFileName() { return mMaterial->GetTextureFileName(); }
 
-	auto GetMaterial() { return mMaterial; }
+	auto& GetMaterial() { return mMaterial; }
+
+	auto& GetRoughness() { return mRoughness; }
+
+	auto SetRoughness(float r) { mRoughness = r; }
 
 	// Setters - model only stores matricies , so if user sets position, rotation or scale, just update those aspects of the matrix
 	void SetPosition(CVector3 position, int node = 0);
@@ -89,20 +96,19 @@ public:
 
 	void RenderToAmbientMap();
 
-	void SetSize(UINT s);
-
 	bool* AmbientMapEnabled();
 
-	auto GetAmbientMap()
-	{
-		return mAmbientMap.mapSRV;
-	}
+	auto GetAmbientMap() { return &mAmbientMap; }
+
+	auto GetAmbientMapSRV() { return mAmbientMap.mapSRV; }
 
 	virtual ~CGameObject();
 
 	//-------------------------------------
 	// Private data / members
 	//-------------------------------------
+
+	bool mChangedPos;
 
 protected:
 
@@ -112,24 +118,36 @@ protected:
 	//the meshes that a model has (all the LODS that a model has)
 	std::vector<std::string> mMeshFiles;
 
-	std::unique_ptr<CMesh> mMesh;
+	CMesh* mMesh;
+
+	float mParallaxDepth;
+	float mRoughness;
 
 	std::string mName;
 
 	bool mEnabled;
 
+	// The Ambient Map
+	// Its purpose is to render the scene surrounding the object to a cubemap
+	// Then it will send the cubemap to the shader and display reflexes on the object
 	struct sAmbientMap
 	{
+		// Initialize the textures
 		void Init();
 
 		bool enabled;
-		ID3D11Texture2D* map;
-		ID3D11ShaderResourceView* mapSRV;
-		ID3D11Texture2D* depthStencilMap;
-		ID3D11DepthStencilView* depthStencilView;
-		ID3D11RenderTargetView* RTV[6];
-		UINT size;
+		ID3D11Texture2D* map;	// The actual texture stored on the GPU side (cubemap)
+		ID3D11ShaderResourceView* mapSRV;	// The texture in the shader resource view format, to send it to the shader
+		ID3D11Texture2D* depthStencilMap;	// The depth stencil texture 
+		ID3D11DepthStencilView* depthStencilView;	// The depth stencil view to set it as the render target
+		ID3D11RenderTargetView* RTV[6];	// The 6 different render targets, one for each face, to bind to the render target
+		UINT size;	// Size of each face of the cubemap
 
+		// Getters and Setters for the size
+		auto GetSize() { return size; }
+		void SetSize(UINT s);
+
+		// It releases the textures
 		void Release();
 	} mAmbientMap;
 

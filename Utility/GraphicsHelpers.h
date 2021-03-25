@@ -13,7 +13,6 @@
 
 #include "MathHelpers.h"
 
-
 //--------------------------------------------------------------------------------------
 // Constant buffers
 //--------------------------------------------------------------------------------------
@@ -47,8 +46,7 @@ inline void UpdateFrameConstantBuffer(ID3D11Buffer* buffer, PerFrameConstants& b
 	gD3DContext->Unmap(buffer, 0);
 }
 
-
-inline void UpdateLightBuffer(ID3D11Buffer* buffer, PerFrameLights& bufferData)
+inline void UpdateLightContantBuffer(ID3D11Buffer* buffer, PerFrameLights& bufferData, int numLights)
 {
 	D3D11_MAPPED_SUBRESOURCE cb;
 	gD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
@@ -61,13 +59,13 @@ inline void UpdateLightBuffer(ID3D11Buffer* buffer, PerFrameLights& bufferData)
 	const auto sizeOfLightStruct = sizeof(sLight);
 
 	//add just the lights used
-	size += sizeOfLightStruct * bufferData.lights[0].numLights;
+	size += sizeOfLightStruct * numLights;
 
 	memcpy(cb.pData, &bufferData, size);
 	gD3DContext->Unmap(buffer, 0);
 }
 
-inline void UpdateSpotLightsBuffer(ID3D11Buffer* buffer, PerFrameSpotLights& bufferData)
+inline void UpdateSpotLightsContantBuffer(ID3D11Buffer* buffer, PerFrameSpotLights& bufferData, int numLights)
 {
 	D3D11_MAPPED_SUBRESOURCE cb;
 	gD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
@@ -80,13 +78,13 @@ inline void UpdateSpotLightsBuffer(ID3D11Buffer* buffer, PerFrameSpotLights& buf
 	const auto sizeOfLightStruct = sizeof(sSpotLight);
 
 	//add just the lights used
-	size += sizeOfLightStruct * bufferData.spotLights[0].numLights;
+	size += sizeOfLightStruct * numLights;
 
 	memcpy(cb.pData, &bufferData, size);
 	gD3DContext->Unmap(buffer, 0);
 }
 
-inline void UpdateDirLightsBuffer(ID3D11Buffer* buffer, PerFrameDirLights& bufferData)
+inline void UpdateDirLightsContantBuffer(ID3D11Buffer* buffer, PerFrameDirLights& bufferData, int numLights)
 {
 	D3D11_MAPPED_SUBRESOURCE cb;
 	gD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
@@ -99,13 +97,13 @@ inline void UpdateDirLightsBuffer(ID3D11Buffer* buffer, PerFrameDirLights& buffe
 	const auto sizeOfLightStruct = sizeof(sDirLights);
 
 	//add just the lights used
-	size += sizeOfLightStruct * bufferData.dirLights[0].numLights;
+	size += sizeOfLightStruct * numLights;
 
 	memcpy(cb.pData, &bufferData, size);
 	gD3DContext->Unmap(buffer, 0);
 }
 
-inline void UpdatePointLightsBuffer(ID3D11Buffer* buffer, PerFramePointLights& bufferData)
+inline void UpdatePointLightsContantBuffer(ID3D11Buffer* buffer, PerFramePointLights& bufferData, int numLights)
 {
 	D3D11_MAPPED_SUBRESOURCE cb;
 	gD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
@@ -118,12 +116,11 @@ inline void UpdatePointLightsBuffer(ID3D11Buffer* buffer, PerFramePointLights& b
 	const auto sizeOfLightStruct = sizeof(sPointLights);
 
 	//add just the lights used
-	size += sizeOfLightStruct * bufferData.pointLights[0].numLights;
+	size += sizeOfLightStruct * numLights;
 
 	memcpy(cb.pData, &bufferData, size);
 	gD3DContext->Unmap(buffer, 0);
 }
-
 
 //--------------------------------------------------------------------------------------
 // Texture Loading
@@ -135,11 +132,10 @@ inline void UpdatePointLightsBuffer(ID3D11Buffer* buffer, PerFramePointLights& b
 // The function will fill in these pointers with usable data. Returns false on failure
 bool LoadTexture(std::string filename, ID3D11Resource** texture, ID3D11ShaderResourceView** textureSRV);
 
-
 //gets the texture dimentions
 CVector3 GetTextureDimentions(ID3D11Resource* texture);
 
-
+bool SaveTextureToFile(ID3D11Resource* tex, std::string& fileName);
 
 //--------------------------------------------------------------------------------------
 // Camera helpers
@@ -152,5 +148,5 @@ CVector3 GetTextureDimentions(ID3D11Resource* texture);
 CMatrix4x4 MakeProjectionMatrix(float aspectRatio = 4.0f / 3.0f, float FOVx = ToRadians(60),
 	float nearClip = 0.1f, float farClip = 10000.0f);
 
-
 CMatrix4x4 MakeOrthogonalMatrix(float width, float height, float nearClip, float farClip);
+

@@ -38,11 +38,17 @@ public:
 	// frameTime is the time passed since the last frame
 	void UpdateScene(float frameTime);
 
+	//--------------------------------------------------------------------------------------
+	// GUI functions
+	//--------------------------------------------------------------------------------------
+
 	void AddObjectsMenu();
 
 	void DisplayPropertiesWindow();
 
 	void DisplayObjects();
+
+	void DisplaySceneSettings(bool& b);
 
 	//--------------------------------------------------------------------------------------
 	// Public Variables TODO REMOVE BIG NONO
@@ -58,14 +64,20 @@ public:
 	// Lock FPS to monitor refresh rate, which will typically set it to 60fps. Press 'p' to toggle to full fps
 	bool mLockFPS = true;
 
-	ColourRGBA gBackgroundColor;
+	ColourRGBA mBackgroundColor;
 
 	UINT mViewportX;
 	UINT mViewportY;
 
+	int mPcfSamples;
+
 	void Save(std::string fileName);
 
 	~CScene();
+
+	void ReleaseTextures();
+
+	void ReleaseSRVandRTVs();
 
 	void Resize(UINT newX, UINT newY);
 
@@ -96,20 +108,20 @@ private:
 	CGameObject* mSelectedObj;
 
 	ID3D11Texture2D* mTextrue;
-	ID3D11ShaderResourceView* mTextureSRV;
-	ID3D11RenderTargetView* mTargetView;
+	ID3D11ShaderResourceView* mSceneSRV;
+	ID3D11RenderTargetView* mSceneRTV;
 
 	ID3D11Texture2D* mDepthStencil;
 	ID3D11ShaderResourceView* mDepthStencilSRV;
-	ID3D11DepthStencilView* mDepthStencilView;
+	ID3D11DepthStencilView* mDepthStencilRTV;
 
 	ID3D11Texture2D* mFinalTextrue;
 	ID3D11ShaderResourceView* mFinalTextureSRV;
-	ID3D11RenderTargetView* mFinalTargetView;
+	ID3D11RenderTargetView* mFinalRTV;
 
 	ID3D11Texture2D* mFinalDepthStencil;
 	ID3D11ShaderResourceView* mFinalDepthStencilSRV;
-	ID3D11DepthStencilView* mFinalDepthStencilView;
+	ID3D11DepthStencilView* mFinalDepthStencilRTV;
 
 	//********************
 	// Available post-processes
@@ -127,10 +139,11 @@ private:
 		ChromaticAberration,
 		GaussionBlur,
 		SSAO,
-		Bloom
+		Bloom,
+		GodRays
 	};
 
-	std::vector<std::string> mPostProcessStrings =
+	std::string mPostProcessStrings[13] =
 	{
 		"None",
 		"Copy",
@@ -143,7 +156,8 @@ private:
 		"ChromaticAberration",
 		"GaussionBlur",
 		"SSAO",
-		"Bloom"
+		"Bloom",
+		"GodRays"
 	};
 
 	enum class PostProcessMode
@@ -153,7 +167,7 @@ private:
 		Polygon,
 	};
 
-	std::vector<std::string> mPostProcessModeStrings =
+	std::string mPostProcessModeStrings[3] =
 	{
 		"FullScreen",
 		"Area",
@@ -182,13 +196,25 @@ private:
 	// Additional textures used for specific post-processes
 	ID3D11Resource* mNoiseMap = nullptr;
 	ID3D11ShaderResourceView* mNoiseMapSRV = nullptr;
+
 	ID3D11Resource* mBurnMap = nullptr;
 	ID3D11ShaderResourceView* mBurnMapSRV = nullptr;
+
 	ID3D11Resource* mDistortMap = nullptr;
 	ID3D11ShaderResourceView* mDistortMapSRV = nullptr;
+
 	ID3D11Texture2D* mLuminanceMap = nullptr;
 	ID3D11ShaderResourceView* mLuminanceMapSRV = nullptr;
-	ID3D11RenderTargetView* mLuminanceRenderTarget = nullptr;
+	ID3D11RenderTargetView* mLuminanceRTV = nullptr;
+
+	ID3D11Resource* mRandomMap = nullptr;
+	ID3D11ShaderResourceView* mRandomMapSRV = nullptr;
+
+	bool mSsaoBlur = false;
+
+	ID3D11Texture2D* mSsaoMap = nullptr;
+	ID3D11ShaderResourceView* mSsaoMapSRV = nullptr;
+	ID3D11RenderTargetView* mSsaoMapRTV = nullptr;
 
 	//****************************
 
@@ -215,5 +241,5 @@ private:
 	void ReleasePostProcessingShaders();
 
 	template<class T>
-	void DisplayDeque(std::deque<T*> deque);
+	void DisplayDeque(std::deque<T*>& deque);
 };

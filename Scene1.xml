@@ -1,126 +1,79 @@
-<?xml version="1.0" encoding="utf-8"?>
-
-<!-- Scene Setup -->
 <Scene>
-
-  <!-- Default Values -->
-  <Default>
-    <!--Shaders VS="" PS="" TODO GS=""-->
-    <Shaders VS="PixelLighting_vs" PS="PixelLighting_ps" />
-  </Default>
-
-  <!-- Objects -->
-  <Entities>
-    <!--Cube Map-->
-    <Entity Type ="Sky" Name="Stars">
-      <Geometry Mesh ="Stars.x" Diffuse ="Stars.jpg" />
-      <Rotation X="1.0" Y="0.0" Z="0.0" />
-      <Scale X="800.0" Y="800.0" Z="800.0" />
-    </Entity>
-
-    <!--Basic Objects-->
-    <Entity Type="GameObject" Name="Ground">
-      <Geometry Mesh ="Hills.x" Diffuse ="GrassDiffuseSpecular.dds" />
-    </Entity>
-    <Entity Type="GameObject" Name="Crate">
-      <Geometry Mesh ="CargoContainer.x" Diffuse ="CargoA.dds" />
-      <Position X="-10.0" Y="0.0" Z="90.0" />
-      <Rotation X="0.0" Y="40.0" Z="0.0" />
-      <Scale    X="6.0" Y="6.0" Z="6.0" />
-    </Entity>
-    <Entity Type="GameObject" Name="Octopus">
-      <Geometry Mesh="Octopus.x" Diffuse ="brick1.jpg" />
-      <Position X="0" Y="0" Z="20" />
-      <Rotation X="-90" Y="0" Z="0" />
-      <Scale X="5" Y="0" Z="0" />
-    </Entity>
-
-    <!-- Lights -->
-    <Entity Type="Light" Name="SimpleLight">
-      <Geometry Mesh="Light.x" Diffuse="Flare.jpg" VS="BasicTransform_vs" PS="TintedTexture_ps" />
-      <Colour X="0.8" Y="0.8" Z="0.8" />
-      <Strength S="100" />
-      <Position X="30.0" Y="10.0" Z="90.0" />
-      <Scale    X="0.3" Y="0.3" Z="0.3" />
-    </Entity>
-    <!--<Entity Type="PointLight" Name="Omidirectional Light">
-      <Geometry Mesh ="Light.x" Diffuse ="Flare.jpg" VS="BasicTransform_vs" PS="TintedTexture_ps" />
-      <Colour   X="0.8" Y="0.8" Z="1.0" />
-      <Strength S="100" />
-      <Position X="30.0" Y="10.0" Z="90.0" />
-      <Scale    X="0.3" Y="0.3" Z="0.3" />
-    </Entity>-->
-    <!--<Entity Type="Light" Name="Spot Light">
-      <Geometry Mesh="Light.x" Diffuse="Flare.jpg" VS="BasicTransform_vs" PS="TintedTexture_ps" />
-      <Colour X="0.8" Y="0.8" Z="0.8" />
-      <Strength S="100" />
-      <Position X="-20" Y="10" Z="40" />
-      <Facing X="1.0" Y="0.0" Z="1.0" /> That means it is a spotlight
-      <Scale X="0.3" Y="0.3" Z="0.3" />
-    </Entity>
-    <Entity Type="Light" Name="Spot Light1">
-      <Geometry Mesh="Light.x" Diffuse="Flare.jpg" VS="BasicTransform_vs" PS="TintedTexture_ps" />
-      <Colour X="0.8" Y="0.8" Z="0.8" />
-      <Strength S="100" />
-      <Position X="-20" Y="10" Z="40" />
-      <Facing X="1.0" Y="0.0" Z="1.0" /> That means it is a spotlight
-      <Scale X="0.3" Y="0.3" Z="0.3" />
-    </Entity>
-    <Entity Type="Light" Name="Spot Light3">
-      <Geometry Mesh="Light.x" Diffuse="Flare.jpg" VS="BasicTransform_vs" PS="TintedTexture_ps" />
-      <Colour X="0.8" Y="0.8" Z="0.8" />
-      <Strength S="100" />
-      <Position X="-20" Y="10" Z="40" />
-      <Facing X="1.0" Y="0.0" Z="1.0" /> That means it is a spotlight
-      <Scale X="0.3" Y="0.3" Z="0.3" />
-    </Entity>-->
-    <!--<Entity Type="Light" Name="Sun">
-      <Geometry Mesh ="Light.x" Diffuse ="Flare.jpg" VS="BasicTransform_vs" PS="TintedTexture_ps" />
-      <Colour   X="1.0" Y="0.8" Z="0.2" />
-      <Strength S="200" />
-      <Facing   X="-1" Y="0" Z="-1" /> Facing vector but no position, Directional Light!
-      <Scale    X="0.7" Y="0.7" Z="0.7" />
-    </Entity>-->
-
-    <!-- PBR Objects -->
-    <!--<Entity Type="GameObject" Name="rock">
-      <Geometry ID="ubrleesiw" VS="PBR_vs" PS="PBR_ps" />
-      <Position X="10.0" Y="2.0" Z="30.0" />
-    </Entity>
-    <Entity Type="Plant" Name ="cactus">
-      <Geometry ID="uenpefhfa" VS="PBR_vs" PS="PBR_ps" />
-      <Position X="50.0" Y="0" Z="50" />
-      <Scale X="0.1" Y="0.1" Z="0.1" />
-    </Entity>
-    <Entity Type="Plant" Name="plant">
-      <Geometry ID="uc0oceo" />
-      <Position X="50.0" Y="0.0" Z="30.0" />
-    </Entity>
-    <Entity Type="GameObject" Name="rock2">
-      <Geometry ID="ubxgfexiw" VS="PBR_vs" PS="PBR_ps" />
-      <Position X="20.0" Y="4.0" Z="10.0" />
-    </Entity>-->
-    <!--<Entity Type="GameObject" Name="Cliff">
-      <Geometry ID ="ub3sahcda" VS="PBR_vs" PS="PBR_ps" />
-      <Position X="42.0" Y="5.0" Z="200.0" />
-    </Entity>-->
-    <!--<Entity Type="GameObject" Name="Door">
-      <Geometry ID="ugymbhrdw" VS="PBR_vs" PS="PBR_ps" />
-      <Position X="90.0" Y="5.0" Z="30.0" />
-      <Rotation X="0.0" Y="90.0" Z="0.0" />
-      <Scale X="0.1" Y="0.1" Z="0.1" />
-    </Entity>
-    <Entity Type="GameObject" Name="FirePlace">
-      <Geometry ID="ujjtcjnfa" VS="PBR_vs" PS="PBR_ps" />
-      <Position X="90.0" Y="10.0" Z="0.0" />
-      <Rotation X="0.0" Y="180.0" Z="0.0" />
-      <Scale X="0.1" Y="0.1" Z="0.1" />
-    </Entity>-->
-
-    <!-- CAMERA -->
-    <Entity Type="Camera">
-      <Position X="25.0" Y="18.0" Z="-45.0" />
-      <Rotation X="10.0" Y="-20.0" Z="0.0" />
-    </Entity>
-  </Entities>
+    <Default>
+        <Shaders/>
+    </Default>
+    <Entities>
+        <Entity Type="Sky" Name="Stars">
+            <Geometry Mesh="Sphere.x" Diffuse="Stars.jpg"/>
+            <Position X="0" Y="0" Z="0"/>
+            <Rotation X="1" Y="0" Z="0"/>
+            <Scale X="800" Y="800" Z="800"/>
+        </Entity>
+        <Entity Type="GameObject" Name="BlackGalaxyGraniteBrickbondTiles">
+            <Geometry ID="BlackGalaxyGraniteBrickbondTiles_3D Assembly/BlackGalaxyGraniteBrickbondTiles_LOD1.x"/>
+            <Position X="25.666586" Y="3.3340809" Z="-34.300785"/>
+            <Rotation X="-0" Y="3.5315604" Z="0"/>
+            <Scale X="0.99998426" Y="1" Z="0.99998426"/>
+        </Entity>
+        <Entity Type="Plant" Name="Common Fern_rhDso_3D Plant">
+            <Geometry ID="Common Fern_rhDso_3D Plant/Common Fern_LOD0_Var1.fbx"/>
+            <Position X="73.166031" Y="-16.302088" Z="-50.233009"/>
+            <Rotation X="-0" Y="134.78334" Z="0"/>
+            <Scale X="0.99999839" Y="0.99999839" Z="0.99999839"/>
+        </Entity>
+        <Entity Type="GameObject" Name="Mossy Embankment_tlnvecpfa_3D Assembly">
+            <Geometry ID="Mossy Embankment_tlnvecpfa_3D Assembly/Mossy Embankment_LOD0_.fbx"/>
+            <Position X="77.45639" Y="-18.96608" Z="-111.51834"/>
+            <Rotation X="-0" Y="178.98009" Z="0"/>
+            <Scale X="0.43000013" Y="0.43000013" Z="0.43000013"/>
+        </Entity>
+        <Entity Type="GameObject" Name="Mossy Rocks_tletbf2fa_3D Assembly">
+            <Geometry ID="Mossy Rocks_tletbf2fa_3D Assembly/Mossy Rocks_LOD0_.fbx"/>
+            <Position X="55.33625" Y="-20.337156" Z="-79.633629"/>
+            <Rotation X="-0" Y="0" Z="0"/>
+            <Scale X="0.70000005" Y="0.70000005" Z="0.70000005"/>
+        </Entity>
+        <Entity Type="GameObject" Name="newMossy Embankment_tlnvecpfa_3D Assembly">
+            <Geometry ID="Mossy Embankment_tlnvecpfa_3D Assembly/Mossy Embankment_LOD0_.fbx"/>
+            <Position X="43.20911" Y="-18.96608" Z="-38.23056"/>
+            <Rotation X="-0" Y="0" Z="0"/>
+            <Scale X="0.43000001" Y="0.43000001" Z="0.43000001"/>
+        </Entity>
+        <Entity Type="GameObject" Name="Aspen Tree Trunk_tk3tbeida_3D Assembly">
+            <Geometry ID="Aspen Tree Trunk_tk3tbeida_3D Assembly/Aspen Tree Trunk_LOD0_.fbx"/>
+            <Position X="82.563828" Y="-16.55875" Z="-32.264385"/>
+            <Rotation X="-0" Y="0" Z="0"/>
+            <Scale X="0.5" Y="0.5" Z="0.5"/>
+        </Entity>
+        <Entity Type="GameObject" Name="Mossy Mounds_tk4tcfhfa_3D Assembly">
+            <Geometry ID="Mossy Mounds_tk4tcfhfa_3D Assembly/Mossy Mounds_LOD0_.fbx"/>
+            <Position X="111.78925" Y="-14.229343" Z="-72.591316"/>
+            <Rotation X="-14.837727" Y="88.537125" Z="0.93482327"/>
+            <Scale X="0.30088291" Y="0.30088294" Z="0.30088294"/>
+        </Entity>
+        <Entity Type="GameObject" Name="Mossy Stone_tk4eaafr_Surface">
+            <Geometry ID="Mossy Stone_tk4eaafr_Surface/Mossy Stone_LOD0.x"/>
+            <Position X="0" Y="-27.722742" Z="0"/>
+            <Rotation X="-0" Y="0" Z="0"/>
+            <Scale X="1" Y="1" Z="1"/>
+        </Entity>
+        <Entity Type="GameObject" Name="Wood Root_rkswd_3D Asset">
+            <Geometry ID="Wood Root_rkswd_3D Asset/Wood Root_LOD0_.fbx"/>
+            <Position X="48.609344" Y="-0.93960094" Z="-39.888596"/>
+            <Rotation X="-0" Y="107.94617" Z="-90.488808"/>
+            <Scale X="0.50999933" Y="0.50999933" Z="0.50999933"/>
+        </Entity>
+        <Entity Type="PointLight" Name="Light">
+            <Geometry Mesh="Light.x" Diffuse="Flare.jpg"/>
+            <Position X="36.441883" Y="15.405025" Z="-78.631676"/>
+            <Rotation X="-0" Y="-179.99998" Z="0"/>
+            <Scale X="1" Y="1" Z="1"/>
+            <Colour X="1" Y="0.99998999" Z="0.99998999"/>
+            <Strength S="4000"/>
+        </Entity>
+        <Entity Type="Camera">
+            <Position X="18.58997" Y="22.890024" Z="-110.90973"/>
+            <Rotation X="19.536234" Y="-6089.7158" Z="0"/>
+        </Entity>
+    </Entities>
 </Scene>

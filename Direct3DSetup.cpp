@@ -7,6 +7,7 @@
 #include <d3d11.h>
 #include <vector>
 #include <stdexcept>
+#include "State.h"
 
 //--------------------------------------------------------------------------------------
 // Global Variables
@@ -143,24 +144,30 @@ bool InitDirect3D()
 // Release the memory held by all objects created
 void ShutdownDirect3D()
 {
+	ReleaseStates();
+
+	if (gDepthShaderView)        gDepthShaderView->Release();			gDepthShaderView = nullptr;
+	if (gDepthStencil)           gDepthStencil->Release();				gDepthStencil = nullptr;
+	if (gDepthStencilTexture)    gDepthStencilTexture->Release();		gDepthStencilTexture = nullptr;
+	
+	if (gBackBufferRenderTarget) gBackBufferRenderTarget->Release();	gBackBufferRenderTarget = nullptr;
+	if (gSwapChain)              gSwapChain->Release();					gSwapChain = nullptr;
+	
+	if (gD3DDevice)              gD3DDevice->Release();					gD3DDevice = nullptr;
+
 	// Release each Direct3D object to return resources to the system. Leaving these out will cause memory
 	// leaks. Check documentation to see which objects need to be released when adding new features in your
 	// own projects.
 	if (gD3DContext)
 	{
 		gD3DContext->ClearState(); // This line is also needed to reset the GPU before shutting down DirectX
-		gD3DContext->Release();
+		gD3DContext->Flush();
+		gD3DContext->Release(); 
+		gD3DContext = nullptr;
 	}
 
-	if (gDepthShaderView)        gDepthShaderView->Release();
-	if (gDepthStencil)           gDepthStencil->Release();
-	if (gDepthStencilTexture)    gDepthStencilTexture->Release();
-	if (gBackBufferRenderTarget) gBackBufferRenderTarget->Release();
-	if (gSwapChain)              gSwapChain->Release();
-	if (gD3DDevice)              gD3DDevice->Release();
-
 	//check for memory leaks
-	gD3DDebug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
+	gD3DDebug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL | D3D11_RLDO_IGNORE_INTERNAL);
 
 	if (gD3DDebug) gD3DDebug->Release();
 }

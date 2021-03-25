@@ -14,10 +14,10 @@ CVector2 gViewportWindowPos;
 
 CDXEngine::~CDXEngine()
 {
-	delete mMainScene;
-
 	ShutdownGui();
-
+	
+	delete mMainScene;
+	
 	ShutdownDirect3D();
 }
 
@@ -51,14 +51,12 @@ CDXEngine::CDXEngine(HINSTANCE hInstance, int nCmdShow)
 	// Initialise Direct3D
 	if (!InitDirect3D())
 	{
-		ShutdownDirect3D();
+		delete this;
 
 		throw std::runtime_error("Impossible initialize DirectX");
 	}
 
-	//create gui
-
-	//auto gGui = std::make_unique<CGui>();
+	// Initialize gui
 
 	InitGui();
 
@@ -68,7 +66,7 @@ CDXEngine::CDXEngine(HINSTANCE hInstance, int nCmdShow)
 	}
 	catch (std::exception e)
 	{
-		ShutdownDirect3D();
+		delete this;
 
 		throw std::runtime_error(e.what());
 	}
@@ -102,6 +100,8 @@ bool CDXEngine::Update()
 			{
 				static bool open = false;
 				static bool save = false;
+				static bool themeWindow = false;
+				static bool sceneProperties = false;
 				static imgui_addons::ImGuiFileBrowser fileDialog;
 
 				if (ImGui::MenuItem("Open"))
@@ -112,6 +112,30 @@ bool CDXEngine::Update()
 				if (ImGui::MenuItem("Save"))
 				{
 					save = true;
+				}
+
+				if (ImGui::MenuItem("Theme"))
+				{
+					themeWindow = true;
+				}
+
+				if (ImGui::MenuItem("Scene Properties"))
+				{
+					sceneProperties = true;
+				}
+
+				if (themeWindow)
+				{
+					if (ImGui::Begin("Style", &themeWindow))
+					{
+						ImGui::ShowStyleEditor();
+					}
+					ImGui::End();
+				}
+
+				if (sceneProperties)
+				{
+					mMainScene->DisplaySceneSettings(sceneProperties);
 				}
 
 				if (open)
@@ -186,7 +210,7 @@ bool CDXEngine::Update()
 					gD3DContext->OMSetRenderTargets(1, &gBackBufferRenderTarget, gDepthStencil);
 
 					// Clear the back buffer to a fixed colour and the depth buffer to the far distance
-					gD3DContext->ClearRenderTargetView(gBackBufferRenderTarget, &mMainScene->gBackgroundColor.r);
+					gD3DContext->ClearRenderTargetView(gBackBufferRenderTarget, &mMainScene->mBackgroundColor.r);
 					gD3DContext->ClearDepthStencilView(gDepthStencil, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 					//render the scene image to ImGui

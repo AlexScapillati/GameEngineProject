@@ -5,12 +5,11 @@
 // The class also doesn't load textures, filters or shaders as the outer code is
 // expected to select these things. A later lab will introduce a more robust loader.
 
-
 #include "Mesh.h"
 #include "Shader.h" // Needed for helper function CreateSignatureForVertexLayout
 #include "GraphicsHelpers.h" // Helper functions to unclutter the code here
-#include "CVector2.h" 
-#include "CVector3.h" 
+#include "CVector2.h"
+#include "CVector3.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -19,13 +18,13 @@
 
 #include <memory>
 
-
 // Pass the name of the mesh file to load. Uses assimp (http://www.assimp.org/) to support many file types
 // Optionally request tangents to be calculated (for normal and parallax mapping - see later lab)
 // Will throw a std::runtime_error exception on failure (since constructors can't return errors).
 CMesh::CMesh(const std::string& fileNameN, bool requireTangents /*= false*/)
 {
 	mFileName = fileNameN;
+	hasTangents = requireTangents;
 
 	auto fileName = gMediaFolder + fileNameN;
 
@@ -52,7 +51,8 @@ CMesh::CMesh(const std::string& fileNameN, bool requireTangents /*= false*/)
 		aiProcess_Debone |
 		aiProcess_SplitByBoneCount |
 		aiProcess_LimitBoneWeights |
-		aiProcess_RemoveComponent;
+		aiProcess_RemoveComponent | 
+		aiProcess_OptimizeGraph;
 
 	// Flags to specify what mesh data to ignore
 	auto removeComponents = aiComponent_LIGHTS | aiComponent_CAMERAS | aiComponent_TEXTURES | aiComponent_COLORS |
@@ -76,7 +76,7 @@ CMesh::CMesh(const std::string& fileNameN, bool requireTangents /*= false*/)
 
 	// Set maximum bones that can affect one vertex, and also maximum bones affecting a single mesh
 	unsigned int maxBonesPerVertex = 4; // The shaders support 4 bones per verted (null bones are added if necessary)
-	unsigned int maxBonesPerMesh = 256; // Bone indexes are stored in a byte, so no more than 256 
+	unsigned int maxBonesPerMesh = 256; // Bone indexes are stored in a byte, so no more than 256
 	importer.SetPropertyInteger(AI_CONFIG_PP_LBW_MAX_WEIGHTS, maxBonesPerVertex);
 	importer.SetPropertyInteger(AI_CONFIG_PP_SBBC_MAX_BONES, maxBonesPerMesh);
 
@@ -89,17 +89,14 @@ CMesh::CMesh(const std::string& fileNameN, bool requireTangents /*= false*/)
 	if (scene == nullptr)  throw std::runtime_error("Error loading mesh (" + fileName + "). " + importer.GetErrorString());
 	if (scene->mNumMeshes == 0)  throw std::runtime_error("No usable geometry in mesh: " + fileName);
 
-
 	//-----------------------------------
 
 	//*********************************************************************//
 	// Read node hierachy - each node has a matrix and contains sub-meshes //
 
-	// Uses recursive helper functions to build node hierarchy    
+	// Uses recursive helper functions to build node hierarchy
 	mNodes.resize(CountNodes(scene->mRootNode));
 	ReadNodes(scene->mRootNode, 0, 0);
-
-
 
 	//******************************************//
 	// Read geometry - multiple parts supported //
@@ -107,7 +104,6 @@ CMesh::CMesh(const std::string& fileNameN, bool requireTangents /*= false*/)
 	mHasBones = false;
 	for (unsigned int m = 0; m < scene->mNumMeshes; ++m)
 		if (scene->mMeshes[m]->HasBones())  mHasBones = true;
-
 
 	// A mesh is made of sub-meshes, each one can have a different material (texture)
 	// Import each sub-mesh in the file to seperate index / vertex buffer (could share buffers between sub-meshes but that would make things more complex)
@@ -117,7 +113,6 @@ CMesh::CMesh(const std::string& fileNameN, bool requireTangents /*= false*/)
 		auto assimpMesh = scene->mMeshes[m];
 		std::string subMeshName = assimpMesh->mName.C_Str();
 		auto& subMesh = mSubMeshes[m]; // Short name for the submesh we're currently preparing - makes code below more readable
-
 
 		//-----------------------------------
 
@@ -162,16 +157,13 @@ CMesh::CMesh(const std::string& fileNameN, bool requireTangents /*= false*/)
 
 		subMesh.vertexSize = offset;
 
-
 		// Create a "vertex layout" to describe to DirectX what is data in each vertex of this mesh
 		auto shaderSignature = CreateSignatureForVertexLayout(vertexElements.data(), static_cast<int>(vertexElements.size()));
 		auto hr = gD3DDevice->CreateInputLayout(vertexElements.data(), static_cast<UINT>(vertexElements.size()),
-		                                        shaderSignature->GetBufferPointer(), shaderSignature->GetBufferSize(),
-		                                        &subMesh.vertexLayout);
+			shaderSignature->GetBufferPointer(), shaderSignature->GetBufferSize(),
+			&subMesh.vertexLayout);
 		if (shaderSignature)  shaderSignature->Release();
 		if (FAILED(hr))  throw std::runtime_error("Failure creating input layout for " + fileName);
-
-
 
 		//-----------------------------------
 
@@ -180,8 +172,7 @@ CMesh::CMesh(const std::string& fileNameN, bool requireTangents /*= false*/)
 		subMesh.numVertices = assimpMesh->mNumVertices;
 		subMesh.numIndices = assimpMesh->mNumFaces * 3;
 		auto vertices = std::make_unique<unsigned char[]>(subMesh.numVertices * subMesh.vertexSize);
-		auto indices  = std::make_unique<unsigned char[]>(subMesh.numIndices * 4); // Using 32 bit indexes (4 bytes) for each indeex
-
+		auto indices = std::make_unique<unsigned char[]>(subMesh.numIndices * 4); // Using 32 bit indexes (4 bytes) for each indeex
 
 		//-----------------------------------
 
@@ -232,7 +223,6 @@ CMesh::CMesh(const std::string& fileNameN, bool requireTangents /*= false*/)
 				++assimpUV;
 			}
 		}
-
 
 		if (mHasBones)
 		{
@@ -314,7 +304,6 @@ CMesh::CMesh(const std::string& fileNameN, bool requireTangents /*= false*/)
 					*(float*)(bones + 4) = 1.0f;
 					bones += subMesh.vertexSize;
 				}
-
 			}
 		}
 
@@ -330,7 +319,6 @@ CMesh::CMesh(const std::string& fileNameN, bool requireTangents /*= false*/)
 			*index++ = assimpMesh->mFaces[face].mIndices[1];
 			*index++ = assimpMesh->mFaces[face].mIndices[2];
 		}
-
 
 		//-----------------------------------
 
@@ -348,7 +336,6 @@ CMesh::CMesh(const std::string& fileNameN, bool requireTangents /*= false*/)
 		hr = gD3DDevice->CreateBuffer(&bufferDesc, &initData, &subMesh.vertexBuffer);
 		if (FAILED(hr))  throw std::runtime_error("Failure creating vertex buffer for " + fileName);
 
-
 		// Create GPU-side index buffer and copy the vertices imported by assimp into it
 		bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER; // Indicate it is an index buffer
 		bufferDesc.Usage = D3D11_USAGE_DEFAULT;         // Default usage for this buffer - we'll see other usages later
@@ -362,12 +349,11 @@ CMesh::CMesh(const std::string& fileNameN, bool requireTangents /*= false*/)
 	}
 }
 
-
 CMesh::~CMesh()
 {
 	for (auto& subMesh : mSubMeshes)
 	{
-		if (subMesh.indexBuffer)   subMesh.indexBuffer ->Release();
+		if (subMesh.indexBuffer)   subMesh.indexBuffer->Release();
 		if (subMesh.vertexBuffer)  subMesh.vertexBuffer->Release();
 		if (subMesh.vertexLayout)  subMesh.vertexLayout->Release();
 	}
@@ -376,6 +362,9 @@ CMesh::~CMesh()
 CMesh::CMesh(const CMesh& mesh)
 {
 	auto fileName = gMediaFolder + mesh.mFileName;
+
+	mHasBones = mesh.mHasBones;
+	hasTangents = mesh.hasTangents;
 
 	Assimp::Importer importer;
 
@@ -424,7 +413,7 @@ CMesh::CMesh(const CMesh& mesh)
 
 	// Set maximum bones that can affect one vertex, and also maximum bones affecting a single mesh
 	unsigned int maxBonesPerVertex = 4; // The shaders support 4 bones per verted (null bones are added if necessary)
-	unsigned int maxBonesPerMesh = 256; // Bone indexes are stored in a byte, so no more than 256 
+	unsigned int maxBonesPerMesh = 256; // Bone indexes are stored in a byte, so no more than 256
 	importer.SetPropertyInteger(AI_CONFIG_PP_LBW_MAX_WEIGHTS, maxBonesPerVertex);
 	importer.SetPropertyInteger(AI_CONFIG_PP_SBBC_MAX_BONES, maxBonesPerMesh);
 
@@ -437,17 +426,14 @@ CMesh::CMesh(const CMesh& mesh)
 	if (scene == nullptr)  throw std::runtime_error("Error loading mesh (" + fileName + "). " + importer.GetErrorString());
 	if (scene->mNumMeshes == 0)  throw std::runtime_error("No usable geometry in mesh: " + fileName);
 
-
 	//-----------------------------------
 
 	//*********************************************************************//
 	// Read node hierachy - each node has a matrix and contains sub-meshes //
 
-	// Uses recursive helper functions to build node hierarchy    
+	// Uses recursive helper functions to build node hierarchy
 	mNodes.resize(CountNodes(scene->mRootNode));
 	ReadNodes(scene->mRootNode, 0, 0);
-
-
 
 	//******************************************//
 	// Read geometry - multiple parts supported //
@@ -455,7 +441,6 @@ CMesh::CMesh(const CMesh& mesh)
 	mHasBones = false;
 	for (unsigned int m = 0; m < scene->mNumMeshes; ++m)
 		if (scene->mMeshes[m]->HasBones())  mHasBones = true;
-
 
 	// A mesh is made of sub-meshes, each one can have a different material (texture)
 	// Import each sub-mesh in the file to seperate index / vertex buffer (could share buffers between sub-meshes but that would make things more complex)
@@ -465,7 +450,6 @@ CMesh::CMesh(const CMesh& mesh)
 		auto assimpMesh = scene->mMeshes[m];
 		std::string subMeshName = assimpMesh->mName.C_Str();
 		auto& subMesh = mSubMeshes[m]; // Short name for the submesh we're currently preparing - makes code below more readable
-
 
 		//-----------------------------------
 
@@ -510,16 +494,13 @@ CMesh::CMesh(const CMesh& mesh)
 
 		subMesh.vertexSize = offset;
 
-
 		// Create a "vertex layout" to describe to DirectX what is data in each vertex of this mesh
 		auto shaderSignature = CreateSignatureForVertexLayout(vertexElements.data(), static_cast<int>(vertexElements.size()));
 		auto hr = gD3DDevice->CreateInputLayout(vertexElements.data(), static_cast<UINT>(vertexElements.size()),
-		                                        shaderSignature->GetBufferPointer(), shaderSignature->GetBufferSize(),
-		                                        &subMesh.vertexLayout);
+			shaderSignature->GetBufferPointer(), shaderSignature->GetBufferSize(),
+			&subMesh.vertexLayout);
 		if (shaderSignature)  shaderSignature->Release();
 		if (FAILED(hr))  throw std::runtime_error("Failure creating input layout for " + fileName);
-
-
 
 		//-----------------------------------
 
@@ -528,8 +509,7 @@ CMesh::CMesh(const CMesh& mesh)
 		subMesh.numVertices = assimpMesh->mNumVertices;
 		subMesh.numIndices = assimpMesh->mNumFaces * 3;
 		auto vertices = std::make_unique<unsigned char[]>(subMesh.numVertices * subMesh.vertexSize);
-		auto indices  = std::make_unique<unsigned char[]>(subMesh.numIndices * 4); // Using 32 bit indexes (4 bytes) for each indeex
-
+		auto indices = std::make_unique<unsigned char[]>(subMesh.numIndices * 4); // Using 32 bit indexes (4 bytes) for each indeex
 
 		//-----------------------------------
 
@@ -580,7 +560,6 @@ CMesh::CMesh(const CMesh& mesh)
 				++assimpUV;
 			}
 		}
-
 
 		if (mHasBones)
 		{
@@ -662,7 +641,6 @@ CMesh::CMesh(const CMesh& mesh)
 					*(float*)(bones + 4) = 1.0f;
 					bones += subMesh.vertexSize;
 				}
-
 			}
 		}
 
@@ -678,7 +656,6 @@ CMesh::CMesh(const CMesh& mesh)
 			*index++ = assimpMesh->mFaces[face].mIndices[1];
 			*index++ = assimpMesh->mFaces[face].mIndices[2];
 		}
-
 
 		//-----------------------------------
 
@@ -696,7 +673,6 @@ CMesh::CMesh(const CMesh& mesh)
 		hr = gD3DDevice->CreateBuffer(&bufferDesc, &initData, &subMesh.vertexBuffer);
 		if (FAILED(hr))  throw std::runtime_error("Failure creating vertex buffer for " + fileName);
 
-
 		// Create GPU-side index buffer and copy the vertices imported by assimp into it
 		bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER; // Indicate it is an index buffer
 		bufferDesc.Usage = D3D11_USAGE_DEFAULT;         // Default usage for this buffer - we'll see other usages later
@@ -709,7 +685,6 @@ CMesh::CMesh(const CMesh& mesh)
 		if (FAILED(hr))  throw std::runtime_error("Failure creating index buffer for " + fileName);
 	}
 }
-
 
 //--------------------------------------------------------------------------------------
 
@@ -733,8 +708,6 @@ void CMesh::RenderSubMesh(const SubMesh& subMesh)
 	// Render mesh
 	gD3DContext->DrawIndexed(subMesh.numIndices, 0, 0);
 }
-
-
 
 // Render the mesh with the given matrices
 // Handles rigid body meshes (including single part meshes) as well as skinned meshes
@@ -780,7 +753,7 @@ void CMesh::Render(std::vector<CMatrix4x4>& modelMatrices)
 		gD3DContext->PSSetConstantBuffers(0, 1, &gPerModelConstantBuffer);
 
 		// Already sent over all the absolute matrices for the entire mesh so we can render sub-meshes directly
-		// rather than iterating through the nodes. 
+		// rather than iterating through the nodes.
 		for (auto& subMesh : mSubMeshes)
 		{
 			RenderSubMesh(subMesh);
@@ -811,7 +784,6 @@ void CMesh::Render(std::vector<CMatrix4x4>& modelMatrices)
 	}
 }
 
-
 //--------------------------------------------------------------------------------------
 // Helper functions
 //--------------------------------------------------------------------------------------
@@ -824,7 +796,6 @@ unsigned int CMesh::CountNodes(aiNode* assimpNode)
 		count += CountNodes(assimpNode->mChildren[child]);
 	return count;
 }
-
 
 // Help build the arrays of submeshes and nodes from the assimp data - recursive
 unsigned int CMesh::ReadNodes(aiNode* assimpNode, unsigned int nodeIndex, unsigned int parentIndex)

@@ -9,8 +9,6 @@ public:
 	CSpotLight(std::string mesh,
 		std::string name,
 		std::string& diffuse,
-		std::string& vertexShader,
-		std::string& pixelShader,
 		CVector3 colour = { 0.0f, 0.0f, 0.0f },
 		float strength = 0.0f,
 		CVector3 position = { 0, 0, 0 },

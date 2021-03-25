@@ -7,6 +7,7 @@
 #include "GraphicsHelpers.h"
 #include "DDSTextureLoader.h"
 #include "WICTextureLoader.h"
+#include "ScreenGrab.h"
 
 //--------------------------------------------------------------------------------------
 // Texture Loading
@@ -19,40 +20,45 @@
 bool LoadTexture(std::string filename, ID3D11Resource** texture, ID3D11ShaderResourceView** textureSRV)
 {
 
-    filename = gMediaFolder + filename;
+	auto res = false;
 
-    // DDS files need a different function from other files
-    std::string dds = ".dds"; // So check the filename extension (case insensitive)
-    if (filename.size() >= 4 &&
-        std::equal(dds.rbegin(), dds.rend(), filename.rbegin(), [](unsigned char a, unsigned char b) { return std::tolower(a) == std::tolower(b); }))
-    {
-        return SUCCEEDED(DirectX::CreateDDSTextureFromFile(gD3DDevice, CA2CT(filename.c_str()), texture, textureSRV));
-    }
-    else
-    {
-        return SUCCEEDED(DirectX::CreateWICTextureFromFile(gD3DDevice, gD3DContext, CA2CT(filename.c_str()), texture, textureSRV));
-    }
+	filename = gMediaFolder + filename;
+
+	// DDS files need a different function from other files
+	std::string dds = ".dds"; // So check the filename extension (case insensitive)
+	if (filename.size() >= 4 &&
+		std::equal(dds.rbegin(), dds.rend(), filename.rbegin(), [](unsigned char a, unsigned char b) { return std::tolower(a) == std::tolower(b); }))
+	{
+		res = SUCCEEDED(DirectX::CreateDDSTextureFromFile(gD3DDevice, CA2CT(filename.c_str()), texture, textureSRV));
+	}
+	else
+	{
+		res = SUCCEEDED(DirectX::CreateWICTextureFromFile(gD3DDevice, gD3DContext, CA2CT(filename.c_str()), texture, textureSRV));
+		gD3DContext->GenerateMips(*textureSRV);
+	}
+
+	return res;
 }
 
 CVector3 GetTextureDimentions(ID3D11Resource* texture)
 {
-    ID3D11Texture2D* tex = nullptr;
-    if (SUCCEEDED(texture->QueryInterface(&tex)))
-    {
-        D3D11_TEXTURE2D_DESC desc;
-        tex->GetDesc(&desc);
+	ID3D11Texture2D* tex = nullptr;
+	if (SUCCEEDED(texture->QueryInterface(&tex)))
+	{
+		D3D11_TEXTURE2D_DESC desc;
+		tex->GetDesc(&desc);
 
-        CVector3 dim;
+		CVector3 dim;
 
-        dim.x = static_cast<float>(desc.Width);
-        dim.y = static_cast<float>(desc.Height);
-        
-        tex->Release();
+		dim.x = static_cast<float>(desc.Width);
+		dim.y = static_cast<float>(desc.Height);
 
-        return dim;
-    }
+		tex->Release();
 
-    return nullptr;
+		return dim;
+	}
+
+	return nullptr;
 }
 
 
@@ -65,7 +71,7 @@ CVector3 GetTextureDimentions(ID3D11Resource* texture)
 // - FOVx is the viewing angle from left->right (high values give a fish-eye look),
 // - near and far clip are the range of z distances that can be rendered
 CMatrix4x4 MakeProjectionMatrix(float aspectRatio /*= 4.0f / 3.0f*/, float FOVx /*= ToRadians(60)*/,
-                                float nearClip /*= 0.1f*/, float farClip /*= 10000.0f*/)
+	float nearClip /*= 0.1f*/, float farClip /*= 10000.0f*/)
 {
 	const auto tanFOVx = std::tan(FOVx * 0.5f);
 	const auto scaleX = 1.0f / tanFOVx;
@@ -73,22 +79,29 @@ CMatrix4x4 MakeProjectionMatrix(float aspectRatio /*= 4.0f / 3.0f*/, float FOVx 
 	const auto scaleZa = farClip / (farClip - nearClip);
 	const auto scaleZb = -nearClip * scaleZa;
 
-    return CMatrix4x4{ scaleX,   0.0f,    0.0f,   0.0f,
-                         0.0f, scaleY,    0.0f,   0.0f,
-                         0.0f,   0.0f, scaleZa,   1.0f,
-                         0.0f,   0.0f, scaleZb,   0.0f };
+	return CMatrix4x4{ scaleX,   0.0f,    0.0f,   0.0f,
+						 0.0f, scaleY,    0.0f,   0.0f,
+						 0.0f,   0.0f, scaleZa,   1.0f,
+						 0.0f,   0.0f, scaleZb,   0.0f };
 }
 
 CMatrix4x4 MakeOrthogonalMatrix(float width, float height, float nearClip, float farClip)
 {
 
-    auto scaleZa = 1 / (farClip - nearClip);
-    auto scaleZb = nearClip / (nearClip - farClip);
+	auto scaleZa = 1 / (nearClip - farClip);
+	auto scaleZb = nearClip / (nearClip - farClip);
 
-    return CMatrix4x4
-    {
-        2/width, 0.0f,     0.0f,      0.0f,
-        0.0f,    2/height, 0.0f,      0.0f,
-        0.0f,    0.0f,     scaleZa,   1.0f,
-        0.0f,    0.0f,     scaleZb,   0.0f };
+	return CMatrix4x4
+	{
+		2 / width, 0.0f,     0.0f,      0.0f,
+		0.0f,    2 / height, 0.0f,      0.0f,
+		0.0f,    0.0f,		 scaleZa,   0.0f,
+		0.0f,    0.0f,		 scaleZb,   1.0f };
+}
+
+bool SaveTextureToFile(ID3D11Resource* tex, std::string& fileName)
+{
+	std::wstring name(fileName.begin(), fileName.end());
+
+	return SUCCEEDED(DirectX::SaveDDSTextureToFile(gD3DContext, tex, name.c_str()));
 }

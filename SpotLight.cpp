@@ -1,10 +1,10 @@
 #include "SpotLight.h"
 #include "GraphicsHelpers.h"
 
-CSpotLight::CSpotLight(std::string mesh, std::string name, std::string& diffuse, std::string& vertexShader,
-	std::string& pixelShader, CVector3 colour, float strength, CVector3 position, CVector3 rotation,
-	float scale, CVector3 facing) :
-	CLight(std::move(mesh), std::move(name), diffuse, vertexShader, pixelShader, colour, strength, position,
+CSpotLight::CSpotLight(std::string mesh, std::string name, std::string& diffuse,
+	CVector3 colour, float strength, CVector3 position, CVector3 rotation,
+	float scale, CVector3 facing) 
+	: CLight(std::move(mesh), std::move(name), diffuse, colour, strength, position,
 		rotation, scale)
 {
 	mFacing = facing;
@@ -37,6 +37,10 @@ void CSpotLight::Render(bool basicGeometry)
 
 ID3D11ShaderResourceView* CSpotLight::RenderFromThis()
 {
+
+	// Cull none state, if the light is inside an object, the object needs to obstruct the light in every direction
+	gD3DContext->RSSetState(gCullNoneState);
+
 	// Setup the viewport to the size of the shadow map texture
 	D3D11_VIEWPORT vp;
 	vp.Width = static_cast<FLOAT>(mShadowMapSize);
@@ -66,6 +70,13 @@ ID3D11ShaderResourceView* CSpotLight::RenderFromThis()
 		//basic geometry rendered, that means just render the model's geometry, leaving all the fancy shaders
 		it->Render(true);
 	}
+
+	// unbind the render target
+	ID3D11DepthStencilView* nullD = nullptr;
+	gD3DContext->OMSetRenderTargets(0, nullptr, nullD);
+
+	// Restore cull back state
+	gD3DContext->RSSetState(gCullBackState);
 
 	return mShadowMapSRV;
 }

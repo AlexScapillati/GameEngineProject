@@ -43,6 +43,68 @@ public:
 	CVector3 GetEulerAngles();
 	CVector3 GetScale() { return { Length(GetXAxis()), Length(GetYAxis()) , Length(GetZAxis()) }; }
 
+	
+	// Rotate an affine transformation by given angle (radians) around world X axis & local origin
+	// Note: The position (translation) will not be altered, use RotateWorldX to perform a world X
+	// rotation around world origin
+	void RotateX( const float x )
+	{
+		// Perform minimum of calculations rather than use full matrix multiply
+		float sX, cX;
+		SinCos( x, &sX, &cX );
+		float t;
+		t   = e01*sX + e02*cX;
+		e01 = e01*cX - e02*sX;
+		e02 = t;
+		t   = e11*sX + e12*cX;
+		e11 = e11*cX - e12*sX;
+		e12 = t;
+		t   = e21*sX + e22*cX;
+		e21 = e21*cX - e22*sX;
+		e22 = t;
+	}
+
+	// Rotate an affine transformation by given angle (radians) around world Y axis & local origin
+	// Note: The position (translation) will not be altered, use RotateWorldY to perform a world Y
+	// rotation around world origin
+	void RotateY( const float y )
+	{
+		// Perform minimum of calculations rather than use full matrix multiply
+		float sY, cY;
+		SinCos( y, &sY, &cY );
+		float t;
+		t   = e00*cY + e02*sY;
+		e02 = e02*cY - e00*sY;
+		e00 = t;
+		t   = e10*cY + e12*sY;
+		e12 = e12*cY - e10*sY;
+		e10 = t;
+		t   = e20*cY + e22*sY;
+		e22 = e22*cY - e20*sY;
+		e20 = t;
+	}
+
+	// Rotate an affine transformation by given angle (radians) around world Z axis & local origin
+	// Note: The position (translation) will not be altered, use RotateWorldZ to perform a world Z
+	// rotation around world origin
+	void RotateZ( const float z )
+	{
+		// Perform minimum of calculations rather than use full matrix multiply
+		float sZ, cZ;
+		SinCos( z, &sZ, &cZ );
+		float t;
+		t   = e00*sZ + e01*cZ;
+		e00 = e00*cZ - e01*sZ;
+		e01 = t;
+		t   = e10*sZ + e11*cZ;
+		e10 = e10*cZ - e11*sZ;
+		e11 = t;
+		t   = e20*sZ + e21*cZ;
+		e20 = e20*cZ - e21*sZ;
+		e21 = t;
+	}
+
+
 	float* GetArray() {
 		return &e00;
 	}
@@ -61,6 +123,7 @@ public:
 	// Transpose the matrix (rows become columns). There are two ways to store a matrix, by rows or by columns.
 	// Different apps use different methods. Use Transpose to swap when necessary.
 	void Transpose();
+	CMatrix4x4 RotationMatrix();
 };
 
 /*-----------------------------------------------------------------------------------------

@@ -7,19 +7,31 @@ class CPointLight :
 {
 public:
 
-	CPointLight(std::string mesh, std::string name, std::string& diffuse, std::string& vertexShader,
-		std::string& pixelShader, CVector3 colour, float strength, CVector3 position = { 0.0f,0.0f,0.0f }, CVector3 rotation = { 0.0f,0.0f,0.0f },
+	CPointLight(std::string mesh, std::string name, std::string& diffuse,  CVector3 colour, float strength, CVector3 position = { 0.0f,0.0f,0.0f }, CVector3 rotation = { 0.0f,0.0f,0.0f },
 		float scale = 1.0f) :
-		CLight(std::move(mesh), std::move(name), diffuse, vertexShader, pixelShader, colour, strength, position,
+		CLight(std::move(mesh), std::move(name), diffuse, colour, strength, position,
 			rotation, scale)
 	{
+		mShadowMapSize = 2048;
+
 		InitTextures();
 	}
 
 	CPointLight(CPointLight& p) : CLight(p)
 	{
+		mShadowMapSize = 2048;
+
 		InitTextures();
 	}
+
+	auto SetShadowMapSize(int size)
+	{
+		mShadowMapSize = size;
+
+		InitTextures();
+	}
+
+	auto GetShadowMapSize() { return mShadowMapSize; }
 
 	void Render(bool basicGeometry = false)
 	{
@@ -28,10 +40,16 @@ public:
 
 	auto RenderFromThis()
 	{
+		// Store original rotation
 		auto originalOrientation = Rotation();
 
+		// Cull none state, if the light is inside an object, the object needs to obstruct the light in every direction
+		gD3DContext->RSSetState(gCullNoneState);
+
+		// For every face
 		for (int i = 0; i < 6; ++i)
 		{
+			// Rotate the object
 			CVector3 rot = mSides[i];
 
 			SetRotation(rot * PI);
@@ -51,13 +69,17 @@ public:
 			gD3DContext->OMSetRenderTargets(0, nullptr, mShadowMapDepthStencils[i]);
 			gD3DContext->ClearDepthStencilView(mShadowMapDepthStencils[i], D3D11_CLEAR_DEPTH, 1.0f, 0);
 
+			// Update the frame buffer with the correct "camera" matrix
 			gPerFrameConstants.viewMatrix = InverseAffine(WorldMatrix());
 			gPerFrameConstants.projectionMatrix = MakeProjectionMatrix(1.0f, ToRadians(90.0f));
 			gPerFrameConstants.viewProjectionMatrix = gPerFrameConstants.viewMatrix * gPerFrameConstants.projectionMatrix;
 
+			// Update the constant buffer
 			UpdateFrameConstantBuffer(gPerFrameConstantBuffer, gPerFrameConstants);
 
+			// Set it to the GPU
 			gD3DContext->VSSetConstantBuffers(1, 1, &gPerFrameConstantBuffer);
+			gD3DContext->PSSetConstantBuffers(1, 1, &gPerFrameConstantBuffer);
 
 			//render just the objects that can cast shadows
 			for (auto it : GOM->mObjects)
@@ -70,8 +92,10 @@ public:
 			gD3DContext->OMSetRenderTargets(0, nullptr, nullD);
 		}
 
-		//restore original orentation //kind of useless i think
+		// Restore cull back state
+		gD3DContext->RSSetState(gCullBackState);
 
+		// Restore original orentation //kind of useless i think
 		SetRotation(originalOrientation);
 
 		return mShadowMapSRV;
@@ -79,14 +103,12 @@ public:
 
 	~CPointLight()
 	{
-		for (auto it : mShadowMapDepthStencils)
-			it->Release();
-
-		for (auto it : mShadowMapSRV)
-			it->Release();
-
-		for (auto it : mShadowMap)
-			it->Release();
+		for (int i = 0; i < 6; ++i)
+		{
+			if (mShadowMap[i])				mShadowMap[i]->Release();				mShadowMap[i] = nullptr;
+			if (mShadowMapSRV[i])			mShadowMapSRV[i]->Release();			mShadowMapSRV[i] = nullptr;
+			if (mShadowMapDepthStencils[i]) mShadowMapDepthStencils[i]->Release();	mShadowMapDepthStencils[i] = nullptr;
+		}
 	}
 
 	float mSides[6][3] = {          // Starting from facing down the +ve Z direction, left handed rotations
@@ -111,12 +133,10 @@ private:
 		//initialize private values
 		for (int i = 0; i < 6; ++i)
 		{
-			mShadowMapDepthStencils[i] = nullptr;
-			mShadowMapSRV[i] = nullptr;
-			mShadowMap[i] = nullptr;
+			if (mShadowMap[i])				mShadowMap[i]->Release(); mShadowMap[i] = nullptr;
+			if (mShadowMapSRV[i])			mShadowMapSRV[i]->Release(); mShadowMapSRV[i] = nullptr;
+			if (mShadowMapDepthStencils[i]) mShadowMapDepthStencils[i]->Release(); mShadowMapDepthStencils[i] = nullptr;
 		}
-
-		mShadowMapSize = 2048;
 
 		//**** Create Shadow Map texture ****//
 

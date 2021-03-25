@@ -27,13 +27,15 @@ public:
 
 	void AddDirLight(CDirLight* obj);
 
-	void UpdateLightsConstBuffer(PerFrameLights* FCB);
+	void UpdateLightsBuffer();
 
-	void UpdateSpotLightsConstBuffer(PerFrameSpotLights* FLB);
+	void UpdateSpotLightsBuffer();
 
-	void UpdateDirLightsConstBuffer(PerFrameDirLights* FLB);
+	void UpdateDirLightsBuffer();
 
-	void UpdatePointLightsConstBuffer(PerFramePointLights* FLB);
+	void UpdatePointLightsBuffer();
+
+	void UpdateAllBuffers();
 
 	bool RemoveObject(int pos);
 
@@ -44,6 +46,8 @@ public:
 	bool RemoveSpotLight(int pos);
 
 	bool RemoveDirLight(int pos);
+
+	void RenderAmbientMaps();
 
 	bool RenderAllObjects();
 

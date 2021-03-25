@@ -106,6 +106,9 @@
     <ClCompile Include="GUI.cpp">
       <Filter>Engine</Filter>
     </ClCompile>
+    <ClCompile Include="External\imgui\imgui_demo.cpp">
+      <Filter>Engine\GUI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Utility\ColourRGBA.h">
@@ -263,6 +266,7 @@
   </ItemGroup>
   <ItemGroup>
     <Xml Include="Scene1.xml" />
+    <Xml Include="maronn.xml" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\BasicTransform_vs.hlsl">
@@ -284,9 +288,6 @@
       <Filter>Engine\Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\DepthOnly_ps.hlsl">
-      <Filter>Engine\Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\PBRDepthOnly_ps.hlsl">
       <Filter>Engine\Shaders</Filter>
     </FxCompile>
     <FxCompile Include="PostProcessing\2DPolygon_pp.hlsl">
@@ -331,10 +332,23 @@
     <FxCompile Include="PostProcessing\BloomLast_pp.hlsl">
       <Filter>Engine\PostProcessing</Filter>
     </FxCompile>
+    <FxCompile Include="PostProcessing\SSAOLast_pp.hlsl">
+      <Filter>Engine\PostProcessing</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Sky_ps.hlsl">
+      <Filter>Engine\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="PostProcessing\GodRays_pp.hlsl">
+      <Filter>Engine\PostProcessing</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\DepthOnlyNormal_ps.hlsl">
+      <Filter>Engine\Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Common.hlsli">
       <Filter>Engine\Shaders</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

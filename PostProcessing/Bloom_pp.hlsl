@@ -14,7 +14,7 @@ SamplerState PointSample : register(s0); // We don't usually want to filter (bil
 
 float luminance(float3 col)
 {
-    //relative luminance formula 
+    // relative luminance formula 
     // source : https://en.wikipedia.org/wiki/Relative_luminance
     return
     0.2126 * col.r +

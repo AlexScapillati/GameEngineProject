@@ -1,9 +1,16 @@
 #include "DirLight.h"
 #include "GraphicsHelpers.h"
 
-CDirLight::CDirLight(std::string mesh, std::string name, std::string& diffuse, std::string& vertexShader,
-	std::string& pixelShader, CVector3 colour, float strength, CVector3 position, CVector3 rotation, float scale, CVector3 direction)
-	: CLight(mesh, name, diffuse, vertexShader, pixelShader, colour, strength, position, rotation, scale)
+CDirLight::CDirLight(std::string mesh, 
+	std::string name, 
+	std::string& diffuse, 
+	CVector3 colour, 
+	float strength, 
+	CVector3 position, 
+	CVector3 rotation, 
+	float scale, 
+	CVector3 direction)
+	: CLight(mesh, name, diffuse, colour, strength, position, rotation, scale)
 {
 	mDirection = direction;
 	mShadowMap = nullptr;
@@ -15,7 +22,9 @@ CDirLight::CDirLight(std::string mesh, std::string name, std::string& diffuse, s
 	mHeight = 1000.0f;
 	mFarClip = 1000.0f;
 
-	SetPosition({ 100.0f,100.0f,0.0f });
+	mDirection = { 0.0f,1.0f,0.0f };
+
+	SetPosition({ 0.0f,0.0f,0.0f });
 
 	//**** Create Shadow Map texture ****//
 
@@ -63,6 +72,9 @@ CDirLight::CDirLight(std::string mesh, std::string name, std::string& diffuse, s
 
 ID3D11ShaderResourceView* CDirLight::RenderFromThis()
 {
+
+	gD3DContext->RSSetState(gCullNoneState);
+
 	// Setup the viewport to the size of the shadow map texture
 	D3D11_VIEWPORT vp;
 	vp.Width = static_cast<FLOAT>(mShadowMapSize);
@@ -78,7 +90,11 @@ ID3D11ShaderResourceView* CDirLight::RenderFromThis()
 	gD3DContext->OMSetRenderTargets(0, nullptr, mShadowMapDepthStencil);
 	gD3DContext->ClearDepthStencilView(mShadowMapDepthStencil, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
-	gPerFrameConstants.viewMatrix = InverseAffine(WorldMatrix());
+	auto m = WorldMatrix();
+
+	m.SetRow(3, { 0.0f,0.0f,0.0f });
+
+	gPerFrameConstants.viewMatrix = InverseAffine(m);
 	gPerFrameConstants.projectionMatrix = MakeOrthogonalMatrix(mWidth, mHeight, mNearClip, mFarClip);
 	gPerFrameConstants.viewProjectionMatrix = gPerFrameConstants.viewMatrix * gPerFrameConstants.projectionMatrix;
 
@@ -92,6 +108,12 @@ ID3D11ShaderResourceView* CDirLight::RenderFromThis()
 		//basic geometry rendered, that means just render the model's geometry, leaving all the fancy shaders
 		it->Render(true);
 	}
+	
+	// unbind the render target
+	ID3D11DepthStencilView* nullD = nullptr;
+	gD3DContext->OMSetRenderTargets(0, nullptr, nullD);
+
+	gD3DContext->RSSetState(gCullBackState);
 
 	return mShadowMapSRV;
 }
@@ -147,7 +169,6 @@ void CDirLight::SetShadowMapSize(int s)
 		throw std::runtime_error("Error creating shadow map shader resource view");
 	}
 
-	return;
 }
 
 CDirLight::~CDirLight()

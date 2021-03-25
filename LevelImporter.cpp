@@ -63,9 +63,6 @@ void CLevelImporter::SaveScene(std::string& fileName /* ="" */, CScene* ptrScene
 
 	auto defShaders = def->InsertNewChildElement("Shaders");
 
-	defShaders->SetAttribute("VS", "PixelLighting_vs");
-	defShaders->SetAttribute("PS", "PixelLighting_ps");
-
 	auto entities = scene->InsertNewChildElement("Entities");
 
 	SaveObjects(entities, ptrScene);
@@ -92,7 +89,7 @@ void CLevelImporter::SaveObjects(tinyxml2::XMLElement* el, CScene* ptrScene)
 		{
 			obj->SetAttribute("Type", "Sky");
 		}
-		if (auto plant = dynamic_cast<CPlant*>(it))
+		else if (auto plant = dynamic_cast<CPlant*>(it))
 		{
 			obj->SetAttribute("Type", "Plant");
 		}
@@ -105,17 +102,11 @@ void CLevelImporter::SaveObjects(tinyxml2::XMLElement* el, CScene* ptrScene)
 
 		auto childEl = obj->InsertNewChildElement("Geometry");
 
-		if (it->GetMaterial()->IsPbr())
+		if (it->GetMaterial()->HasNormals())
 		{
 			std::string id = it->GetMeshFileName();
 
-			auto pos = id.find_first_of('_');
-
-			id = id.substr(0, pos);
-
 			childEl->SetAttribute("ID", id.c_str());
-			childEl->SetAttribute("VS", "PBR_vs");
-			childEl->SetAttribute("PS", "PBR_ps");
 		}
 		else
 		{
@@ -146,8 +137,6 @@ void CLevelImporter::SaveObjects(tinyxml2::XMLElement* el, CScene* ptrScene)
 
 		childEl->SetAttribute("Mesh", it->GetMeshFileName().c_str());
 		childEl->SetAttribute("Diffuse", it->GetTextrueFileName().c_str());
-		childEl->SetAttribute("VS", "BasicTransform_vs");
-		childEl->SetAttribute("PS", "TintedTexture_ps");
 
 		//save position, position and scale
 		childEl = obj->InsertNewChildElement("Position");
@@ -178,8 +167,6 @@ void CLevelImporter::SaveObjects(tinyxml2::XMLElement* el, CScene* ptrScene)
 
 		childEl->SetAttribute("Mesh", it->GetMeshFileName().c_str());
 		childEl->SetAttribute("Diffuse", it->GetTextrueFileName().c_str());
-		childEl->SetAttribute("VS", "BasicTransform_vs");
-		childEl->SetAttribute("PS", "TintedTexture_ps");
 
 		//save position, position and scale
 		childEl = obj->InsertNewChildElement("Position");
@@ -214,8 +201,6 @@ void CLevelImporter::SaveObjects(tinyxml2::XMLElement* el, CScene* ptrScene)
 
 		childEl->SetAttribute("Mesh", it->GetMeshFileName().c_str());
 		childEl->SetAttribute("Diffuse", it->GetTextrueFileName().c_str());
-		childEl->SetAttribute("VS", "BasicTransform_vs");
-		childEl->SetAttribute("PS", "TintedTexture_ps");
 
 		//save rotation and scale
 		//no position, since this is a directional light
@@ -249,8 +234,6 @@ void CLevelImporter::SaveObjects(tinyxml2::XMLElement* el, CScene* ptrScene)
 
 		childEl->SetAttribute("Mesh", it->GetMeshFileName().c_str());
 		childEl->SetAttribute("Diffuse", it->GetTextrueFileName().c_str());
-		childEl->SetAttribute("VS", "BasicTransform_vs");
-		childEl->SetAttribute("PS", "TintedTexture_ps");
 
 		//save position, position and scale
 		childEl = obj->InsertNewChildElement("Position");
@@ -337,8 +320,6 @@ void CLevelImporter::LoadObject(tinyxml2::XMLElement* currEntity, CScene* scene)
 	std::string mesh;
 	std::string name;
 	std::string diffuse;
-	auto vertexShader = scene->mDefaultVs;
-	auto pixelShader = scene->mDefaultPs;
 
 	CVector3 pos = { 0,0,0 };
 	CVector3 rot = { 0,0,0 };
@@ -360,12 +341,6 @@ void CLevelImporter::LoadObject(tinyxml2::XMLElement* currEntity, CScene* scene)
 
 		const auto diffuseAttr = geometry->FindAttribute("Diffuse");
 		if (diffuseAttr) diffuse = diffuseAttr->Value();
-
-		const auto VsAttr = geometry->FindAttribute("VS");
-		if (VsAttr) vertexShader = VsAttr->Value();
-
-		const auto PsAttr = geometry->FindAttribute("PS");
-		if (PsAttr) pixelShader = PsAttr->Value();
 	}
 
 	const auto positionEl = currEntity->FirstChildElement("Position");
@@ -394,13 +369,13 @@ void CLevelImporter::LoadObject(tinyxml2::XMLElement* currEntity, CScene* scene)
 	{
 		if (ID.empty())
 		{
-			auto obj = new CGameObject(mesh, name, diffuse, vertexShader, pixelShader, pos, rot, scale);
+			auto obj = new CGameObject(mesh, name, diffuse, pos, rot, scale);
 
 			scene->mObjManager->AddObject(obj);
 		}
 		else
 		{
-			auto obj = new CGameObject(ID, name, vertexShader, pixelShader, pos, rot, scale);
+			auto obj = new CGameObject(ID, name, pos, rot, scale);
 			scene->mObjManager->AddObject(obj);
 		}
 	}
@@ -410,13 +385,18 @@ void CLevelImporter::LoadObject(tinyxml2::XMLElement* currEntity, CScene* scene)
 	}
 }
 
+CVector3 LoadVector3(tinyxml2::XMLElement* el)
+{
+	return { float(el->FindAttribute("X")->DoubleValue()),
+			float(el->FindAttribute("Y")->DoubleValue()),
+			float(el->FindAttribute("Z")->DoubleValue()) };
+}
+
 void CLevelImporter::LoadPointLight(tinyxml2::XMLElement* currEntity, CScene* scene)
 {
 	std::string mesh;
 	std::string name;
 	std::string diffuse;
-	auto vertexShader = scene->mDefaultVs;
-	auto pixelShader = scene->mDefaultPs;
 
 	CVector3 colour = { 0,0,0 };
 	float strength = 0;
@@ -436,28 +416,24 @@ void CLevelImporter::LoadPointLight(tinyxml2::XMLElement* currEntity, CScene* sc
 
 		const auto diffuseAttr = geometry->FindAttribute("Diffuse");
 		if (diffuseAttr) diffuse = diffuseAttr->Value();
-
-		const auto VsAttr = geometry->FindAttribute("VS");
-		if (VsAttr) vertexShader = VsAttr->Value();
-
-		const auto PsAttr = geometry->FindAttribute("PS");
-		if (PsAttr) pixelShader = PsAttr->Value();
 	}
 
 	const auto positionEl = currEntity->FirstChildElement("Position");
 	if (positionEl)
 	{
-		pos = { positionEl->FindAttribute("X")->FloatValue(),
-			positionEl->FindAttribute("Y")->FloatValue(),
-			positionEl->FindAttribute("Z")->FloatValue() };
+		pos = LoadVector3(positionEl);
 	}
 
 	const auto rotationEl = currEntity->FirstChildElement("Rotation");
 	if (rotationEl)
 	{
-		rot = { ToRadians(rotationEl->FindAttribute("X")->FloatValue()),
-			ToRadians(rotationEl->FindAttribute("Y")->FloatValue()),
-			ToRadians(rotationEl->FindAttribute("Z")->FloatValue()) };
+		rot = ToRadians(LoadVector3(rotationEl));
+	}
+
+	const auto scaleEl = currEntity->FirstChildElement("Scale");
+	if (scaleEl)
+	{
+		scale = scaleEl->FindAttribute("X")->FloatValue();
 	}
 
 	const auto strengthEl = currEntity->FirstChildElement("Strength");
@@ -466,23 +442,15 @@ void CLevelImporter::LoadPointLight(tinyxml2::XMLElement* currEntity, CScene* sc
 		strength = strengthEl->FindAttribute("S")->FloatValue();
 	}
 
-	const auto scaleEl = currEntity->FirstChildElement("Scale");
-	if (scaleEl)
-	{
-		scale = scaleEl->FindAttribute("X")->FloatValue() * strength;
-	}
-
 	const auto colourEl = currEntity->FirstChildElement("Colour");
 	if (colourEl)
 	{
-		colour = { colourEl->FindAttribute("X")->FloatValue(),
-			colourEl->FindAttribute("Y")->FloatValue(),
-			colourEl->FindAttribute("Z")->FloatValue() };
+		colour = LoadVector3(colourEl);
 	}
 
 	try
 	{
-		auto obj = new CPointLight(mesh, name, diffuse, vertexShader, pixelShader, colour, strength, pos, rot, scale);
+		auto obj = new CPointLight(mesh, name, diffuse, colour, strength, pos, rot, scale);
 
 		scene->mObjManager->AddPointLight(obj);
 	}
@@ -497,8 +465,6 @@ void CLevelImporter::LoadLight(tinyxml2::XMLElement* currEntity, CScene* scene)
 	std::string mesh;
 	std::string name;
 	std::string diffuse;
-	auto vertexShader = scene->mDefaultVs;
-	auto pixelShader = scene->mDefaultPs;
 
 	CVector3 colour = { 0,0,0 };
 	float strength = 0;
@@ -519,27 +485,24 @@ void CLevelImporter::LoadLight(tinyxml2::XMLElement* currEntity, CScene* scene)
 		const auto diffuseAttr = geometry->FindAttribute("Diffuse");
 		if (diffuseAttr) diffuse = diffuseAttr->Value();
 
-		const auto VsAttr = geometry->FindAttribute("VS");
-		if (VsAttr) vertexShader = VsAttr->Value();
-
-		const auto PsAttr = geometry->FindAttribute("PS");
-		if (PsAttr) pixelShader = PsAttr->Value();
 	}
 
 	const auto positionEl = currEntity->FirstChildElement("Position");
 	if (positionEl)
 	{
-		pos = { positionEl->FindAttribute("X")->FloatValue(),
-			positionEl->FindAttribute("Y")->FloatValue(),
-			positionEl->FindAttribute("Z")->FloatValue() };
+		pos = LoadVector3(positionEl);
 	}
 
 	const auto rotationEl = currEntity->FirstChildElement("Rotation");
 	if (rotationEl)
 	{
-		rot = { ToRadians(rotationEl->FindAttribute("X")->FloatValue()),
-			ToRadians(rotationEl->FindAttribute("Y")->FloatValue()),
-			ToRadians(rotationEl->FindAttribute("Z")->FloatValue()) };
+		rot = LoadVector3(rotationEl);
+	}
+
+	const auto scaleEl = currEntity->FirstChildElement("Scale");
+	if (scaleEl)
+	{
+		scale = scaleEl->FindAttribute("X")->FloatValue();
 	}
 
 	const auto strengthEl = currEntity->FirstChildElement("Strength");
@@ -548,27 +511,17 @@ void CLevelImporter::LoadLight(tinyxml2::XMLElement* currEntity, CScene* scene)
 		strength = strengthEl->FindAttribute("S")->FloatValue();
 	}
 
-	const auto scaleEl = currEntity->FirstChildElement("Scale");
-	if (scaleEl)
-	{
-		scale = scaleEl->FindAttribute("X")->FloatValue() * strength;
-	}
-
 	const auto colourEl = currEntity->FirstChildElement("Colour");
 	if (colourEl)
 	{
-		colour = { colourEl->FindAttribute("X")->FloatValue(),
-			colourEl->FindAttribute("Y")->FloatValue(),
-			colourEl->FindAttribute("Z")->FloatValue() };
+		colour = LoadVector3(colourEl);
 	}
 
 	const auto facingEl = currEntity->FirstChildElement("Facing");
 
 	if (facingEl)
 	{
-		facing = { facingEl->FindAttribute("X")->FloatValue(),
-			facingEl->FindAttribute("Y")->FloatValue(),
-			facingEl->FindAttribute("Z")->FloatValue() };
+		facing = LoadVector3(facingEl);
 
 		facing = Normalise(facing);
 
@@ -578,14 +531,14 @@ void CLevelImporter::LoadLight(tinyxml2::XMLElement* currEntity, CScene* scene)
 			//if there is position create a spotlight
 			if (positionEl)
 			{
-				auto obj = new CSpotLight(mesh, name, diffuse, vertexShader, pixelShader, colour, strength, pos, rot, scale, facing);
+				auto obj = new CSpotLight(mesh, name, diffuse, colour, strength, pos, rot, scale, facing);
 
 				scene->mObjManager->AddSpotLight(obj);
 			}
 			else
 			{
 				//otherwise create a directional light
-				auto obj = new CDirLight(mesh, name, diffuse, vertexShader, pixelShader, colour, strength, pos, rot, scale, facing);
+				auto obj = new CDirLight(mesh, name, diffuse, colour, strength, pos, rot, scale, facing);
 
 				scene->mObjManager->AddDirLight(obj);
 			}
@@ -599,7 +552,7 @@ void CLevelImporter::LoadLight(tinyxml2::XMLElement* currEntity, CScene* scene)
 	{
 		try
 		{
-			auto obj = new CLight(mesh, name, diffuse, vertexShader, pixelShader, colour, strength, pos, rot, scale);
+			auto obj = new CLight(mesh, name, diffuse, colour, strength, pos, rot, scale);
 
 			scene->mObjManager->AddLight(obj);
 		}
@@ -615,8 +568,6 @@ void CLevelImporter::LoadSky(tinyxml2::XMLElement* currEntity, CScene* scene) co
 	std::string mesh;
 	std::string name;
 	std::string diffuse;
-	auto vertexShader = scene->mDefaultVs;
-	auto pixelShader = scene->mDefaultPs;
 
 	CVector3 pos = { 0,0,0 };
 	CVector3 rot = { 0,0,0 };
@@ -635,28 +586,18 @@ void CLevelImporter::LoadSky(tinyxml2::XMLElement* currEntity, CScene* scene) co
 
 		const auto diffuseAttr = geometry->FindAttribute("Diffuse");
 		if (diffuseAttr) diffuse = diffuseAttr->Value();
-
-		const auto VsAttr = geometry->FindAttribute("VS");
-		if (VsAttr) vertexShader = VsAttr->Value();
-
-		const auto PsAttr = geometry->FindAttribute("PS");
-		if (PsAttr) pixelShader = PsAttr->Value();
 	}
 
 	const auto positionEl = currEntity->FirstChildElement("Position");
 	if (positionEl)
 	{
-		pos = { positionEl->FindAttribute("X")->FloatValue(),
-			positionEl->FindAttribute("Y")->FloatValue(),
-			positionEl->FindAttribute("Z")->FloatValue() };
+		pos = LoadVector3(positionEl);
 	}
 
 	const auto rotationEl = currEntity->FirstChildElement("Rotation");
 	if (rotationEl)
 	{
-		rot = { ToRadians(rotationEl->FindAttribute("X")->FloatValue()),
-			ToRadians(rotationEl->FindAttribute("Y")->FloatValue()),
-			ToRadians(rotationEl->FindAttribute("Z")->FloatValue()) };
+		rot = ToRadians(LoadVector3(rotationEl));
 	}
 
 	const auto scaleEl = currEntity->FirstChildElement("Scale");
@@ -667,7 +608,7 @@ void CLevelImporter::LoadSky(tinyxml2::XMLElement* currEntity, CScene* scene) co
 
 	try
 	{
-		auto obj = new CSky(mesh, name, diffuse, vertexShader, pixelShader, pos, rot, scale);
+		auto obj = new CSky(mesh, name, diffuse, pos, rot, scale);
 
 		scene->mObjManager->AddObject(obj);
 	}
@@ -698,17 +639,13 @@ void CLevelImporter::LoadCamera(tinyxml2::XMLElement* currEntity, CScene* scene)
 	const auto positionEl = currEntity->FirstChildElement("Position");
 	if (positionEl)
 	{
-		pos = { positionEl->FindAttribute("X")->FloatValue(),
-			positionEl->FindAttribute("Y")->FloatValue(),
-			positionEl->FindAttribute("Z")->FloatValue() };
+		pos = LoadVector3(positionEl);
 	}
 
 	const auto rotationEl = currEntity->FirstChildElement("Rotation");
 	if (rotationEl)
 	{
-		rot = { ToRadians(rotationEl->FindAttribute("X")->FloatValue()),
-			ToRadians(rotationEl->FindAttribute("Y")->FloatValue()),
-			ToRadians(rotationEl->FindAttribute("Z")->FloatValue()) };
+		rot = ToRadians(LoadVector3(rotationEl));
 	}
 
 	scene->mCamera = new CCamera(pos, rot, FOV, aspectRatio, nearClip, farClip);
@@ -725,8 +662,6 @@ void CLevelImporter::LoadPlant(tinyxml2::XMLElement* currEntity, CScene* scene) 
 	std::string mesh;
 	std::string name;
 	std::string diffuse;
-	auto vertexShader = scene->mDefaultVs;
-	auto pixelShader = scene->mDefaultPs;
 
 	CVector3 pos = { 0,0,0 };
 	CVector3 rot = { 0,0,0 };
@@ -748,28 +683,18 @@ void CLevelImporter::LoadPlant(tinyxml2::XMLElement* currEntity, CScene* scene) 
 
 		const auto diffuseAttr = geometry->FindAttribute("Diffuse");
 		if (diffuseAttr) diffuse = diffuseAttr->Value();
-
-		const auto VsAttr = geometry->FindAttribute("VS");
-		if (VsAttr) vertexShader = VsAttr->Value();
-
-		const auto PsAttr = geometry->FindAttribute("PS");
-		if (PsAttr) pixelShader = PsAttr->Value();
 	}
 
 	const auto positionEl = currEntity->FirstChildElement("Position");
 	if (positionEl)
 	{
-		pos = { positionEl->FindAttribute("X")->FloatValue(),
-			positionEl->FindAttribute("Y")->FloatValue(),
-			positionEl->FindAttribute("Z")->FloatValue() };
+		pos = LoadVector3(positionEl);
 	}
 
 	const auto rotationEl = currEntity->FirstChildElement("Rotation");
 	if (rotationEl)
 	{
-		rot = { ToRadians(rotationEl->FindAttribute("X")->FloatValue()),
-			ToRadians(rotationEl->FindAttribute("Y")->FloatValue()),
-			ToRadians(rotationEl->FindAttribute("Z")->FloatValue()) };
+		rot = ToRadians(LoadVector3(rotationEl));
 	}
 
 	const auto scaleEl = currEntity->FirstChildElement("Scale");
@@ -782,12 +707,12 @@ void CLevelImporter::LoadPlant(tinyxml2::XMLElement* currEntity, CScene* scene) 
 	{
 		if (ID.empty())
 		{
-			auto obj = new CPlant(mesh, name, diffuse, vertexShader, pixelShader, pos, rot, scale);
+			auto obj = new CPlant(mesh, name, diffuse, pos, rot, scale);
 			scene->mObjManager->AddObject(obj);
 		}
 		else
 		{
-			auto obj = new CPlant(ID, name, vertexShader, pixelShader, pos, rot, scale);
+			auto obj = new CPlant(ID, name, pos, rot, scale);
 			scene->mObjManager->AddObject(obj);
 		}
 	}

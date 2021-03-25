@@ -77,9 +77,21 @@ CVector3 operator+ (const CVector3& v, const CVector3& w);
 // Vector-vector subtraction
 CVector3 operator- (const CVector3& v, const CVector3& w);
 
+// Vector-scalar subtraction
+CVector3 operator- (const CVector3& v, const float& w);
+CVector3 operator- (const float& w,const CVector3& v);
+
+// Vector-scalar subtraction
+CVector3 operator+ (const CVector3& v, const float& w);
+CVector3 operator+ (const float& w,const CVector3& v);
+
 // Vector-scalar multiplication
 CVector3 operator* (const CVector3& v, float s);
 CVector3 operator* (float s, const CVector3& v);
+
+// Vector-scalar division
+CVector3 operator/ (const CVector3& v, float s);
+CVector3 operator/ (float s,const CVector3& v);
 
 /*-----------------------------------------------------------------------------------------
 	Non-member functions
@@ -98,5 +110,9 @@ CVector3 Normalise(const CVector3& v);
 float Length(const CVector3& v);
 
 CVector3 ToDegrees(CVector3 v);
+
+CVector3 ToRadians(CVector3 v);
+
+CVector3 ScaleBetween(CVector3 v, float minAllowed, float maxAllowed, CVector3 min, CVector3 max);
 
 #endif // _CVECTOR3_H_DEFINED_

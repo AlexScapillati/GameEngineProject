@@ -32,6 +32,8 @@ public:
 	void Control( float frameTime, KeyCode turnUp, KeyCode turnDown, KeyCode turnLeft, KeyCode turnRight,  
 	              KeyCode moveForward, KeyCode moveBackward, KeyCode moveLeft, KeyCode moveRight);
 
+	void ControlMouse(float frameTime, CVector2 delta, KeyCode moveForward, KeyCode moveBackward, KeyCode moveLeft, KeyCode moveRight);
+
 	void SetAspectRatio(float r);
 
 

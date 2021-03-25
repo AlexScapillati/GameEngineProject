@@ -9,9 +9,16 @@
 class CSky : public CGameObject
 {
 public:
-	CSky(std::string mesh, std::string name,
-		std::string& diffuse, std::string& vertexShader, std::string& pixelShader, CVector3 position = { 0,0,0 }, CVector3 rotation = { 0,0,0 }, float scale = 1)
-		: CGameObject(std::move(mesh), std::move(name), diffuse, vertexShader, pixelShader, position, rotation, scale) {}
+	CSky(std::string mesh, 
+		std::string name,
+		std::string& diffuse, 
+		CVector3 position = { 0,0,0 }, 
+		CVector3 rotation = { 0,0,0 }, 
+		float scale = 1)
+		: CGameObject(mesh, name, diffuse, position, rotation, scale) 
+	{
+		mMaterial->SetPixelShader(gSkyPixelShader);
+	}
 
 	void Render(bool basicGeometry = false) override
 	{
@@ -21,7 +28,6 @@ public:
 		}
 		else
 		{
-
 			//set the colour white for the sky (no tint)
 			gPerModelConstants.objectColour = { 1, 1, 1 };
 
@@ -36,6 +42,7 @@ public:
 
 			gD3DContext->RSSetState(pRSState);
 
+			pRSState->Release();
 		}
 	}
 };

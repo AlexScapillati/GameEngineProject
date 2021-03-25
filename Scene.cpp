@@ -20,8 +20,8 @@
 #include "External\imgui\ImGuizmo.h"
 #include "External\imgui\FileBrowser\ImGuiFileBrowser.h"
 
-const float ROTATION_SPEED = 1.5f;
-const float MOVEMENT_SPEED = 50.0f;
+float ROTATION_SPEED = 0.25f;
+float MOVEMENT_SPEED = 50.0f;
 
 //--------------------------------------------------------------------------------------
 // Constant Buffers
@@ -61,25 +61,35 @@ CScene::CScene(std::string fileName)
 	//--------------------------------------------------------------------------------------
 
 	mCamera = nullptr;
-	mTextrue = nullptr;
-	mTargetView = nullptr;
-	mTextureSRV = nullptr;
-	mDepthStencil = nullptr;
-	mDepthStencilView = nullptr;
-	mDepthStencilSRV = nullptr;
 	mSelectedObj = nullptr;
+
+	mTextrue = nullptr;
+	mSceneRTV = nullptr;
+	mSceneSRV = nullptr;
+	mDepthStencil = nullptr;
+	mDepthStencilRTV = nullptr;
+	mDepthStencilSRV = nullptr;
+
+	mFinalTextrue = nullptr;
+	mFinalRTV = nullptr;
+	mFinalTextureSRV = nullptr;
+	mFinalDepthStencil = nullptr;
+	mFinalDepthStencilRTV = nullptr;
+	mFinalDepthStencilSRV = nullptr;
 
 	mViewportX = 1024;
 	mViewportY = 720;
+
+	mPcfSamples = 4;
 
 	mObjManager = new CGameObjectManager();
 
 	GOM = mObjManager;
 
-	gAmbientColour = { 0.3f, 0.3f, 0.4f };
+	gAmbientColour = { 0.03f, 0.03f, 0.04f };
 	gSpecularPower = 256; // Specular power //will be removed since it will be dependent on the material
 	mLockFPS = true;
-	gBackgroundColor = { 0.3f, 0.3f, 0.4f, 1.0f };
+	mBackgroundColor = { 0.3f, 0.3f, 0.4f, 1.0f };
 
 	try
 	{
@@ -165,37 +175,17 @@ void CScene::RenderSceneFromCamera(CCamera* camera)
 	gPerFrameConstants.projectionMatrix = camera->ProjectionMatrix();
 	gPerFrameConstants.viewProjectionMatrix = camera->ViewProjectionMatrix();
 
+	// Update the frame constant buffer
 	UpdateFrameConstantBuffer(gPerFrameConstantBuffer, gPerFrameConstants);
-	UpdateLightBuffer(gPerFrameLightsConstBuffer, gPerFrameLightsConstants);
-	UpdateSpotLightsBuffer(gPerFrameSpotLightsConstBuffer, gPerFrameSpotLightsConstants);
-	UpdateDirLightsBuffer(gPerFrameDirLightsConstBuffer, gPerFrameDirLightsConstants);
-	UpdatePointLightsBuffer(gPerFramePointLightsConstBuffer, gPerFramePointLightsConstants);
 
-	ID3D11Buffer* frameCBuffers[] = { gPerFrameConstantBuffer,
-		gPerFrameLightsConstBuffer,
-		gPerFrameSpotLightsConstBuffer,
-		gPerFrameDirLightsConstBuffer,
-		gPerFramePointLightsConstBuffer };
-
-	gD3DContext->PSSetConstantBuffers(1, 5, frameCBuffers);
-	gD3DContext->VSSetConstantBuffers(1, 5, frameCBuffers); // First parameter must match constant buffer number in the shader
-	gD3DContext->GSSetConstantBuffers(1, 5, frameCBuffers);
+	// Set it to the GPU
+	gD3DContext->PSSetConstantBuffers(1, 1, &gPerFrameConstantBuffer);
+	gD3DContext->VSSetConstantBuffers(1, 1, &gPerFrameConstantBuffer);
 
 	////--------------- Render ordinary models ---------------///
 
 	// Select which shaders to use next
 	gD3DContext->GSSetShader(nullptr, nullptr, 0);  ////// Switch off geometry shader when not using it (pass nullptr for first parameter)
-
-	gD3DContext->PSSetSamplers(1, 1, &gPointSamplerBorder);
-
-	gD3DContext->PSSetShaderResources(5, 0, nullptr);
-
-	//if the shadowmaps array is not empty
-	if (!mObjManager->mShadowsMaps.empty())
-	{
-		//send the shadow maps to the shaders (slot 6)
-		gD3DContext->PSSetShaderResources(6, mObjManager->mShadowsMaps.size(), &mObjManager->mShadowsMaps[0]);
-	}
 
 	// States - no blending, normal depth buffer and back-face culling (standard set-up for opaque models)
 	gD3DContext->OMSetBlendState(gNoBlendingState, nullptr, 0xffffff);
@@ -219,21 +209,52 @@ ID3D11ShaderResourceView* CScene::RenderScene(float frameTime)
 	// Set up the light information in the constant buffer
 	// Don't send to the GPU yet, the function RenderSceneFromCamera will do that
 
-	mObjManager->UpdateLightsConstBuffer(&gPerFrameLightsConstants);
-	mObjManager->UpdateSpotLightsConstBuffer(&gPerFrameSpotLightsConstants);
-	mObjManager->UpdateDirLightsConstBuffer(&gPerFrameDirLightsConstants);
-	mObjManager->UpdatePointLightsConstBuffer(&gPerFramePointLightsConstants);
-
-	gPerModelConstants.parallaxDepth = 0.01f;
+	mObjManager->UpdateAllBuffers();
 
 	gPerFrameConstants.ambientColour = gAmbientColour;
 	gPerFrameConstants.specularPower = gSpecularPower;
 	gPerFrameConstants.cameraPosition = mCamera->Position();
 	gPerFrameConstants.frameTime = frameTime;
+	gPerFrameConstants.nPcfSamples = mPcfSamples;
+
+	// Update constant buffest
+	UpdateLightContantBuffer(gPerFrameLightsConstBuffer, gPerFrameLightsConstants, mObjManager->mLights.size());
+	UpdateDirLightsContantBuffer(gPerFrameDirLightsConstBuffer, gPerFrameDirLightsConstants, mObjManager->mDirLights.size());
+	UpdateSpotLightsContantBuffer(gPerFrameSpotLightsConstBuffer, gPerFrameSpotLightsConstants, mObjManager->mSpotLights.size());
+	UpdatePointLightsContantBuffer(gPerFramePointLightsConstBuffer, gPerFramePointLightsConstants, mObjManager->mPointLights.size());
+
+	// Set them to the GPU
+	ID3D11Buffer* frameCBuffers[] =
+	{
+		gPerFrameLightsConstBuffer,
+		gPerFrameSpotLightsConstBuffer,
+		gPerFrameDirLightsConstBuffer,
+		gPerFramePointLightsConstBuffer
+	};
+
+	gD3DContext->PSSetConstantBuffers(2, 4, frameCBuffers);
+	gD3DContext->VSSetConstantBuffers(2, 4, frameCBuffers);
+
+	// Set the sampler for the material textures
+	gD3DContext->PSSetSamplers(0, 1, &gAnisotropic4xSampler);
+
+	// Set Sampler for the Shadow Maps
+	gD3DContext->PSSetSamplers(1, 1, &gPointSamplerBorder);
 
 	////----- Render form the lights point of view ----------////
 
 	mObjManager->RenderFromAllLights();
+
+	//if the shadowmaps array is not empty
+	if (!mObjManager->mShadowsMaps.empty())
+	{
+		//send the shadow maps to the shaders (slot 7)
+		gD3DContext->PSSetShaderResources(7, mObjManager->mShadowsMaps.size(), &mObjManager->mShadowsMaps[0]);
+	}
+
+	////--------------- Render Ambient Maps  ---------------////
+
+	mObjManager->RenderAmbientMaps();
 
 	////--------------- Main scene rendering ---------------////
 
@@ -241,10 +262,10 @@ ID3D11ShaderResourceView* CScene::RenderScene(float frameTime)
 	// If using post-processing then render to the scene texture, otherwise to the usual back buffer
 	// Also clear the render target to a fixed colour and the depth buffer to the far distance
 
-	gD3DContext->OMSetRenderTargets(1, &mTargetView, mDepthStencilView);
-	gD3DContext->ClearRenderTargetView(mTargetView, &gBackgroundColor.r);
+	gD3DContext->OMSetRenderTargets(1, &mSceneRTV, mDepthStencilRTV);
+	gD3DContext->ClearRenderTargetView(mSceneRTV, &mBackgroundColor.r);
 
-	gD3DContext->ClearDepthStencilView(mDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+	gD3DContext->ClearDepthStencilView(mDepthStencilRTV, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 	// Setup the viewport to the size of the main window
 	D3D11_VIEWPORT vp;
@@ -259,12 +280,13 @@ ID3D11ShaderResourceView* CScene::RenderScene(float frameTime)
 	// Render the scene from the main camera
 	RenderSceneFromCamera(mCamera);
 
+	// Render the scene to a depth map, for post processing
 	RenderToDepthMap();
 
-	//PostProcessing pass
+	// PostProcessing pass
 	PostProcessingPass();
 
-	return mTextureSRV;
+	return mSceneSRV;
 }
 
 //--------------------------------------------------------------------------------------
@@ -289,10 +311,39 @@ void CScene::UpdateScene(float frameTime)
 	// Update heat haze timer
 	gPostProcessingConstants.heatHazeTimer += frameTime;
 
-	//***********
+	// Camera control 
 	if (ImGui::IsWindowFocused())
 	{
-		mCamera->Control(frameTime, Key_Up, Key_Down, Key_Left, Key_Right, Key_W, Key_S, Key_A, Key_D);
+		if (KeyHeld(Mouse_RButton))
+		{
+			POINT mousePos;
+
+			GetCursorPos(&mousePos);
+
+			CVector2 delta = { ImGui::GetMouseDragDelta(1).x, ImGui::GetMouseDragDelta(1).y };
+
+			if (KeyHeld(Key_LShift))
+				MOVEMENT_SPEED = 100.0f;
+			else
+				MOVEMENT_SPEED = 50.0f;
+
+			RECT winRect;
+
+			GetWindowRect(gHWnd, &winRect);
+
+			if (mousePos.x > winRect.right) SetCursorPos(winRect.left, mousePos.y);
+
+			else if (mousePos.x < winRect.left) SetCursorPos(winRect.right, mousePos.y);
+
+			else if (mousePos.y > winRect.bottom) SetCursorPos(mousePos.x, winRect.top);
+
+			else if (mousePos.y < winRect.top) SetCursorPos(mousePos.x, winRect.bottom);
+
+			else
+				mCamera->ControlMouse(frameTime , delta, Key_W, Key_S, Key_A, Key_D);
+
+			ImGui::ResetMouseDragDelta(1);
+		}
 	}
 
 	// Toggle FPS limiting
@@ -324,43 +375,67 @@ void CScene::UpdateScene(float frameTime)
 
 void CScene::Save(std::string fileName)
 {
-	auto importer = std::make_unique<CLevelImporter>();
+	CLevelImporter importer;
 
-	importer->SaveScene(fileName, this);
+	importer.SaveScene(fileName, this);
 }
 
 CScene::~CScene()
 {
-	delete mObjManager;
-	delete mCamera;
+	delete mObjManager; mObjManager = nullptr;
+	delete mCamera;		mCamera = nullptr;
 
-	ReleaseStates();
+	if (gPerModelConstantBuffer)			gPerModelConstantBuffer->Release();			gPerModelConstantBuffer = nullptr;
+	if (gPerFrameConstantBuffer)			gPerFrameConstantBuffer->Release();			gPerFrameConstantBuffer = nullptr;
+	if (gPerFrameLightsConstBuffer)			gPerFrameLightsConstBuffer->Release();		gPerFrameLightsConstBuffer = nullptr;
+	if (gPerFrameSpotLightsConstBuffer)		gPerFrameSpotLightsConstBuffer->Release();	gPerFrameSpotLightsConstBuffer = nullptr;
+	if (gPerFrameDirLightsConstBuffer)		gPerFrameDirLightsConstBuffer->Release();	gPerFrameDirLightsConstBuffer = nullptr;
+	if (gPerFramePointLightsConstBuffer)	gPerFramePointLightsConstBuffer->Release();	gPerFramePointLightsConstBuffer = nullptr;
+	if (gPostProcessingConstBuffer)			gPostProcessingConstBuffer->Release();		gPostProcessingConstBuffer = nullptr;
 
-	if (gPerModelConstantBuffer)			gPerModelConstantBuffer->Release();
-	if (gPerFrameConstantBuffer)			gPerFrameConstantBuffer->Release();
-	if (gPerFrameLightsConstBuffer)			gPerFrameLightsConstBuffer->Release();
-	if (gPerFrameSpotLightsConstBuffer)		gPerFrameSpotLightsConstBuffer->Release();
-	if (gPerFrameDirLightsConstBuffer)		gPerFrameDirLightsConstBuffer->Release();
-	if (gPerFramePointLightsConstBuffer)	gPerFramePointLightsConstBuffer->Release();
+	// Release all the texture that are vieport size dependent
+	ReleaseTextures();
 
-	if (mTargetView)						mTargetView->Release();
-	if (mTextrue)							mTextrue->Release();
-	if (mTextureSRV)						mTextureSRV->Release();
-	if (mDepthStencil)						mDepthStencil->Release();
-	if (mDepthStencilView)					mDepthStencilView->Release();
-
-	if (mFinalTargetView)					mFinalTargetView->Release();
-	if (mFinalTextrue)						mFinalTextrue->Release();
-	if (mFinalTextureSRV)					mFinalTextureSRV->Release();
-
-	if (mLuminanceMap)						mLuminanceMap->Release();
-	if (mLuminanceMapSRV)					mLuminanceMapSRV->Release();
-	if (mLuminanceRenderTarget)				mLuminanceRenderTarget->Release();
-
+	ReleaseSRVandRTVs();
+	
 	ReleasePostProcessingShaders();
 
 	ReleaseDefaultShaders();
 }
+
+void CScene::ReleaseTextures()
+{
+	if (mTextrue)							mTextrue->Release();						mTextrue = nullptr;
+	if (mFinalTextrue)						mFinalTextrue->Release();					mFinalTextrue = nullptr;
+	if (mDepthStencil)						mDepthStencil->Release();					mDepthStencil = nullptr;
+	if (mSsaoMap)							mSsaoMap->Release();						mSsaoMap = nullptr;
+	if (mLuminanceMap)						mLuminanceMap->Release();					mLuminanceMap = nullptr;
+	if (mFinalDepthStencil)					mFinalDepthStencil->Release();				mFinalDepthStencil = nullptr;
+}
+
+void CScene::ReleaseSRVandRTVs()
+{
+	//Release the SRV and RTV
+	if (mSceneRTV)							mSceneRTV->Release();						mSceneRTV = nullptr;
+	if (mSceneSRV)							mSceneSRV->Release();						mSceneSRV = nullptr;
+
+	if (mDepthStencilRTV)					mDepthStencilRTV->Release();				mDepthStencilRTV = nullptr;
+	if (mDepthStencilSRV)					mDepthStencilSRV->Release();				mDepthStencilSRV = nullptr;
+
+	if (mFinalRTV)							mFinalRTV->Release();						mFinalRTV = nullptr;
+	if (mFinalTextureSRV)					mFinalTextureSRV->Release();				mFinalTextureSRV = nullptr;
+
+	if (mFinalDepthStencilSRV)				mFinalDepthStencilSRV->Release();			mFinalDepthStencilSRV = nullptr;
+	if (mFinalDepthStencilRTV)				mFinalDepthStencilRTV->Release();			mFinalDepthStencilRTV = nullptr;
+
+	if (mLuminanceMapSRV)					mLuminanceMapSRV->Release();				mLuminanceMapSRV = nullptr;
+	if (mLuminanceRTV)						mLuminanceRTV->Release();					mLuminanceRTV = nullptr;
+
+	if (mSsaoMapRTV)						mSsaoMapRTV->Release();						mSsaoMapRTV = nullptr;
+	if (mSsaoMapSRV)						mSsaoMapSRV->Release();						mSsaoMapSRV = nullptr;
+
+}
+
 
 void CScene::Resize(UINT newX, UINT newY)
 {
@@ -368,32 +443,17 @@ void CScene::Resize(UINT newX, UINT newY)
 	//broken
 	mCamera->SetAspectRatio(float(newX) / float(newY));
 
-	//set the scene viewport size to the new size
+	// set the scene viewport size to the new size
 	mViewportX = newX;
 	mViewportY = newY;
 
-	//release the textures
-	mDepthStencil->Release();
-	mDepthStencilView->Release();
-	mDepthStencilSRV->Release();
+	// Release all the texture that are vieport size dependent
+	ReleaseTextures();
 
-	mFinalDepthStencil->Release();
-	mFinalDepthStencilView->Release();
-	mFinalDepthStencilSRV->Release();
+	// Release the SRV and RTVs
+	ReleaseSRVandRTVs();
 
-	mTextrue->Release();
-	mTargetView->Release();
-	mTextureSRV->Release();
-
-	mFinalTargetView->Release();
-	mFinalTextrue->Release();
-	mFinalTextureSRV->Release();
-
-	mLuminanceMap->Release();
-	mLuminanceMapSRV->Release();
-	mLuminanceRenderTarget->Release();
-
-	//recreate all the texture with the updated size
+	// Recreate all the texture with the updated size
 	InitTextures();
 }
 
@@ -427,6 +487,11 @@ void CScene::InitTextures()
 		throw std::runtime_error("Error creating luminance texture");
 	}
 
+	if (FAILED(gD3DDevice->CreateTexture2D(&textureDesc, NULL, &mSsaoMap)))
+	{
+		throw std::runtime_error("Error creating ssao texture");
+	}
+
 	D3D11_RENDER_TARGET_VIEW_DESC rtvDesc;
 	rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
@@ -434,19 +499,24 @@ void CScene::InitTextures()
 
 	// We created the scene texture above, now we get a "view" of it as a render target, i.e. get a special pointer to the texture that
 	// we use when rendering to it (see RenderScene function below)
-	if (FAILED(gD3DDevice->CreateRenderTargetView(mTextrue, &rtvDesc, &mTargetView)))
+	if (FAILED(gD3DDevice->CreateRenderTargetView(mTextrue, &rtvDesc, &mSceneRTV)))
 	{
 		gLastError = "Error creating scene render target view";
 	}
 
-	if (FAILED(gD3DDevice->CreateRenderTargetView(mFinalTextrue, &rtvDesc, &mFinalTargetView)))
+	if (FAILED(gD3DDevice->CreateRenderTargetView(mFinalTextrue, &rtvDesc, &mFinalRTV)))
 	{
 		gLastError = "Error creating scene render target view";
 	}
 
-	if (FAILED(gD3DDevice->CreateRenderTargetView(mLuminanceMap, &rtvDesc, &mLuminanceRenderTarget)))
+	if (FAILED(gD3DDevice->CreateRenderTargetView(mLuminanceMap, &rtvDesc, &mLuminanceRTV)))
 	{
 		gLastError = "Error creating luminance render target view";
+	}
+
+	if (FAILED(gD3DDevice->CreateRenderTargetView(mSsaoMap, &rtvDesc, &mSsaoMapRTV)))
+	{
+		gLastError = "Error creating ssao render target view";
 	}
 
 	// We also need to send this texture (resource) to the shaders. To do that we must create a shader-resource "view"
@@ -455,7 +525,8 @@ void CScene::InitTextures()
 	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MostDetailedMip = 0;
 	srvDesc.Texture2D.MipLevels = 1;
-	if (FAILED(gD3DDevice->CreateShaderResourceView(mTextrue, &srvDesc, &mTextureSRV)))
+
+	if (FAILED(gD3DDevice->CreateShaderResourceView(mTextrue, &srvDesc, &mSceneSRV)))
 	{
 		throw std::runtime_error("Error creating scene texture shader resource view");
 	}
@@ -468,6 +539,11 @@ void CScene::InitTextures()
 	if (FAILED(gD3DDevice->CreateShaderResourceView(mLuminanceMap, &srvDesc, &mLuminanceMapSRV)))
 	{
 		throw std::runtime_error("Error creating luminance shader resource view");
+	}
+
+	if (FAILED(gD3DDevice->CreateShaderResourceView(mSsaoMap, &srvDesc, &mSsaoMapSRV)))
+	{
+		throw std::runtime_error("Error creating ssao shader resource view");
 	}
 
 	//create depth stencil
@@ -501,12 +577,12 @@ void CScene::InitTextures()
 	dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	dsvDesc.Texture2D.MipSlice = 0;
 
-	if (FAILED(gD3DDevice->CreateDepthStencilView(mDepthStencil, &dsvDesc, &mDepthStencilView)))
+	if (FAILED(gD3DDevice->CreateDepthStencilView(mDepthStencil, &dsvDesc, &mDepthStencilRTV)))
 	{
 		throw std::runtime_error("Error creating depth stencil view ");
 	}
 
-	if (FAILED(gD3DDevice->CreateDepthStencilView(mFinalDepthStencil, &dsvDesc, &mFinalDepthStencilView)))
+	if (FAILED(gD3DDevice->CreateDepthStencilView(mFinalDepthStencil, &dsvDesc, &mFinalDepthStencilRTV)))
 	{
 		throw std::runtime_error("Error creating depth stencil view ");
 	}
@@ -528,4 +604,7 @@ void CScene::InitTextures()
 	{
 		throw std::runtime_error("Error creating depth stencil shader resource view");
 	}
+
+	// Now relese the textures since we do not need them anymore
+	ReleaseTextures();
 }
