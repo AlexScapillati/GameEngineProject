@@ -71,7 +71,7 @@ public:
 
 	int mPcfSamples;
 
-	void Save(std::string fileName);
+	void Save(std::string fileName = "");
 
 	~CScene();
 
@@ -86,42 +86,6 @@ public:
 	void RenderToDepthMap();
 
 	void DisplayPostProcessingEffects();
-
-private:
-
-	//--------------------------------------------------------------------------------------
-	// Scene Data
-	//--------------------------------------------------------------------------------------
-
-	// Variables controlling light1's orbiting of the particle emitter
-	float gCameraOrbitRadius;
-	float gCameraOrbitSpeed;
-
-	// Additional light information
-	CVector3 gAmbientColour; // Background level of light (slightly bluish to match the far background, which is dark blue)
-	float    gSpecularPower; // Specular power controls shininess - same for all models in this app
-
-	// Variables controlling light1's orbiting of the cube
-	float gLightOrbitRadius;
-	float gLightOrbitSpeed;
-
-	CGameObject* mSelectedObj;
-
-	ID3D11Texture2D* mTextrue;
-	ID3D11ShaderResourceView* mSceneSRV;
-	ID3D11RenderTargetView* mSceneRTV;
-
-	ID3D11Texture2D* mDepthStencil;
-	ID3D11ShaderResourceView* mDepthStencilSRV;
-	ID3D11DepthStencilView* mDepthStencilRTV;
-
-	ID3D11Texture2D* mFinalTextrue;
-	ID3D11ShaderResourceView* mFinalTextureSRV;
-	ID3D11RenderTargetView* mFinalRTV;
-
-	ID3D11Texture2D* mFinalDepthStencil;
-	ID3D11ShaderResourceView* mFinalDepthStencilSRV;
-	ID3D11DepthStencilView* mFinalDepthStencilRTV;
 
 	//********************
 	// Available post-processes
@@ -189,6 +153,44 @@ private:
 	};
 
 	std::list<PostProcessFilter> mPostProcessingFilters;
+
+private:
+
+	//--------------------------------------------------------------------------------------
+	// Scene Data
+	//--------------------------------------------------------------------------------------
+
+	std::string mFileName;
+
+	// Variables controlling light1's orbiting of the particle emitter
+	float gCameraOrbitRadius;
+	float gCameraOrbitSpeed;
+
+	// Additional light information
+	CVector3 gAmbientColour; // Background level of light (slightly bluish to match the far background, which is dark blue)
+	float    gSpecularPower; // Specular power controls shininess - same for all models in this app
+
+	// Variables controlling light1's orbiting of the cube
+	float gLightOrbitRadius;
+	float gLightOrbitSpeed;
+
+	CGameObject* mSelectedObj;
+
+	ID3D11Texture2D* mTextrue;
+	ID3D11ShaderResourceView* mSceneSRV;
+	ID3D11RenderTargetView* mSceneRTV;
+
+	ID3D11Texture2D* mDepthStencil;
+	ID3D11ShaderResourceView* mDepthStencilSRV;
+	ID3D11DepthStencilView* mDepthStencilRTV;
+
+	ID3D11Texture2D* mFinalTextrue;
+	ID3D11ShaderResourceView* mFinalTextureSRV;
+	ID3D11RenderTargetView* mFinalRTV;
+
+	ID3D11Texture2D* mFinalDepthStencil;
+	ID3D11ShaderResourceView* mFinalDepthStencilSRV;
+	ID3D11DepthStencilView* mFinalDepthStencilRTV;
 
 	//****************************
 	// Post processing textures

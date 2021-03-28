@@ -93,6 +93,9 @@ void CMaterial::RenderMaterial(bool basicGeometry)
 	//if the object is required rendered without effects or textures
 	if (basicGeometry)
 	{
+		// Send Albedo map (in the aplha channel there is the opacity map)
+		gD3DContext->PSSetShaderResources(0, 1, &mPbrMaps.AlbedoSRV);
+
 		// Use special depth-only rendering shaders
 		if (HasNormals())
 			gD3DContext->PSSetShader(gDepthOnlyNormalPixelShader, nullptr, 0);
@@ -163,7 +166,7 @@ void CMaterial::RenderMaterial(bool basicGeometry)
 		else
 		{
 			
-			gD3DContext->PSSetShaderResources(4, 1, &nullSRV);
+			gD3DContext->PSSetShaderResources(5, 1, &nullSRV);
 			gPerModelConstants.hasMetallnessMap = 0.0f;
 		}
 
@@ -181,7 +184,12 @@ void CMaterial::SetPixelShader(ID3D11PixelShader* s)
 }
 
 CMaterial::~CMaterial()
-{		
+{
+	Release();
+}
+
+void CMaterial::Release()
+{
 	if (mPbrMaps.AO				 != nullptr)				{mPbrMaps.AO->Release();				mPbrMaps.AO				 = nullptr;}
 	if (mPbrMaps.Normal			 != nullptr)				{mPbrMaps.Normal->Release();			mPbrMaps.Normal			 = nullptr;}
 	if (mPbrMaps.Albedo			 != nullptr)				{mPbrMaps.Albedo->Release();			mPbrMaps.Albedo			 = nullptr;}
@@ -249,7 +257,6 @@ void CMaterial::LoadMaps(std::vector<std::string>& fileMaps)
 			else if (fileName.find("Displacement") != std::string::npos)
 			{
 				//found displacement map
-				//TODO: THERE IS A .EXR FILE THAT I DUNNO WHAT IS IT
 				if (!LoadTexture(originalFileName, &mPbrMaps.Displacement, &mPbrMaps.DisplacementSRV))
 				{
 					throw std::runtime_error("Error Loading: " + fileName);

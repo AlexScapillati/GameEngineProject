@@ -38,8 +38,12 @@ void CSpotLight::Render(bool basicGeometry)
 ID3D11ShaderResourceView* CSpotLight::RenderFromThis()
 {
 
+	// Store the prev rasterize state
+	ID3D11RasterizerState* prevRS = nullptr;
+	gD3DContext->RSGetState(&prevRS);
+
 	// Cull none state, if the light is inside an object, the object needs to obstruct the light in every direction
-	gD3DContext->RSSetState(gCullNoneState);
+	gD3DContext->RSSetState(gCullBackState);
 
 	// Setup the viewport to the size of the shadow map texture
 	D3D11_VIEWPORT vp;
@@ -76,7 +80,8 @@ ID3D11ShaderResourceView* CSpotLight::RenderFromThis()
 	gD3DContext->OMSetRenderTargets(0, nullptr, nullD);
 
 	// Restore cull back state
-	gD3DContext->RSSetState(gCullBackState);
+	gD3DContext->RSSetState(prevRS);
+	if (prevRS) prevRS->Release();
 
 	return mShadowMapSRV;
 }
@@ -86,9 +91,7 @@ void CSpotLight::SetShadowMapsSize(int value)
 	//TODO boundaries
 	mShadowMapSize = value;
 
-	mShadowMap->Release();
-	mShadowMapDepthStencil->Release();
-	mShadowMapSRV->Release();
+	Release();
 
 	InitTextures();
 }
@@ -146,6 +149,11 @@ void CSpotLight::InitTextures()
 }
 
 CSpotLight::~CSpotLight()
+{
+	Release();
+}
+
+void CSpotLight::Release()
 {
 	if (mShadowMap) mShadowMap->Release();
 	if (mShadowMapDepthStencil) mShadowMapDepthStencil->Release();

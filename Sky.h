@@ -24,7 +24,7 @@ public:
 	{
 		if (basicGeometry)
 		{
-			CGameObject::Render(basicGeometry);
+			// Do not render the sky map in any depth buffer
 		}
 		else
 		{
@@ -37,6 +37,8 @@ public:
 
 			// Stars point inwards
 			gD3DContext->RSSetState(gCullFrontState);
+
+			SetPosition(gPerFrameConstants.cameraPosition);
 
 			CGameObject::Render(basicGeometry);
 

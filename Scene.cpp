@@ -56,6 +56,9 @@ CGameObjectManager* GOM;
 
 CScene::CScene(std::string fileName)
 {
+
+	mFileName = fileName;
+
 	//--------------------------------------------------------------------------------------
 	// Scene Geometry and Layout
 	//--------------------------------------------------------------------------------------
@@ -375,8 +378,10 @@ void CScene::UpdateScene(float frameTime)
 
 void CScene::Save(std::string fileName)
 {
-	CLevelImporter importer;
+	if (fileName == "")
+		fileName = mFileName;
 
+	CLevelImporter importer;
 	importer.SaveScene(fileName, this);
 }
 

@@ -149,7 +149,7 @@ void CScene::SelectPostProcessShaderAndTextures(PostProcess postProcess)
 
 		// 1st pass - Calculate the ssao amount
 
-		gD3DContext->PSSetSamplers(1,1,&gPointSampler);
+		gD3DContext->PSSetSamplers(1, 1, &gPointSampler);
 
 		gD3DContext->OMSetRenderTargets(1, &mSsaoMapRTV, nullptr);
 
@@ -266,22 +266,37 @@ void CScene::SelectPostProcessShaderAndTextures(PostProcess postProcess)
 		CVector3 lightPos;
 		CVector3 lightScreenPos;
 
+		// TODO REMOVE
+		// TODO IMPLEMENT SUPPORT FOR MULTIPLE LIGHTS
 		if (!GOM->mDirLights.empty()) lightPos = GOM->mDirLights[0]->Position();
 		else if (!GOM->mLights.empty()) lightPos = GOM->mLights[0]->Position();
 		else if (!GOM->mSpotLights.empty()) lightPos = GOM->mSpotLights[0]->Position();
 		else if (!GOM->mPointLights.empty()) lightPos = GOM->mPointLights[0]->Position();
-		else break;
+		else
+		{
+			// If there are no lights just set the copy post process shader
+			gD3DContext->PSSetShader(gCopyPostProcess, nullptr, 0);
+			break;
+		};
 
 		// Convert the world point to screen space
 		lightScreenPos = mCamera->PixelFromWorldPt(lightPos, mViewportX, mViewportY);
 
-		if (lightScreenPos.z < 0.0f) break;
+		// Add the gui padding
+		auto windowPos = ImGui::GetWindowPos();
+
+		lightScreenPos.x += windowPos.x;
+		lightScreenPos.y += windowPos.y;
 
 		// Scale it in uv coordinates (-1,1)
 		lightScreenPos = ScaleBetween(lightScreenPos, -1.0f, 1.0f, { 0.0f,0.0f,0.0f }, { float(mViewportX),float(mViewportY),0.0f });
 
 		// Set the point to the post processing buffer
-		gPostProcessingConstants.lightScreenPos = { lightScreenPos.x, lightScreenPos.y };
+		gPostProcessingConstants.lightScreenPos = { lightScreenPos.x , lightScreenPos.y};
+
+		// Set the depth map to the shader
+		// Needed for corrections
+		gD3DContext->PSGetShaderResources(1, 0, &gDepthShaderView);
 
 		//Set the shader
 		gD3DContext->PSSetShader(gGodRaysPostProcess, nullptr, 0);
@@ -506,57 +521,104 @@ void CScene::PolygonPostProcess(PostProcess postProcess, const std::array<CVecto
 
 void CScene::PostProcessingPass()
 {
-	//show the postprocessing window
-	if (!gViewportFullscreen)
+	//display the post processing effects in a window
+	DisplayPostProcessingEffects();
+
+	//iterate through the effects array
+	auto filter = mPostProcessingFilters.begin();
+
+	while (filter != mPostProcessingFilters.end())
 	{
-		//display the post processing effects in a window
-		DisplayPostProcessingEffects();
-
-		//iterate through the effects array
-		auto filter = mPostProcessingFilters.begin();
-
-		while (filter != mPostProcessingFilters.end())
+		// Run any post-processing steps
+		if (filter->type != PostProcess::None)
 		{
-			// Run any post-processing steps
-			if (filter->type != PostProcess::None)
+			if (filter->mode == PostProcessMode::Fullscreen)
 			{
-				if (filter->mode == PostProcessMode::Fullscreen)
-				{
-					FullScreenPostProcess(filter->type);
-				}
-				else if (filter->mode == PostProcessMode::Area)
-				{
-					//select an object using ImGui
-					static CGameObject* select = nullptr;
+				FullScreenPostProcess(filter->type);
+			}
+			else if (filter->mode == PostProcessMode::Area)
+			{
+				//select an object using ImGui
+				static CGameObject* select = nullptr;
 
-					//select the object with ImGui
-					if (select == nullptr)
+				//select the object with ImGui
+				if (select == nullptr)
+				{
+					if (ImGui::Begin("Select Object"))
 					{
-						if (ImGui::Begin("Select Object"))
+						for (auto obj : GOM->mObjects)
 						{
-							for (auto obj : GOM->mObjects)
+							if (ImGui::Button(obj->Name().c_str()))
 							{
-								if (ImGui::Button(obj->GetName().c_str()))
-								{
-									select = obj;
-								}
+								select = obj;
 							}
 						}
-						ImGui::End();
 					}
-					else
+					ImGui::End();
+				}
+				else
+				{
+					static CVector3 areaPos = { 0,0,0 };
+					static CVector2 areaSize = { 0,0 };
+
+					ImGui::DragFloat3("Postion", areaPos.GetValuesArray());
+					ImGui::DragFloat2("Size", areaSize.GetValuesArray());
+
+					// Pass a 3D point for the centre of the affected area and the size of the (rectangular) area in world units
+					AreaPostProcess(filter->type, areaPos, areaSize);
+
+					//display the selected obj name and a button to change it
+					auto selectedText = "Selected: " + select->Name();
+					ImGui::Text(selectedText.c_str());
+					ImGui::SameLine();
+					if (ImGui::Button("Change"))
 					{
-						static CVector3 areaPos = { 0,0,0 };
-						static CVector2 areaSize = { 0,0 };
+						select = nullptr;
+					}
+				}
+			}
+			else if (filter->mode == PostProcessMode::Polygon)
+			{
+				static CGameObject* select = nullptr;
 
-						ImGui::DragFloat3("Postion", areaPos.GetValuesArray());
-						ImGui::DragFloat2("Size", areaSize.GetValuesArray());
+				//select the object with ImGui
+				if (select == nullptr)
+				{
+					if (ImGui::Begin("Select Object"))
+					{
+						for (auto obj : GOM->mObjects)
+						{
+							if (ImGui::Button(obj->Name().c_str()))
+							{
+								select = obj;
+							}
+						}
+					}
+					ImGui::End();
+				}
+				else
+				{
+					//create a window to let the user modify the dimentions
+					if (ImGui::Begin("Edit Volume"))
+					{
+						// An array of four points in world space - a tapered square centred at the origin
+						static std::array<CVector3, 4> points = { {{-5,5,0}, {-5,-5,0}, {5,5,0}, {5,-5,0} } };
 
-						// Pass a 3D point for the centre of the affected area and the size of the (rectangular) area in world units
-						AreaPostProcess(filter->type, areaPos, areaSize);
+						ImGui::Separator();
+						ImGui::Text("Edit Area");
+						ImGui::DragFloat3("Top Left", points[0].GetValuesArray());
+						ImGui::DragFloat3("Bottom Left", points[1].GetValuesArray());
+						ImGui::DragFloat3("Top Right", points[2].GetValuesArray());
+						ImGui::DragFloat3("Bottom Right", points[3].GetValuesArray());
+						ImGui::Separator();
+
+						static CMatrix4x4 polyMatrix = MatrixTranslation({ select->Position() });
+
+						// Pass an array of 4 points and a matrix. Only supports 4 points.
+						PolygonPostProcess(filter->type, points, polyMatrix);
 
 						//display the selected obj name and a button to change it
-						auto selectedText = "Selected: " + select->GetName();
+						auto selectedText = "Selected: " + select->Name();
 						ImGui::Text(selectedText.c_str());
 						ImGui::SameLine();
 						if (ImGui::Button("Change"))
@@ -564,75 +626,25 @@ void CScene::PostProcessingPass()
 							select = nullptr;
 						}
 					}
+					ImGui::End();
 				}
-				else if (filter->mode == PostProcessMode::Polygon)
-				{
-					static CGameObject* select = nullptr;
-
-					//select the object with ImGui
-					if (select == nullptr)
-					{
-						if (ImGui::Begin("Select Object"))
-						{
-							for (auto obj : GOM->mObjects)
-							{
-								if (ImGui::Button(obj->GetName().c_str()))
-								{
-									select = obj;
-								}
-							}
-						}
-						ImGui::End();
-					}
-					else
-					{
-						//create a window to let the user modify the dimentions
-						if (ImGui::Begin("Edit Volume"))
-						{
-							// An array of four points in world space - a tapered square centred at the origin
-							static std::array<CVector3, 4> points = { {{-5,5,0}, {-5,-5,0}, {5,5,0}, {5,-5,0} } };
-
-							ImGui::Separator();
-							ImGui::Text("Edit Area");
-							ImGui::DragFloat3("Top Left", points[0].GetValuesArray());
-							ImGui::DragFloat3("Bottom Left", points[1].GetValuesArray());
-							ImGui::DragFloat3("Top Right", points[2].GetValuesArray());
-							ImGui::DragFloat3("Bottom Right", points[3].GetValuesArray());
-							ImGui::Separator();
-
-							static CMatrix4x4 polyMatrix = MatrixTranslation({ select->Position() });
-
-							// Pass an array of 4 points and a matrix. Only supports 4 points.
-							PolygonPostProcess(filter->type, points, polyMatrix);
-
-							//display the selected obj name and a button to change it
-							auto selectedText = "Selected: " + select->GetName();
-							ImGui::Text(selectedText.c_str());
-							ImGui::SameLine();
-							if (ImGui::Button("Change"))
-							{
-								select = nullptr;
-							}
-						}
-						ImGui::End();
-					}
-				}
-
-				//These lines unbind the scene texture from the pixel shader to stop DirectX issuing a warning when we try to render to it again next frame
-				ID3D11ShaderResourceView* nullSRV = nullptr;
-				gD3DContext->PSSetShaderResources(0, 1, &nullSRV);
-
-				if (filter->type == PostProcess::SSAO ||
-					filter->type == PostProcess::Bloom ||
-					filter->type == PostProcess::Distort ||
-					filter->type == PostProcess::Burn ||
-					filter->type == PostProcess::GaussionBlur ||
-					filter->type == PostProcess::GreyNoise ||
-					filter->type == PostProcess::Spiral)
-					gD3DContext->PSSetShaderResources(1, 1, &nullSRV);
-
-				filter++;
 			}
+
+			//These lines unbind the scene texture from the pixel shader to stop DirectX issuing a warning when we try to render to it again next frame
+			ID3D11ShaderResourceView* nullSRV = nullptr;
+			gD3DContext->PSSetShaderResources(0, 1, &nullSRV);
+
+			if (filter->type == PostProcess::SSAO ||
+				filter->type == PostProcess::Bloom ||
+				filter->type == PostProcess::Distort ||
+				filter->type == PostProcess::Burn ||
+				filter->type == PostProcess::GaussionBlur ||
+				filter->type == PostProcess::GreyNoise ||
+				filter->type == PostProcess::Spiral ||
+				filter->type == PostProcess::GodRays)
+				gD3DContext->PSSetShaderResources(1, 1, &nullSRV);
+
+			filter++;
 		}
 	}
 }
@@ -651,17 +663,15 @@ void CScene::RenderToDepthMap()
 	for (auto it : GOM->mObjects)
 	{
 		//basic geometry rendered, that means just render the model's geometry, leaving all the fancy shaders
-
-		// Leave out the plants // TODO: since they have a opacity map, the depth map will get the model geometry 
-		if (dynamic_cast<CPlant*>(it))
-			return;
-		else
-			it->Render(true);
+		it->Render(true);
 	}
 }
 
 void CScene::DisplayPostProcessingEffects()
 {
+
+	if (gViewportFullscreen) return;
+
 	//-------------------------------------------------------
 	// Post Processing Effects Window
 	//-------------------------------------------------------
@@ -892,7 +902,7 @@ void CScene::DisplayPostProcessingEffects()
 
 				case CScene::PostProcess::GaussionBlur:
 
-					ImGui::DragFloat("Directions", &gPostProcessingConstants.blurDirections, 0.1f, 0.01f, 64.0f);
+					ImGui::DragInt("Directions", &gPostProcessingConstants.blurDirections, 0.1f, 0.01f, 64.0f);
 					ImGui::DragFloat("Quality", &gPostProcessingConstants.blurQuality, 0.1, 1.0f, 64.0f);
 					ImGui::DragFloat("Size", &gPostProcessingConstants.blurSize, 0.1f);
 
@@ -916,14 +926,15 @@ void CScene::DisplayPostProcessingEffects()
 
 					if (mSsaoBlur)
 					{
-						ImGui::DragFloat("Directions", &gPostProcessingConstants.blurDirections, 0.1f, 0.01f, 64.0f);
+						ImGui::DragInt("Directions", &gPostProcessingConstants.blurDirections, 1.0f, 1.0f, 64.0f);
 						ImGui::DragFloat("Quality", &gPostProcessingConstants.blurQuality, 0.1, 1.0f, 64.0f);
 						ImGui::DragFloat("Size", &gPostProcessingConstants.blurSize, 0.1f);
 					}
 
 					if (showDepthMap)
 					{
-						ImGui::Image(mSsaoMapSRV, { 256, 256});
+						auto avaliableDim = ImGui::GetContentRegionAvail();
+						ImGui::Image(mSsaoMapSRV, { avaliableDim.x,avaliableDim.x });
 					}
 
 					break;
@@ -942,11 +953,11 @@ void CScene::DisplayPostProcessingEffects()
 					if (showLuminanceMap)
 					{
 						auto avaliableDim = ImGui::GetContentRegionAvail();
-						ImGui::Image(mLuminanceMapSRV, avaliableDim);
+						ImGui::Image(mLuminanceMapSRV, { avaliableDim.x,avaliableDim.x });
 					}
 
 					//for the blur part of the bloom
-					ImGui::DragFloat("Directions", &gPostProcessingConstants.blurDirections, 0.1f, 0.01f, 64.0f);
+					ImGui::DragInt("Directions", &gPostProcessingConstants.blurDirections, 1.0f, 1.0f, 64.0f);
 					ImGui::DragFloat("Quality", &gPostProcessingConstants.blurQuality, 0.1, 1.0f, 64.0f);
 					ImGui::DragFloat("Size", &gPostProcessingConstants.blurSize, 0.1f);
 
@@ -954,15 +965,15 @@ void CScene::DisplayPostProcessingEffects()
 
 				case CScene::PostProcess::GodRays:
 
-					
-					ImGui::DragFloat2("debug",gPostProcessingConstants.lightScreenPos.GetValuesArray());
+
+					ImGui::DragFloat2("debug", gPostProcessingConstants.lightScreenPos.GetValuesArray());
 
 					// Display the other settings
-					ImGui::DragFloat("Weight", &gPostProcessingConstants.weight,0.001f,0.0f,1.0f);
-					ImGui::DragFloat("Decay", &gPostProcessingConstants.decay,0.001f,0.0f,1.0f);
-					ImGui::DragFloat("Exposure", &gPostProcessingConstants.exposure,0.001f,0.0f,1.0f);
-					ImGui::DragFloat("Density", &gPostProcessingConstants.density,0.001f,0.0f,1.0f);
-					ImGui::DragInt("Samples", &gPostProcessingConstants.numSamples,1,0.0f,MAXUINT16);
+					ImGui::DragFloat("Weight", &gPostProcessingConstants.weight, 0.001f);
+					ImGui::DragFloat("Decay", &gPostProcessingConstants.decay, 0.001f);
+					ImGui::DragFloat("Exposure", &gPostProcessingConstants.exposure, 0.001f);
+					ImGui::DragFloat("Density", &gPostProcessingConstants.density, 0.001f);
+					ImGui::DragInt("Samples", &gPostProcessingConstants.numSamples, 1, 0.0f);
 
 					break;
 				}

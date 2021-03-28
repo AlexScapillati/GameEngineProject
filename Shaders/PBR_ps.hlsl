@@ -1,7 +1,6 @@
 //--------------------------------------------------------------------------------------
-// Texture Pixel Shader
+// PBR Pixel Shader
 //--------------------------------------------------------------------------------------
-// Pixel shader simply samples a diffuse texture map and tints with colours from vertex shader
 
 #include "Common.hlsli" // Shaders can also use include files - note the extension
 
@@ -23,7 +22,7 @@ TextureCube IBLMap : register(t6);
 
 SamplerState TexSampler : register(s0); // A sampler is a filter for a texture like bilinear, trilinear or anisotropic
                                              
-Texture2D ShadowMaps[9] : register(t7); // An array of shadow maps
+Texture2D ShadowMaps[10] : register(t7); // An array of shadow maps
 SamplerState PointClamp : register(s1); // Aampler for the shadow maps 
 
 static const float PI = 3.14159265359f;
@@ -51,24 +50,24 @@ float3 CalculateLight(float3 lightPos, float lightIntensity, float3 colour, floa
     float3 lambert = albedo / PI;
 
     // Microfacet specular - fresnel term
-    float3 F = specular + (1 - specular) * pow(max(1.0f - vDotH, 0.0f), 5.0f);
+    float3 F = specular + (1.0f - specular) * pow(max(1.0f - vDotH, 0.0f), 5.0f);
 
     // Microfacet specular - normal distribution term
     float alpha = max(roughness * roughness, 2.0e-3f); // Dividing by alpha in the dn term so don't allow it to reach 0
     float alpha2 = alpha * alpha;
     float nDotH2 = nDotH * nDotH;
-    float dn = nDotH2 * (alpha2 - 1) + 1;
+    float dn = nDotH2 * (alpha2 - 1.0f) + 1.0f;
     float D = alpha2 / (PI * dn * dn);
 
     // Microfacet specular - geometry term
-    float k = (roughness + 1);
-    k = k * k / 8;
-    float gV = nDotV / (nDotV * (1 - k) + k);
-    float gL = nDotL / (nDotL * (1 - k) + k);
+    float k = (roughness + 1.0f);
+    k = k * k / 8.0f;
+    float gV = nDotV / (nDotV * (1.0f - k) + k);
+    float gL = nDotL / (nDotL * (1.0f - k) + k);
     float G = gV * gL;
 
     // Full brdf, diffuse + specular
-    float3 brdf = lambert + F * G * D / (4 * nDotL * nDotV);
+    float3 brdf = lambert + F * G * D / (4.0f * nDotL * nDotV);
 
     // Accumulate punctual light equation for this light
     diffuse += PI * li * lc * brdf * nDotL;
@@ -83,23 +82,24 @@ static const float totalTexels = (pcfCount * 2.0f + 1.0f) * (pcfCount * 2.0f + 1
 float PCF(float depthFromLight, float2 shadowMapUV, int i)
 {
     //get the shadow map size
-    float2 size = 0;
+    float2 size = 0.0f;
     ShadowMaps[i].GetDimensions(size.x, size.y);
     
     //store the texel size
     const float texelSize = 1.0f / size.x;
     
+    // Get the derivates
     float dx = ddx(shadowMapUV);
     float dy = ddy(shadowMapUV);
     
-    float sum = 0;
+    float sum = 0.0f;
     float x, y;
 
-    for (y = -1.5; y <= 1.5; y += 1.0)
-        for (x = -1.5; x <= 1.5; x += 1.0)
-            sum += ShadowMaps[i].SampleGrad(PointClamp, shadowMapUV + float2(x, y) * texelSize,dx,dy);
+    for (y = -1.5f; y <= 1.5f; y += 1.0f)
+        for (x = -1.5f; x <= 1.5f; x += 1.0f)
+            sum += ShadowMaps[i].SampleGrad(PointClamp, shadowMapUV + float2(x, y) * texelSize, dx, dy);
 
-    return sum / 16.0;
+    return sum / 16.0f;
 }
 
 
@@ -108,8 +108,8 @@ float2 ParallaxMapping(float2 UV, float3 v)
     //------------------------------
     // Parallax offset mapping
     
-    //  float depth = gParallaxDepth * (DisplacementMap.Sample(TexSampler, UV).r - 0.5f);
-    //return UV + depth * v.xy / v.z; // Remove the / v.z to get parallax offset mapping with limiting
+    float depth = gParallaxDepth * (DisplacementMap.Sample(TexSampler, UV).r - 0.5f);
+    return UV + depth * v.xy / v.z; // Remove the / v.z to get parallax offset mapping with limiting
     
     //------------------------------
     // Common linear search for parallax occlusion mapping and relief mapping
@@ -127,7 +127,7 @@ float2 ParallaxMapping(float2 UV, float3 v)
     
     // For each step along the ray direction, find the amount to move the UVs and the amount to descend in the height layer
     float rayHeight = 1.0f; // Current height of ray, 0->1 in the height map layer. Start at the top of the layer
-    float heightStep = 1.0 / numSamples; // Amount the ray descends for each step
+    float heightStep = 1.0f / numSamples; // Amount the ray descends for each step
     float2 uvStep = (gParallaxDepth * v.xy / v.z) / numSamples; // Ray UV offset for each step. Can also remove the / v.z here
                                                                // to add limiting, which will reduce artefacts at glancing angles
                                                                // but will also reduce the depth at those angles
@@ -153,7 +153,7 @@ float2 ParallaxMapping(float2 UV, float3 v)
 
         // Sample height map again
         prevSurfaceHeight = surfaceHeight;
-        surfaceHeight = DisplacementMap.SampleGrad(TexSampler, UV, dx, dy).r;
+        surfaceHeight = NormalHeightMap.SampleGrad(TexSampler, UV, dx, dy).r;
     }
 
 
@@ -283,37 +283,33 @@ float4 main(NormalMappingPixelShaderInput input) : SV_Target
 	///////////////////////
     // Texture Sampling
     
-    // Get the derivative
-    float2 derivX = ddx(offsetTexCoord);
-    float2 derivY = ddx(offsetTexCoord);
-    
     //Sample the albedo
-    float3 albedo = AlbedoMap.SampleGrad(TexSampler, offsetTexCoord, derivX, derivY).rgb;
+    float3 albedo = AlbedoMap.Sample(TexSampler, offsetTexCoord).rgb;
     
     // Check for the opacity 
-    float opacity = AlbedoMap.SampleGrad(TexSampler, offsetTexCoord, derivX, derivY).a;
+    float opacity = AlbedoMap.Sample(TexSampler, offsetTexCoord).a;
     if (!opacity)
         discard;
     
     
     // Sample roughness map
-    float roughness = 0;
+    float roughness = gRoughness;
     if (gHasRoughnessMap != 0.0f)
     {
-        roughness = RoughnessMap.SampleGrad(TexSampler, offsetTexCoord, derivX, derivY).r;
+        roughness = RoughnessMap.Sample(TexSampler, offsetTexCoord).r;
     }
     
     // Sample ambient occlusion map
-    float ao = 1;
+    float ao = 0.0f;
     if (gHasAoMap != 0.0f)
     {
-        ao = AOMap.SampleGrad(TexSampler, offsetTexCoord, derivX, derivY).r;
+        ao = AOMap.Sample(TexSampler, offsetTexCoord).r;
     }
     
-    float metalness = 0;
+    float metalness = 1.0f;
     if (gHasMetallnessMap != 0.0f)
     {
-        metalness = MetalnessMap.SampleGrad(TexSampler, offsetTexCoord, derivX, derivY);
+        metalness = MetalnessMap.Sample(TexSampler, offsetTexCoord);
     }
     
 	///////////////////////
@@ -329,14 +325,14 @@ float4 main(NormalMappingPixelShaderInput input) : SV_Target
     
     // Sample environment cubemap, use small mipmap for diffuse, use mipmap based on roughness for specular
     float roughnessMip = 8 * log2(roughness + 1); // Heuristic to convert roughness to mip-map. Rougher surfaces will use smaller (blurrier) mip-maps
-    float3 diffuseIBL = IBLMap.SampleLevel(TexSampler, r, roughnessMip).rgb; // This approximation gives somewhat weak diffuse, so scale by 2
+    float3 diffuseIBL = IBLMap.Sample(TexSampler, textureNormal).rgb * 2.0f; // This approximation gives somewhat weak diffuse, so scale by 2
     float3 specularIBL = IBLMap.SampleLevel(TexSampler, r, roughnessMip).rgb;
 
     // Fresnel for IBL: when surface is at more of a glancing angle reflection of the scene increases
-    float3 F_IBL = specularColour + (1 - specularColour) * pow(max(1.0f - nDotV, 0.0f), 5.0f);
+    float3 F_IBL = specularColour + (1.0f - specularColour) * pow(max(1.0f - nDotV, 0.0f), 5.0f);
 
     // Overall global illumination - rough approximation
-    float3 resDiffuse = ao * (albedo * diffuseIBL + (1 - roughness) * F_IBL * specularIBL);
+    float3 resDiffuse = ao * (albedo * diffuseIBL + (1.0f - roughness) * F_IBL * specularIBL);
     
     
 	///////////////////////
@@ -344,16 +340,16 @@ float4 main(NormalMappingPixelShaderInput input) : SV_Target
 	
 	//// Lights ////
     
-    float3 resSpecular = 0.0f;
+    float3 resSpecular = specularColour;
 	
-    for (int i = 0; i < gNumLights; ++i)
+    for (int i = 0; i < gNumLights && gLights[i].enabled; ++i)
     {
         resDiffuse += CalculateLight(gLights[i].position, gLights[i].intensity, gLights[i].colour, resDiffuse, resSpecular, textureNormal, cameraDirection, input.worldPosition, roughness, albedo);
     }
+     
     
-    
-	//for each dir light
-    for (int j = 0; j < gNumSpotLights; ++j)
+	//for each spot light
+    for (int j = 0; j < gNumSpotLights && gSpotLights[j].enabled; ++j)
     {
         const float3 lightDir = normalize(gSpotLights[j].pos - input.worldPosition);
 
@@ -382,7 +378,7 @@ float4 main(NormalMappingPixelShaderInput input) : SV_Target
 		
 			// Compare pixel depth from light with depth held in shadow map of the light. If shadow map depth is less than something is nearer
 			// to the light than this pixel - so the pixel gets no effect from this light
-            if (1/*depthFromLight < depth*/)
+            if (depthFromLight < depth)
             {
                 //calculate amount of PCF
                 float PCFValue = PCF(depthFromLight, shadowMapUV, j);
@@ -391,9 +387,10 @@ float4 main(NormalMappingPixelShaderInput input) : SV_Target
         }
     }
     
-    for (int k = 0; k < gNumDirLights; ++k)
+    [unroll]
+    for (int k = 0; k < gNumDirLights && gDirLights[k].enabled; ++k)
     {
-        const float3 lightDir = gDirLights[k].facing;
+        const float3 lightDir = normalize(gSpotLights[j].pos - input.worldPosition);
         
     	//Using the world position of the current pixel and the matrices of the light (as a camera), find the 2D position of the
 		//pixel *as seen from the light*. Will use this to find which part of the shadow map to look at.
@@ -407,7 +404,7 @@ float4 main(NormalMappingPixelShaderInput input) : SV_Target
         shadowMapUV.y = 1.0f - shadowMapUV.y; // Check if pixel is within light cone
         
         // Bias slope
-        float bias = gDepthAdjust * tan(acos(dot(input.worldNormal, lightDir)));
+        float bias = gDepthAdjust * tan(acos(dot(textureNormal, lightDir)));
         bias = clamp(bias, 0, 0.01);
         
 		//Get depth of this pixel if it were visible from the light (another advanced projection step)
@@ -416,64 +413,61 @@ float4 main(NormalMappingPixelShaderInput input) : SV_Target
 		
 		//Compare pixel depth from light with depth held in shadow map of the light. If shadow map depth is less than something is nearer
 		//to the light than this pixel - so the pixel gets no effect from this light
-        float depth = ShadowMaps[k /*+ gNumSpotLights*/].Sample(PointClamp, shadowMapUV).r;
+        float depth = 1;
+        depth = ShadowMaps[k /*+ gNumSpotLights*/].Sample(PointClamp, shadowMapUV).r;
         
         // Calcluate pcf value   
         float PCFvalue = PCF(depthFromLight, shadowMapUV, k);
         
-        if (1/*depthFromLight < depth*/)
-        {
-            // Calculate pcf value
-            float PCFValue = PCF(depthFromLight, shadowMapUV, k);
-            float nDotV = max(dot(textureNormal, cameraDirection), 0.001f);
+      
+        // Calculate pcf value
+        float PCFValue = PCF(depthFromLight, shadowMapUV, k);
+        float nDotV = max(dot(textureNormal, cameraDirection), 0.001f);
             
-            float li = gDirLights[k].intensity;
-            float3 l = gDirLights[k].facing;
-            float3 lc = gDirLights[k].colour;
+        float li = gDirLights[k].intensity;
+        float3 l = gDirLights[k].facing;
+        float3 lc = gDirLights[k].colour;
 
             // Halfway vector (normal halfway between view and light vector)
-            float3 h = normalize(l + cameraDirection);
+        float3 h = normalize(l + cameraDirection);
 
             // Various dot products used throughout
-            float nDotL = max(dot(textureNormal, l), 0.001f);
-            float nDotH = max(dot(textureNormal, h), 0.001f);
-            float vDotH = max(dot(cameraDirection, h), 0.001f);
+        float nDotL = max(dot(textureNormal, l), 0.001f);
+        float nDotH = max(dot(textureNormal, h), 0.001f);
+        float vDotH = max(dot(cameraDirection, h), 0.001f);
 
             // Lambert diffuse
-            float3 lambert = albedo / PI;
+        float3 lambert = albedo / PI;
 
             // Microfacet specular - fresnel term
-            float3 F = resSpecular + (1 - resSpecular) * pow(max(1.0f - vDotH, 0.0f), 5.0f);
+        float3 F = resSpecular + (1 - resSpecular) * pow(max(1.0f - vDotH, 0.0f), 5.0f);
 
             // Microfacet specular - normal distribution term
-            float alpha = max(roughness * roughness, 2.0e-3f); // Dividing by alpha in the dn term so don't allow it to reach 0
-            float alpha2 = alpha * alpha;
-            float nDotH2 = nDotH * nDotH;
-            float dn = nDotH2 * (alpha2 - 1) + 1;
-            float D = alpha2 / (PI * dn * dn);
+        float alpha = max(roughness * roughness, 2.0e-3f); // Dividing by alpha in the dn term so don't allow it to reach 0
+        float alpha2 = alpha * alpha;
+        float nDotH2 = nDotH * nDotH;
+        float dn = nDotH2 * (alpha2 - 1) + 1;
+        float D = alpha2 / (PI * dn * dn);
 
             // Microfacet specular - geometry term
-            float k = (roughness + 1);
-            k = k * k / 8;
-            float gV = nDotV / (nDotV * (1 - k) + k);
-            float gL = nDotL / (nDotL * (1 - k) + k);
-            float G = gV * gL;
+        float k = (roughness + 1);
+        k = k * k / 8;
+        float gV = nDotV / (nDotV * (1 - k) + k);
+        float gL = nDotL / (nDotL * (1 - k) + k);
+        float G = gV * gL;
 
             // Full brdf, diffuse + specular
-            float3 brdf = lambert + F * G * D / (4 * nDotL * nDotV);
+        float3 brdf = lambert + F * G * D / (4 * nDotL * nDotV);
 
             // Accumulate punctual light equation for this light
-            resDiffuse += (PI * li * lc * brdf * nDotL) * PCFvalue;
-        }
+        resDiffuse += (PI * li * lc * brdf * nDotL) * PCFvalue;
     }
     
     //for each point light
-    [fastopt]
-    for (int l = 0; l < gNumPointLights; ++l)
+    for (int l = 0; l < gNumPointLights && gPointLights[l].enabled; ++l)
     {
         const float3 lightDir = normalize(gPointLights[l].pos - input.worldPosition);
         
-        [fastopt]
         for (int face = 0; face < 6; ++face)
         {
     	    // Using the world position of the current pixel and the matrices of the light (as a camera), find the 2D position of the
@@ -488,12 +482,11 @@ float4 main(NormalMappingPixelShaderInput input) : SV_Target
             shadowMapUV.y = 1.0f - shadowMapUV.y; // Check if pixel is within light cone
             
             //Bias slope
-
             float bias = gDepthAdjust * tan(acos(dot(textureNormal, lightDir)));
             bias = clamp(bias, 0, 0.01);
             
 		    // Get depth of this pixel if it were visible from the light (another advanced projection step)
-            const float depthFromLight = projection.z / projection.w - gDepthAdjust; //*** Adjustment so polygons don't shadow themselves
+            const float depthFromLight = projection.z / projection.w - bias; //*** Adjustment so polygons don't shadow themselves
 		
             float depth = ShadowMaps[l /*+ gNumSpotLights + gNumDirLights */ + face].Sample(PointClamp, shadowMapUV).r;
             
@@ -510,6 +503,6 @@ float4 main(NormalMappingPixelShaderInput input) : SV_Target
     }
     
     
-    return float4(resDiffuse,1); // Always use 1.0f for alpha - no alpha blending in this lab
+    return float4(resDiffuse, 1); // Always use 1.0f for alpha - no alpha blending in this lab
 }
 

@@ -182,10 +182,10 @@ cbuffer PerFrameConstants : register(b1) // The b0 gives this constant buffer th
     
     float       gDepthAdjust;
     
-    float       gNumLights;
-    float       gNumDirLights;
-    float       gNumSpotLights;
-    float       gNumPointLights;
+    float       gNumLights = 0;
+    float       gNumDirLights = 0;
+    float       gNumSpotLights = 0;
+    float       gNumPointLights = 0;
     
     int         gPcfSamples;
     float3      padding2;
@@ -239,7 +239,7 @@ cbuffer PostProcessingConstants : register(b1)
     float2  gNoiseScale;
     float2  gNoiseOffset;
     float   gNoiseEdge;
-    float2  paddingB;
+    float3  paddingB;
 
 	// Burn post-process settings
     float   gBurnHeight;
@@ -266,7 +266,7 @@ cbuffer PostProcessingConstants : register(b1)
     float paddingG;
     
     // Gaussian blur settings
-    float   gBlurDirections = 16.0; // BLUR DIRECTIONS (Default 16.0 - More is better but slower)
+    int   gBlurDirections = 16.0; // BLUR DIRECTIONS (Default 16.0 - More is better but slower)
     float   gBlurQuality = 3.0; // BLUR QUALITY (Default 4.0 - More is better but slower)
     float   gBlurSize = 8.0; // BLUR SIZE (Radius)
     float paddingH;
@@ -288,6 +288,7 @@ cbuffer PostProcessingConstants : register(b1)
     float   gExposure   ;
     float   gDensity    ;
     int     gNumSamples;
+    float   paddingJ;
 }
 
 //**************************

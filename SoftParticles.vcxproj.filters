@@ -100,14 +100,14 @@
     <ClCompile Include="External\imgui\FileBrowser\ImGuiFileBrowser.cpp">
       <Filter>Engine\GUI</Filter>
     </ClCompile>
-    <ClCompile Include="PostProcessing.cpp">
-      <Filter>Engine\PostProcessing</Filter>
-    </ClCompile>
-    <ClCompile Include="GUI.cpp">
+    <ClCompile Include="GUI.h">
       <Filter>Engine</Filter>
     </ClCompile>
     <ClCompile Include="External\imgui\imgui_demo.cpp">
       <Filter>Engine\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="PostProcessing.cpp">
+      <Filter>Engine\PostProcessing</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -266,16 +266,15 @@
   </ItemGroup>
   <ItemGroup>
     <Xml Include="Scene1.xml" />
-    <Xml Include="maronn.xml" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\BasicTransform_vs.hlsl">
       <Filter>Engine\Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\PixelLighting_ps.hlsl">
+    <FxCompile Include="Shaders\PBRNoNormals_ps.hlsl">
       <Filter>Engine\Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\PixelLighting_vs.hlsl">
+    <FxCompile Include="Shaders\PBRNoNormals_vs.hlsl">
       <Filter>Engine\Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\TintedTexture_ps.hlsl">

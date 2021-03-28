@@ -3,6 +3,8 @@
 //--------------------------------------------------------------------------------------
 // Holds position, rotation, near/far clip and field of view. These to a view and projection matrices as required
 
+#pragma once
+
 #include "Camera.h"
 #include "Common.h"
 

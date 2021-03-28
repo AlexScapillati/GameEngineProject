@@ -52,6 +52,8 @@ public:
 
 	~CSpotLight();
 
+	void Release();
+
 private:
 
 	int mShadowMapSize;

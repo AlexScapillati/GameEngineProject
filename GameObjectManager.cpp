@@ -23,7 +23,7 @@ void CGameObjectManager::AddObject(CGameObject* obj)
 	}
 	else
 	{
-		throw std::runtime_error("Not enough space to store more objects");
+		throw std::exception("Not enough space to store more objects");
 	}
 }
 
@@ -35,33 +35,33 @@ void CGameObjectManager::AddLight(CLight* obj)
 	}
 	else
 	{
-		throw std::runtime_error("Not enough space to store more objects");
+		throw std::exception("Not enough space to store more objects");
 	}
 }
 
 void CGameObjectManager::AddPointLight(CPointLight* obj)
 {
-	if (mPointLights.size() < mMaxSize)
+	if (mShadowsMaps.size() < mMaxShadowMaps)
 	{
 		mPointLights.push_back(obj);
 	}
 	else
-		throw std::runtime_error("Not enough space to store more objects");
+		throw std::exception("Not enough space to store more objects");
 }
 
 void CGameObjectManager::AddSpotLight(CSpotLight* obj)
 {
-	if (mSpotLights.size() < mMaxSize)
+	if (mShadowsMaps.size() < mMaxShadowMaps)
 	{
 		mSpotLights.push_back(obj);
 	}
 	else
-		throw std::runtime_error("Not enough space to store more objects");
+		throw std::exception("Not enough space to store more objects");
 }
 
 void CGameObjectManager::AddDirLight(CDirLight* obj)
 {
-	if (mDirLights.size() < mMaxSize)
+	if (mShadowsMaps.size() < mMaxShadowMaps)
 	{
 		mDirLights.push_back(obj);
 	}
@@ -155,7 +155,7 @@ void CGameObjectManager::UpdatePointLightsBuffer()
 
 				gPerFramePointLightsConstants.pointLights[i].viewMatrices[j] = InverseAffine(mPointLights[i]->WorldMatrix());
 			}
-			//since they are all the same
+			//since they are all the same we just need one projection matrix
 			gPerFramePointLightsConstants.pointLights[i].projMatrix = MakeProjectionMatrix(1.0f, ToRadians(90.0f));
 		}
 		else
@@ -353,32 +353,34 @@ void CGameObjectManager::UpdateObjects(float updateTime)
 
 CGameObjectManager::~CGameObjectManager()
 {
-	for (auto it : mObjects)
+	for (auto& it : mObjects)
 	{
-		delete it;
+		if (it)delete it;
 	}
 
-	for (auto it : mLights)
+	for (auto& it : mLights)
 	{
-		delete it;
+		if (it)delete it;
 	}
 
-	for (auto it : mSpotLights)
+	for (auto& it : mSpotLights)
 	{
-		delete it;
+		if (it)delete it;
 	}
 
-	for (auto it : mPointLights)
+	for (auto& it : mPointLights)
 	{
-		delete it;
+		if (it)delete it;
 	}
 
-	for (auto it : mShadowsMaps)
+	for (auto& it : mDirLights)
 	{
-		if (it)
-		{
-			it->Release();
-		}
+		if (it) delete it;
+	}
+
+	for (auto& it : mShadowsMaps)
+	{
+		if (it) it->Release();
 	}
 
 	mShadowsMaps.clear();

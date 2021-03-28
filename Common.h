@@ -1,8 +1,8 @@
 //--------------------------------------------------------------------------------------
 // Commonly used definitions across entire project
 //--------------------------------------------------------------------------------------
-#ifndef _COMMON_H_INCLUDED_
-#define _COMMON_H_INCLUDED_
+
+#pragma once
 
 #include "Math\CVector3.h"
 #include "Math\CVector4.h"
@@ -125,7 +125,7 @@ struct PerFrameConstants
 	float		parallaxMaxSamples = 20;
 	float	parallaxPadding;
 
-	float		gDepthAdjust = 0.0005f;
+	float		gDepthAdjust = 0.00005f;
 
 	float		nLights;
 	float		nDirLight;
@@ -199,7 +199,7 @@ struct PerModelConstants
 extern PerModelConstants gPerModelConstants;      // This variable holds the CPU-side constant buffer described above
 extern ID3D11Buffer* gPerModelConstantBuffer; // This variable controls the GPU-side constant buffer related to the above structure
 
-//**************************
+
 
 // Settings used by post-processes - must match the similar structure in the Common.hlsli shader file
 struct PostProcessingConstants
@@ -219,7 +219,7 @@ struct PostProcessingConstants
 	CVector2 noiseScale;
 	CVector2 noiseOffset;
 	float noiseEdge;
-	CVector2 paddingB;
+	CVector3 paddingB;
 
 	// Burn post-process settings
 	float burnHeight;
@@ -241,37 +241,35 @@ struct PostProcessingConstants
 
 	// Chromatic Aberration settings
 	float caAmount = 0.01f;
-    float   caEdge = 0.5f;
-    float   caFalloff = 0.01f;
+	float   caEdge = 0.5f;
+	float   caFalloff = 0.01f;
 	float paddingG;
 
 	//gaussian blur settings
-	float blurDirections = 16.0; // BLUR DIRECTIONS (Default 16.0 - More is better but slower)
+	int blurDirections = 16.0; // BLUR DIRECTIONS (Default 16.0 - More is better but slower)
 	float blurQuality = 3.0; // BLUR QUALITY (Default 4.0 - More is better but slower)
 	float blurSize = 8.0; // BLUR SIZE (Radius)
 	float paddingH;
-	
-    // Bloom settings
+
+	// Bloom settings
 	float bloomThreshold = 0.5f;
 	CVector3 paddingI;
-	
-    // SSAO settings
+
+	// SSAO settings
 	float ssaoStrenght = 1.0f;
 	float ssaoArea = 0.2f;
 	float ssaoFalloff = 0.000001f;
 	float ssaoRadius = 0.1f;
-	
-    // God Rays Settings
+
+	// God Rays Settings
 	CVector2 lightScreenPos;
-    float	 weight		= 0.58767f;
-    float	 decay		= 0.97815f;
-    float	 exposure	= 0.2f;
-    float	 density	= 0.926f;
-    int		 numSamples = 4;
+	float	 weight = 0.58767f;
+	float	 decay = 0.97815f;
+	float	 exposure = 0.2f;
+	float	 density = 0.926f;
+	int		 numSamples = 4;
+	float	 paddingJ;
 };
 extern PostProcessingConstants gPostProcessingConstants; // This variable holds the CPU-side constant buffer described above
 extern ID3D11Buffer* gPostProcessingConstBuffer; // This variable controls the GPU-side constant buffer related to the above structure
 
-//**************************
-
-#endif //_COMMON_H_INCLUDED_

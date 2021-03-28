@@ -6,7 +6,7 @@
 
 #include "Common.hlsli" // Shaders can also use include files - note the extension
 
-Texture2D OpacityMap : register(t0);
+Texture2D Albedo : register(t0);
 SamplerState texSampler : register(s0);
 
 //--------------------------------------------------------------------------------------
@@ -18,11 +18,8 @@ SamplerState texSampler : register(s0);
 
 void main(LightingPixelShaderInput i)
 {
-    if (gHasOpacityMap == 1.0f)
-    {
-        if (OpacityMap.Sample(texSampler, i.uv).r == 0.0f)
-            discard;
-    }
+    if (Albedo.Sample(texSampler, i.uv).a < 0.1f)
+        discard;
 }
 
 // If the depth buffer is enabled, this will output depth but no colour (C++ side render target should be nullptr)

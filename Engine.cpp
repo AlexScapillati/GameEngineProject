@@ -246,6 +246,12 @@ bool CDXEngine::Update()
 
 			if (KeyHit(Key_Escape))
 			{
+				// Ask to save // WIP 
+				//ImGui::OpenPopup("Save?");
+
+				// Save automatically
+				mMainScene->Save();
+
 				DestroyWindow(gHWnd); // This will close the window and ultimately exit this loop
 			}
 		}

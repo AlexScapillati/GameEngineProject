@@ -221,8 +221,9 @@ ID3DBlob* CreateSignatureForVertexLayout(const D3D11_INPUT_ELEMENT_DESC vertexLa
 
 void LoadDefaultShaders()
 {
-	//***************************************
-	//**** Post processing shaders
+	//-------------------------------------
+	// Post Processing Shaders
+	//-------------------------------------
 
 	gCopyPostProcess				= LoadPixelShader("PostProcessing/Copy_pp");
 	gTintPostProcess				= LoadPixelShader("PostProcessing/Tint_pp");
@@ -240,20 +241,25 @@ void LoadDefaultShaders()
 	g2DPolygonVertexShader			= LoadVertexShader("PostProcessing/2DPolygon_pp");
 	gGaussionBlurPostProcess		= LoadPixelShader("PostProcessing/GaussionBlur_pp");
 	gChromaticAberrationPostProcess = LoadPixelShader("PostProcessing/ChromaticAberration_pp");
+	
+	//-------------------------------------
+	// Default Shaders
+	//-------------------------------------
 
 	gDepthOnlyPixelShader			= LoadPixelShader("Shaders/DepthOnly_ps");
 	gDepthOnlyNormalPixelShader		= LoadPixelShader("Shaders/DepthOnlyNormal_ps");
 	gBasicTransformVertexShader		= LoadVertexShader("Shaders/BasicTransform_vs");
 	
-	gPBRVertexShader				= LoadVertexShader("Shaders/PixelLighting_vs");
+	gPBRVertexShader				= LoadVertexShader("Shaders/PBRNoNormals_vs");
 	gPBRNormalVertexShader			= LoadVertexShader("Shaders/PBR_vs");
 
-	gPBRPixelShader					= LoadPixelShader("Shaders/PixelLighting_ps");
+	gPBRPixelShader					= LoadPixelShader("Shaders/PBRNoNormals_ps");
 	gPBRNormalPixelShader			= LoadPixelShader("Shaders/PBR_ps");
 
 	gTintedTexturePixelShader		= LoadPixelShader("Shaders/TintedTexture_ps");
 	gSkyPixelShader				    = LoadPixelShader("Shaders/Sky_ps");
 
+	// Check for all the shaders if they are being loaded
 	if (gDepthOnlyPixelShader	 == nullptr || gBasicTransformVertexShader	   == nullptr ||
 		g2DQuadVertexShader		 == nullptr || gCopyPostProcess				   == nullptr ||
 		gTintPostProcess		 == nullptr || gHeatHazePostProcess			   == nullptr ||

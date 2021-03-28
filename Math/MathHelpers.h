@@ -48,6 +48,17 @@ inline uint32_t Random(const uint32_t a, const uint32_t b)
 	return t == 0 ? a : a + (t - 1) / RAND_MAX;
 }
 
+// Return random integer from a to b (inclusive)
+// Can only return up to RAND_MAX different values, spread evenly across the given range
+// RAND_MAX is defined in stdlib.h and is compiler-specific (32767 on VS-2005, higher elsewhere)
+inline int Random(const int a, const int b)
+{
+	// Could just use a + rand() % (b-a), but using a more complex form to allow range
+	// to exceed RAND_MAX and still return values spread across the range
+	const auto t = (b - a + 1) * rand();
+	return t == 0 ? a : a + (t - 1) / RAND_MAX;
+}
+
 // Return random 32-bit float from a to b (inclusive)
 // Can only return up to RAND_MAX different values, spread evenly across the given range
 // RAND_MAX is defined in stdlib.h and is compiler-specific (32767 on VS-2005, higher elsewhere)

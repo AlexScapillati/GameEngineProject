@@ -35,6 +35,10 @@ public:
 
 	~CDirLight();
 
+	void Release();
+
+	void InitTextures();
+
 private:
 
 	int mShadowMapSize;

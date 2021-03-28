@@ -12,6 +12,7 @@
 #include <utility>
 #include "ColourRGBA.h"
 #include "GameObjectManager.h"
+#include "State.h"
 
 //copy constructor
 CGameObject::CGameObject(CGameObject& obj)
@@ -19,15 +20,19 @@ CGameObject::CGameObject(CGameObject& obj)
 	mEnabled = true;
 	mMaterial = new CMaterial(*obj.mMaterial);
 	mMeshFiles = obj.mMeshFiles;
-	mMesh = new CMesh(*obj.mMesh);
+	mMesh = new CMesh(obj.mMesh->MeshFileName(),mMaterial->HasNormals());
 	mName = "new" + obj.mName;
 
-	mParallaxDepth = obj.GetParallaxDepth();
-	mRoughness = obj.GetRoughness();
+	mLODs = obj.mLODs;
+	mCurrentLOD = obj.mCurrentLOD;
+	mCurrentVar = obj.mCurrentVar;
+
+	mParallaxDepth = obj.ParallaxDepth();
+	mRoughness = obj.Roughness();
 
 	//initialize ambient map variables
-	mAmbientMap.size = obj.GetAmbientMap()->size;
-	mAmbientMap.enabled = obj.GetAmbientMap()->enabled;
+	mAmbientMap.size = obj.AmbientMap()->size;
+	mAmbientMap.enabled = obj.AmbientMap()->enabled;
 	mAmbientMap.Init();
 
 	// Set default matrices from mesh
@@ -43,7 +48,7 @@ CGameObject::CGameObject(CGameObject& obj)
 CGameObject::CGameObject(std::string mesh, std::string name, std::string& diffuseMap, CVector3 position /*= { 0,0,0 }*/, CVector3 rotation /*= { 0,0,0 }*/, float scale /*= 1*/)
 {
 	mAmbientMap.enabled = false;
-	mAmbientMap.size = 1;
+	mAmbientMap.size = 4;
 	mAmbientMap.Init();
 
 	mParallaxDepth = 0.f;
@@ -128,7 +133,7 @@ void GetFilesInFolder(std::string& dirPath, std::vector<std::string>& fileNames)
 
 	dirPath.replace(0, gMediaFolder.size(), "");
 
-	if (*dirPath.end() != '/') dirPath.push_back('/');
+	if (dirPath[dirPath.size() - 1] != '/') dirPath.push_back('/');
 
 	std::filesystem::recursive_directory_iterator end;
 
@@ -154,8 +159,8 @@ CGameObject::CGameObject(std::string dirPath, std::string name, CVector3 positio
 	mName = std::move(name);
 
 	//initialize ambient map variables
-	mAmbientMap.size = 1;
-	mAmbientMap.enabled = true;
+	mAmbientMap.size = 4;
+	mAmbientMap.enabled = false;
 	mAmbientMap.Init();
 
 	mEnabled = true;
@@ -188,7 +193,7 @@ CGameObject::CGameObject(std::string dirPath, std::string name, CVector3 positio
 		if (slashPos != std::string::npos)
 		{
 			// Get the id
-			auto subFolder = id.substr(0,slashPos);
+			auto subFolder = id.substr(0, slashPos);
 
 
 			folder = gMediaFolder + subFolder + '/';
@@ -198,6 +203,9 @@ CGameObject::CGameObject(std::string dirPath, std::string name, CVector3 positio
 		}
 		else
 		{
+			// Get the ID
+			id = id.substr(0, id.find_first_of('_'));
+
 			GetFilesWithID(gMediaFolder, files, id);
 		}
 	}
@@ -224,6 +232,47 @@ CGameObject::CGameObject(std::string dirPath, std::string name, CVector3 positio
 		throw std::runtime_error("No mesh found in " + name);
 	}
 
+	// If the meshes vector has more than one fileName
+	if (mMeshFiles.size() > 1)
+	{
+		// Extract the lods and variations
+		int counter = 0;
+		int nVariations = 0;
+		std::vector<std::string> vec;
+		for (auto mesh : mMeshFiles)
+		{
+			// Prepare file to find
+			// It changes depending on the counter
+			std::string currFind = "LOD";
+			currFind += (counter + '0');
+
+			// If found
+			if (mesh.find(currFind) != std::string::npos)
+			{
+				// Push it in the variations vector
+				vec.push_back(mesh);
+			}
+			else
+			{
+				// If not found we finished the variations for this LOD
+				// So push the variations vector in the LODs vector and clear the variations vector
+				mLODs.push_back(move(vec));
+
+				// Push the current variation iin the variation vec
+				vec.push_back(mesh);
+
+				// Increment the LOD counter
+				counter++;
+			}
+		}
+	}
+	else
+	{
+		// If the meshes vector has only one fileName
+		// Push it on the lod
+		mLODs.push_back(mMeshFiles);
+	}
+
 	try
 	{
 		//load the most detailed mesh with tangents required if the model has normals
@@ -239,8 +288,7 @@ CGameObject::CGameObject(std::string dirPath, std::string name, CVector3 positio
 		throw std::runtime_error(e.what());
 	}
 
-	//geometry loaded, set its position...
-
+	// geometry loaded, set its position...
 	SetPosition(position);
 	SetRotation(rotation);
 	SetScale(scale);
@@ -265,7 +313,7 @@ void CGameObject::Render(bool basicGeometry)
 	// Render the material
 	mMaterial->RenderMaterial(basicGeometry);
 
-	//TODO render the the correct mesh according to the camera distance
+	// Render the mesh
 	mMesh->Render(mWorldMatrices);
 
 	// Unbind the ambient map from the shader
@@ -283,7 +331,14 @@ void CGameObject::RenderToAmbientMap()
 	// if the ambient map is disabled, nothing to do here
 	if (!mAmbientMap.enabled) return;
 
-	//if (!mChangedPos) return;
+	if (!mChangedPos) return;
+
+	// Store current RS state
+	ID3D11RasterizerState* prevRS = nullptr;
+	gD3DContext->RSGetState(&prevRS);
+
+	// Set the cullback state
+	gD3DContext->RSSetState(gCullBackState);
 
 	// Store current RTV(render target) and DSV(depth stencil)
 	ID3D11RenderTargetView* prevRTV = nullptr;
@@ -341,6 +396,7 @@ void CGameObject::RenderToAmbientMap()
 			if (it != this)
 				// Render all the objects 
 				// Performance improvements: Could render only the closest objects
+				// Could render only the face that the user is looking at (kinda like cull back state)
 				it->Render();
 		}
 	}
@@ -351,13 +407,66 @@ void CGameObject::RenderToAmbientMap()
 	if (prevRTV) prevRTV->Release();
 	if (prevDSV) prevDSV->Release();
 
+	// Restore previous RS state
+	gD3DContext->RSSetState(prevRS);
+
+	// Release that
+	if (prevRS) prevRS->Release();
+
 	//restore original rotation
 	SetRotation(originalRotation);
 
 	//generate mipMaps for the cube map
 	gD3DContext->GenerateMips(mAmbientMap.mapSRV);
 
-	mChangedPos = false;
+	//mChangedPos = false;
+}
+
+std::vector<std::string>& CGameObject::GetMeshes()
+{
+	return mMeshFiles;
+}
+
+void CGameObject::LoadNewMesh(std::string newMesh)
+{
+	try
+	{
+		auto newCMesh = new CMesh(newMesh, mMaterial->HasNormals());
+
+		delete mMesh;
+
+		mMesh = newCMesh;
+
+		auto prevPos = Position();
+		auto prevScale = Scale();
+		auto prevRotation = Rotation();
+		
+		// Recalculate matrix based on mesh
+		mWorldMatrices.resize(mMesh->NumberNodes());
+		for (auto i = 0; i < mWorldMatrices.size(); ++i)
+			mWorldMatrices[i] = mMesh->GetNodeDefaultMatrix(i);
+
+		SetPosition(prevPos);
+		SetScale(prevScale);
+		SetRotation(prevRotation);
+
+	}
+	catch (std::exception& e)
+	{
+		throw std::exception(e.what());
+	}
+
+
+}
+
+// Set the given mesh variation
+// It will check if the variation is valid
+// Not performance friendly, it will delete the current mesh and load a new one
+
+void CGameObject::SetVariation(int variation) 
+{ 
+	if (variation >= 0 && variation < mLODs[mCurrentLOD].size()) 
+		LoadNewMesh(mLODs[mCurrentLOD][variation]); 
 }
 
 void CGameObject::sAmbientMap::Init()
@@ -456,8 +565,14 @@ void CGameObject::sAmbientMap::Init()
 
 CGameObject::~CGameObject()
 {
-	delete mMesh;
-	delete mMaterial;
+	Release();
+}
+
+
+void CGameObject::Release()
+{
+	if(mMesh) delete mMesh;
+	if(mMaterial) delete mMaterial;
 
 	mAmbientMap.Release();
 }
@@ -508,11 +623,11 @@ void CGameObject::Control(int node, float frameTime, KeyCode turnUp, KeyCode tur
 
 // Getters - model only stores matrices. Position, rotation and scale are extracted if requested.
 
-CVector3 CGameObject::Position(int node) { return mWorldMatrices[node].GetRow(3); mChangedPos = true; }
+CVector3 CGameObject::Position(int node) { mChangedPos = true; return mWorldMatrices[node].GetRow(3);  }
 
 // Position is on bottom row of matrix
 
-CVector3 CGameObject::Rotation(int node) { return mWorldMatrices[node].GetEulerAngles(); mChangedPos = true; }
+CVector3 CGameObject::Rotation(int node) {  mChangedPos = true; return mWorldMatrices[node].GetEulerAngles(); }
 
 // Getting angles from a matrix is complex - see .cpp file
 
@@ -535,7 +650,7 @@ float* CGameObject::DirectPosition()
 	return &mWorldMatrices[0].e30;
 }
 
-CMesh* CGameObject::GetMesh() const { return mMesh; }
+CMesh* CGameObject::Mesh() const { return mMesh; }
 
 // Setters - model only stores matricies , so if user sets position, rotation or scale, just update those aspects of the matrix
 
@@ -565,9 +680,10 @@ void CGameObject::SetScale(float scale) { SetScale({ scale, scale, scale }); mCh
 
 void CGameObject::SetWorldMatrix(CMatrix4x4 matrix, int node) { mWorldMatrices[node] = matrix; mChangedPos = true; }
 
-bool* CGameObject::AmbientMapEnabled()
+
+bool& CGameObject::AmbientMapEnabled()
 {
-	return &mAmbientMap.enabled;
+	return mAmbientMap.enabled;
 }
 
 void CGameObject::sAmbientMap::SetSize(UINT s)
@@ -585,8 +701,8 @@ void CGameObject::sAmbientMap::SetSize(UINT s)
 
 void CGameObject::sAmbientMap::Release()
 {
-	if (depthStencilView != nullptr) depthStencilView->Release();
-	if (mapSRV != nullptr) mapSRV->Release();
+	if (depthStencilView) depthStencilView->Release();
+	if (mapSRV) mapSRV->Release();
 	for (auto& it : RTV)
 	{
 		it->Release();

@@ -8,29 +8,47 @@
 class CMaterial
 {
 public:
+	
+	//-------------------------------------
+	// Construction / Usage
+	//-------------------------------------
 
+	// Main Constructor
+	// Requires a vector of filemaps
+	// Formats: NAME_RESOLUTION_TYPE.EXTENTION
+	// Types supported: Albedo,AmbientOccusion,Displacement,Roughness,Metallness
+	// It will set automatically the correct shaders depending on the use (Normals = PBR / No Normals = PBRNoNormals)
 	CMaterial(std::vector<std::string> fileMaps);
 
+	// Copy Constuctor
+	// Deep Copy
 	CMaterial(CMaterial& m);
 
-	//return if the material has a normal map
+	// Return if the material has a normal map
 	bool HasNormals() { return mHasNormals; }
 
+	// Set the shaders
+	// Set the maps to the shader
+	// Optionally decide to set depth only shaders
 	void RenderMaterial(bool basicGeometry = false);
 
+	// This two functions will change the shaders to set at rendering time
 	void SetVertexShader(ID3D11VertexShader* s);
-
 	void SetPixelShader(ID3D11PixelShader* s);
+	
+	//-------------------------------------
+	// Data Access
+	//-------------------------------------
 
-	auto GetTextureFileName() { return mMapsStr.front(); }
+	auto TextureFileName() { return mMapsStr.front(); }
 	auto GetTexture() { return mPbrMaps.Albedo; }
-	auto GetTextureSRV() { return mPbrMaps.AlbedoSRV; }
-
+	auto TextureSRV() { return mPbrMaps.AlbedoSRV; }
 	auto GetPtrVertexShader() { return mVertexShader; }
-
 	auto GetPtrPixelShader() { return mPixelShader; }
 
 	~CMaterial();
+
+	void Release();
 
 private:
 
@@ -43,7 +61,7 @@ private:
 	ID3D11GeometryShader* mGeometryShader; //WIP
 	ID3D11PixelShader* mPixelShader;
 
-	//All the pbr related maps that a model can have
+	// All the pbr related maps that a model can have
 	struct sPbrMaps
 	{
 		ID3D11Resource* Albedo;

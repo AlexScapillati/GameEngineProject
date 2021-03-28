@@ -86,7 +86,7 @@ public:
 	// LIMITATION: The mesh must use a single texture throughout
 	void Render(std::vector<CMatrix4x4>& modelMatrices);
 
-
+	std::string MeshFileName() { return mFileName; }
 
 //--------------------------------------------------------------------------------------
 // Private helper functions
