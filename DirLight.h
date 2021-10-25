@@ -11,11 +11,10 @@ public:
 	CDirLight(std::string mesh, std::string name,
 		std::string& diffuse, 
 		CVector3 colour = { 0.0f, 0.0f, 0.0f }, float strength = 0.0f,
-		CVector3 position = { 0, 0, 0 }, CVector3 rotation = { 0, 0, 0 }, float scale = 1, CVector3 facing = { 0,0,1 });
+		CVector3 position = { 0, 0, 0 }, CVector3 rotation = { 0, 0, 0 }, float scale = 1);
 
 	CDirLight(CDirLight& l) : CLight(l)
 	{
-		mDirection = l.GetDirection();
 	}
 
 	ID3D11ShaderResourceView* RenderFromThis();
@@ -28,8 +27,6 @@ public:
 	auto GetHeight() { return mHeight; }
 	auto SetWidth(float n) { mWidth = n; }
 	auto SetHeight(float n) { mHeight = n; }
-	CVector3 GetDirection() { return mDirection; }
-	auto SetDirection(CVector3& dir) { mDirection = dir; }
 	void SetShadowMapSize(int s);
 	auto GetShadowMapSize() { return mShadowMapSize; }
 
@@ -43,7 +40,6 @@ private:
 
 	int mShadowMapSize;
 
-	CVector3 mDirection;
 	float mWidth;
 	float mHeight;
 	float mNearClip;

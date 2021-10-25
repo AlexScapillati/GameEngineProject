@@ -15,30 +15,39 @@ SamplerState PointSample : register(s0); // We don't usually want to filter (bil
 //ambient occlusion needs a depth texture
 Texture2D DepthTexture : register(t1);
 
-Texture2D RandomTexture : register(t2);
-
-float3 normal_from_depth(float depth, float2 texcoords, float2 texelSize)
+// Funtion that returns the normal given the depth value, the pixel uv and the texel size
+float3 CalculateNormal(float depth, float2 texcoords, float2 texelSize)
 {
+    // Amount of the offsets based on the texel size
     const float2 offset1 = float2(0.0, texelSize.y);
     const float2 offset2 = float2(texelSize.x, 0.0);
  
+    // Sample the depth texture in the different offsets
     float depth1 = DepthTexture.Sample(PointSample, texcoords + offset1).r;
     float depth2 = DepthTexture.Sample(PointSample, texcoords + offset2).r;
   
+    // Calculate the position of the points relative to their offsets
     float3 p1 = float3(offset1, depth1 - depth);
     float3 p2 = float3(offset2, depth2 - depth);
   
+    // Cross product between this two points to get the vector
     float3 normal = cross(p1, p2);
+    
+    // Flip the Z
     normal.z = -normal.z;
   
+    // Get the normal
     return normalize(normal);
 }
 
 
 float4 main(PostProcessingInput In) : SV_TARGET
 {
-    const int samples = 16;
-    float3 sample_sphere[samples] =
+    // Number of sphere samples
+    const int kNumSamples = 16;
+    
+    // Already defined vectors to sample the surroundings
+    const float3 kSampleSphere[kNumSamples] =
     {
         float3(0.5381, 0.1856, -0.4319),    float3(0.1379, 0.2486, 0.4430),
         float3(0.3371, 0.5679, -0.0057),    float3(-0.6999, -0.0451, -0.0019),
@@ -50,31 +59,45 @@ float4 main(PostProcessingInput In) : SV_TARGET
         float3(0.0352, -0.0631, 0.5460),    float3(-0.4776, 0.2847, -0.0271)
     };
     
-    
+    // Get the size of the depth map (width, height)
     float2 depthMapSize;
-    
     DepthTexture.GetDimensions(depthMapSize.x, depthMapSize.y);
   
+    // Sample the depth map
     float depth = DepthTexture.Sample(PointSample, In.sceneUV).r;
     
+    // Get the position of the texel
+    // This is not the actual position of the pixel in world space
     float3 position = float3(In.sceneUV, depth);
-    float3 normal = normal_from_depth(depth, In.sceneUV, 1.0 / depthMapSize);
     
-    float3 random = normalize(RandomTexture.Sample(PointSample, In.sceneUV ).rgb);
+    // Get the normal based on that pixel
+    float3 normal = CalculateNormal(depth, In.sceneUV, 1.0 / depthMapSize);
     
-    float radius_depth = gSsaoRadius / depth;
+    // Get the radius of the ray from CPU devided by the current depth
+    float depthRadius = gSsaoRadius / depth;
+    
+    // Initialize the occlusion value
     float occlusion = 0.0;
-    for (int i = 0; i < samples; i++)
+    
+    // For all the samples
+    for (int i = 0; i < kNumSamples; i++)
     {
-        float3 ray = radius_depth * reflect(sample_sphere[i], random);
-        float3 hemi_ray = position + sign(dot(ray, normal)) * ray;
+        // Project the ray in the correct direction
+        float3 ray = depthRadius * kSampleSphere[i];
+        float3 projectedRay = position + sign(dot(ray, normal)) * ray;
     
-        float occ_depth = DepthTexture.Sample(PointSample, hemi_ray.xy).r;
-        float difference = depth - occ_depth;
+        // Sample the depth at that ray point
+        float occluderDepth = DepthTexture.Sample(PointSample, projectedRay.xy).r;
+        
+        // Calculate the difference compared to the current depth
+        float difference = depth - occluderDepth;
     
+        // Increment the occlusion 
+        // Depending on the falloff value (CPU side) (if the difference is greater the "step" function will return 1)
+        // Interpolate the difference by the falloff and the area (cpu side)
         occlusion += step(gSsaoFalloff, difference) * (1.0 - smoothstep(gSsaoFalloff, gSsaoArea, difference));
     }
   
-    float ao = 1.0 - gSsaoStrenght * occlusion * (1.0 / samples);
+    float ao = 1.0 - gSsaoStrenght * occlusion * (1.0 / kNumSamples);
     return float4(ao.rrr, 1.0f);
 }

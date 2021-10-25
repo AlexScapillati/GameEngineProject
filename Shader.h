@@ -7,6 +7,9 @@
 
 #include <d3d11.h>
 #include <string>
+#include <wrl.h>
+
+using namespace Microsoft::WRL;
 
 //--------------------------------------------------------------------------------------
 // Global Variables
@@ -15,17 +18,18 @@
 // file somewhere. We should use classes and avoid use of globals, but done this way to keep code simpler
 // so the DirectX content is clearer. However, try to architect your own code in a better way.
 
-inline ID3D11PixelShader*  gDepthOnlyPixelShader = nullptr;
-inline ID3D11VertexShader* gBasicTransformVertexShader = nullptr;
-inline ID3D11PixelShader*  gDepthOnlyNormalPixelShader = nullptr;
+inline ComPtr<ID3D11PixelShader>  gDepthOnlyPixelShader = nullptr;
+inline ComPtr<ID3D11VertexShader> gBasicTransformVertexShader = nullptr;
+inline ComPtr<ID3D11PixelShader>  gDepthOnlyNormalPixelShader = nullptr;
 
-inline ID3D11PixelShader*  gPBRPixelShader = nullptr;
-inline ID3D11PixelShader*  gPBRNormalPixelShader = nullptr;
-inline ID3D11VertexShader* gPBRVertexShader = nullptr;
-inline ID3D11VertexShader* gPBRNormalVertexShader = nullptr;
+inline ComPtr<ID3D11PixelShader>  gPBRPixelShader = nullptr;
+inline ComPtr<ID3D11PixelShader>  gPBRNormalPixelShader = nullptr;
+inline ComPtr<ID3D11VertexShader> gPBRVertexShader = nullptr;
+inline ComPtr<ID3D11VertexShader> gPBRNormalVertexShader = nullptr;
 
-inline ID3D11PixelShader* gTintedTexturePixelShader = nullptr;
-inline ID3D11PixelShader* gSkyPixelShader = nullptr;
+inline ComPtr<ID3D11PixelShader> gTintedTexturePixelShader = nullptr;
+inline ComPtr<ID3D11PixelShader> gSkyPixelShader = nullptr;
+inline ComPtr<ID3D11VertexShader> gSkyVertexShader = nullptr;
 
 
 void LoadDefaultShaders();

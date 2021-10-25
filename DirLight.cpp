@@ -8,11 +8,9 @@ CDirLight::CDirLight(std::string mesh,
 	float strength, 
 	CVector3 position, 
 	CVector3 rotation, 
-	float scale, 
-	CVector3 direction)
+	float scale)
 	: CLight(mesh, name, diffuse, colour, strength, position, rotation, scale)
 {
-	mDirection = direction;
 	mShadowMap = nullptr;
 	mShadowMapDepthStencil = nullptr;
 	mShadowMapSRV = nullptr;
@@ -49,13 +47,11 @@ ID3D11ShaderResourceView* CDirLight::RenderFromThis()
 	gD3DContext->OMSetRenderTargets(0, nullptr, mShadowMapDepthStencil);
 	gD3DContext->ClearDepthStencilView(mShadowMapDepthStencil, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
-	auto& m = WorldMatrix();
-
-	gPerFrameConstants.viewMatrix = InverseAffine(m);
+	gPerFrameConstants.viewMatrix = InverseAffine(WorldMatrix());
 	gPerFrameConstants.projectionMatrix = MakeOrthogonalMatrix(mWidth, mHeight, mNearClip, mFarClip);
 	gPerFrameConstants.viewProjectionMatrix = gPerFrameConstants.viewMatrix * gPerFrameConstants.projectionMatrix;
 
-	UpdateFrameConstantBuffer(gPerFrameConstantBuffer, gPerFrameConstants);
+	UpdateFrameConstantBuffer(gPerFrameConstantBuffer.Get(), gPerFrameConstants);
 
 	gD3DContext->VSSetConstantBuffers(1, 1, &gPerFrameConstantBuffer);
 

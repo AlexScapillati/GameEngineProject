@@ -15,22 +15,23 @@
 //*******************************
 //**** Post-processing shader DirectX objects
 // These are also added to Shader.h
-ID3D11PixelShader*	gSsaoPostProcess = nullptr;
-ID3D11PixelShader*	gCopyPostProcess = nullptr;
-ID3D11PixelShader*	gTintPostProcess = nullptr;
-ID3D11PixelShader*	gBurnPostProcess = nullptr;
-ID3D11PixelShader*	gBloomPostProcess = nullptr;
-ID3D11PixelShader*	gSpiralPostProcess = nullptr;
-ID3D11PixelShader*	gGodRaysPostProcess = nullptr;
-ID3D11PixelShader*	gDistortPostProcess = nullptr;
-ID3D11VertexShader* g2DQuadVertexShader = nullptr;
-ID3D11PixelShader*	gSsaoLastPostProcess = nullptr;
-ID3D11PixelShader*	gHeatHazePostProcess = nullptr;
-ID3D11PixelShader*	gBloomLastPostProcess = nullptr;
-ID3D11PixelShader*	gGreyNoisePostProcess = nullptr;
-ID3D11VertexShader* g2DPolygonVertexShader = nullptr;
-ID3D11PixelShader*	gGaussionBlurPostProcess = nullptr;
-ID3D11PixelShader*	gChromaticAberrationPostProcess = nullptr;
+ComPtr<ID3D11PixelShader>	gSsaoPostProcess = nullptr;
+ComPtr<ID3D11PixelShader>	gCopyPostProcess = nullptr;
+ComPtr<ID3D11PixelShader>	gTintPostProcess = nullptr;
+ComPtr<ID3D11PixelShader>	gBurnPostProcess = nullptr;
+ComPtr<ID3D11PixelShader>	gBloomPostProcess = nullptr;
+ComPtr<ID3D11PixelShader>	gSpiralPostProcess = nullptr;
+ComPtr<ID3D11PixelShader>	gGodRaysPostProcess = nullptr;
+ComPtr<ID3D11PixelShader>	gDistortPostProcess = nullptr;
+ComPtr<ID3D11PixelShader>	gSsaoLastPostProcess = nullptr;
+ComPtr<ID3D11PixelShader>	gHeatHazePostProcess = nullptr;
+ComPtr<ID3D11PixelShader>	gBloomLastPostProcess = nullptr;
+ComPtr<ID3D11PixelShader>	gGreyNoisePostProcess = nullptr;
+ComPtr<ID3D11PixelShader>	gGaussionBlurPostProcess = nullptr;
+ComPtr<ID3D11PixelShader>	gChromaticAberrationPostProcess = nullptr;
+
+ComPtr<ID3D11VertexShader>  g2DPolygonVertexShader = nullptr;
+ComPtr<ID3D11VertexShader>  g2DQuadVertexShader = nullptr;
 
 
 // Load a vertex shader, include the file in the project and pass the name (without the .hlsl extension)
@@ -225,87 +226,90 @@ void LoadDefaultShaders()
 	// Post Processing Shaders
 	//-------------------------------------
 
-	gCopyPostProcess				= LoadPixelShader("PostProcessing/Copy_pp");
-	gTintPostProcess				= LoadPixelShader("PostProcessing/Tint_pp");
-	gBurnPostProcess				= LoadPixelShader("PostProcessing/Burn_pp");
-	gSsaoPostProcess				= LoadPixelShader("PostProcessing/SSAO_pp");
-	gBloomPostProcess				= LoadPixelShader("PostProcessing/Bloom_pp");
-	gSpiralPostProcess				= LoadPixelShader("PostProcessing/Spiral_pp");
-	gGodRaysPostProcess				= LoadPixelShader("PostProcessing/GodRays_pp");
-	gDistortPostProcess				= LoadPixelShader("PostProcessing/Distort_pp");
-	g2DQuadVertexShader				= LoadVertexShader("PostProcessing/2DQuad_pp");
-	gSsaoLastPostProcess			= LoadPixelShader("PostProcessing/SSAOLast_pp");
-	gHeatHazePostProcess			= LoadPixelShader("PostProcessing/HeatHaze_pp");
-	gBloomLastPostProcess			= LoadPixelShader("PostProcessing/BloomLast_pp");
-	gGreyNoisePostProcess			= LoadPixelShader("PostProcessing/GreyNoise_pp");
-	g2DPolygonVertexShader			= LoadVertexShader("PostProcessing/2DPolygon_pp");
-	gGaussionBlurPostProcess		= LoadPixelShader("PostProcessing/GaussionBlur_pp");
-	gChromaticAberrationPostProcess = LoadPixelShader("PostProcessing/ChromaticAberration_pp");
-	
+	gCopyPostProcess.Attach(LoadPixelShader("PostProcessing/Copy_pp"));
+	gTintPostProcess.Attach(LoadPixelShader("PostProcessing/Tint_pp"));
+	gBurnPostProcess.Attach(LoadPixelShader("PostProcessing/Burn_pp"));
+	gSsaoPostProcess.Attach(LoadPixelShader("PostProcessing/SSAO_pp"));
+	gBloomPostProcess.Attach(LoadPixelShader("PostProcessing/Bloom_pp"));
+	gSpiralPostProcess.Attach(LoadPixelShader("PostProcessing/Spiral_pp"));
+	gGodRaysPostProcess.Attach(LoadPixelShader("PostProcessing/GodRays_pp"));
+	gDistortPostProcess.Attach(LoadPixelShader("PostProcessing/Distort_pp"));
+	g2DQuadVertexShader.Attach(LoadVertexShader("PostProcessing/2DQuad_pp"));
+	gSsaoLastPostProcess.Attach(LoadPixelShader("PostProcessing/SSAOLast_pp"));
+	gHeatHazePostProcess.Attach(LoadPixelShader("PostProcessing/HeatHaze_pp"));
+	gBloomLastPostProcess.Attach(LoadPixelShader("PostProcessing/BloomLast_pp"));
+	gGreyNoisePostProcess.Attach(LoadPixelShader("PostProcessing/GreyNoise_pp"));
+	g2DPolygonVertexShader.Attach(LoadVertexShader("PostProcessing/2DPolygon_pp"));
+	gGaussionBlurPostProcess.Attach(LoadPixelShader("PostProcessing/GaussionBlur_pp"));
+	gChromaticAberrationPostProcess.Attach(LoadPixelShader("PostProcessing/ChromaticAberration_pp"));
+
 	//-------------------------------------
 	// Default Shaders
 	//-------------------------------------
 
-	gDepthOnlyPixelShader			= LoadPixelShader("Shaders/DepthOnly_ps");
-	gDepthOnlyNormalPixelShader		= LoadPixelShader("Shaders/DepthOnlyNormal_ps");
-	gBasicTransformVertexShader		= LoadVertexShader("Shaders/BasicTransform_vs");
-	
-	gPBRVertexShader				= LoadVertexShader("Shaders/PBRNoNormals_vs");
-	gPBRNormalVertexShader			= LoadVertexShader("Shaders/PBR_vs");
+	gDepthOnlyPixelShader.Attach(LoadPixelShader("Shaders/DepthOnly_ps"));
+	gDepthOnlyNormalPixelShader.Attach(LoadPixelShader("Shaders/DepthOnlyNormal_ps"));
+	gBasicTransformVertexShader.Attach(LoadVertexShader("Shaders/BasicTransform_vs"));
 
-	gPBRPixelShader					= LoadPixelShader("Shaders/PBRNoNormals_ps");
-	gPBRNormalPixelShader			= LoadPixelShader("Shaders/PBR_ps");
+	gPBRVertexShader.Attach(LoadVertexShader("Shaders/PBRNoNormals_vs"));
+	gPBRNormalVertexShader.Attach(LoadVertexShader("Shaders/PBR_vs"));
 
-	gTintedTexturePixelShader		= LoadPixelShader("Shaders/TintedTexture_ps");
-	gSkyPixelShader				    = LoadPixelShader("Shaders/Sky_ps");
+	gPBRPixelShader.Attach(LoadPixelShader("Shaders/PBRNoNormals_ps"));
+	gPBRNormalPixelShader.Attach(LoadPixelShader("Shaders/PBR_ps"));
+
+	gTintedTexturePixelShader.Attach(LoadPixelShader("Shaders/TintedTexture_ps"));
+	gSkyPixelShader.Attach(LoadPixelShader("Shaders/Sky_ps"));
+	gSkyVertexShader.Attach(LoadVertexShader("Shaders/Sky_vs"));
 
 	// Check for all the shaders if they are being loaded
-	if (gDepthOnlyPixelShader	 == nullptr || gBasicTransformVertexShader	   == nullptr ||
-		g2DQuadVertexShader		 == nullptr || gCopyPostProcess				   == nullptr ||
-		gTintPostProcess		 == nullptr || gHeatHazePostProcess			   == nullptr ||
-		gGreyNoisePostProcess	 == nullptr || gBurnPostProcess				   == nullptr ||
-		gDistortPostProcess		 == nullptr || gSpiralPostProcess			   == nullptr ||
-		g2DPolygonVertexShader	 == nullptr || gChromaticAberrationPostProcess == nullptr ||
-		gGaussionBlurPostProcess == nullptr || gSsaoPostProcess				   == nullptr ||
-		gBloomPostProcess		 == nullptr || gBloomLastPostProcess		   == nullptr ||
-		gSsaoLastPostProcess	 == nullptr || gGodRaysPostProcess			   == nullptr ||
-		gPBRVertexShader		 == nullptr || gPBRNormalVertexShader		   == nullptr ||
-		gPBRPixelShader			 == nullptr || gPBRNormalPixelShader		   == nullptr ||
-		gTintedTexturePixelShader== nullptr || gSkyPixelShader				   == nullptr)
+	if (gDepthOnlyPixelShader == nullptr || gBasicTransformVertexShader == nullptr ||
+		g2DQuadVertexShader == nullptr || gCopyPostProcess == nullptr ||
+		gTintPostProcess == nullptr || gHeatHazePostProcess == nullptr ||
+		gGreyNoisePostProcess == nullptr || gBurnPostProcess == nullptr ||
+		gDistortPostProcess == nullptr || gSpiralPostProcess == nullptr ||
+		g2DPolygonVertexShader == nullptr || gChromaticAberrationPostProcess == nullptr ||
+		gGaussionBlurPostProcess == nullptr || gSsaoPostProcess == nullptr ||
+		gBloomPostProcess == nullptr || gBloomLastPostProcess == nullptr ||
+		gSsaoLastPostProcess == nullptr || gGodRaysPostProcess == nullptr ||
+		gPBRVertexShader == nullptr || gPBRNormalVertexShader == nullptr ||
+		gPBRPixelShader == nullptr || gPBRNormalPixelShader == nullptr ||
+		gTintedTexturePixelShader == nullptr || gSkyPixelShader == nullptr ||
+		gSkyVertexShader == nullptr)
 	{
 		throw std::runtime_error("Error loading default shaders");
 	}
 }
 
 void ReleaseDefaultShaders()
-{																															
-	if (gDepthOnlyPixelShader)				gDepthOnlyPixelShader			->Release();  gDepthOnlyPixelShader				= nullptr;
-	if (gBasicTransformVertexShader)		gBasicTransformVertexShader		->Release();  gBasicTransformVertexShader		= nullptr;		
-	if (gHeatHazePostProcess)				gHeatHazePostProcess			->Release();  gHeatHazePostProcess				= nullptr;
-	if (gSpiralPostProcess)					gSpiralPostProcess				->Release();  gSpiralPostProcess				= nullptr;		
-	if (gDistortPostProcess)				gDistortPostProcess				->Release();  gDistortPostProcess				= nullptr;		
-	if (gBurnPostProcess)					gBurnPostProcess				->Release();  gBurnPostProcess					= nullptr;
-	if (gGreyNoisePostProcess)				gGreyNoisePostProcess			->Release();  gGreyNoisePostProcess				= nullptr;
-	if (gTintPostProcess)					gTintPostProcess				->Release();  gTintPostProcess					= nullptr;
-	if (gCopyPostProcess)					gCopyPostProcess				->Release();  gCopyPostProcess					= nullptr;
-	if (g2DPolygonVertexShader)				g2DPolygonVertexShader			->Release();  g2DPolygonVertexShader			= nullptr;		
-	if (g2DQuadVertexShader)				g2DQuadVertexShader				->Release();  g2DQuadVertexShader				= nullptr;		
-	if (gChromaticAberrationPostProcess)	gChromaticAberrationPostProcess	->Release();  gChromaticAberrationPostProcess	= nullptr;		
-	if (gGaussionBlurPostProcess)			gGaussionBlurPostProcess		->Release();  gGaussionBlurPostProcess			= nullptr;
-	if (gBloomPostProcess)					gBloomPostProcess				->Release();  gBloomPostProcess					= nullptr;
-	if (gBloomLastPostProcess)				gBloomLastPostProcess			->Release();  gBloomLastPostProcess				= nullptr;
-	if (gSsaoLastPostProcess)				gSsaoLastPostProcess			->Release();  gSsaoLastPostProcess				= nullptr;
-	if (gSsaoPostProcess)					gSsaoPostProcess				->Release();  gSsaoPostProcess					= nullptr;
-	if (gGodRaysPostProcess)				gGodRaysPostProcess				->Release();  gGodRaysPostProcess				= nullptr;
-	if (gDepthOnlyNormalPixelShader)		gDepthOnlyNormalPixelShader		->Release();  gDepthOnlyNormalPixelShader		= nullptr;
+{
+	if (gDepthOnlyPixelShader)			  gDepthOnlyPixelShader = nullptr;
+	if (gBasicTransformVertexShader)	  gBasicTransformVertexShader = nullptr;
+	if (gHeatHazePostProcess)			  gHeatHazePostProcess = nullptr;
+	if (gSpiralPostProcess)				  gSpiralPostProcess = nullptr;
+	if (gDistortPostProcess)			  gDistortPostProcess = nullptr;
+	if (gBurnPostProcess)				  gBurnPostProcess = nullptr;
+	if (gGreyNoisePostProcess)			  gGreyNoisePostProcess = nullptr;
+	if (gTintPostProcess)				  gTintPostProcess = nullptr;
+	if (gCopyPostProcess)				  gCopyPostProcess = nullptr;
+	if (g2DPolygonVertexShader)			  g2DPolygonVertexShader = nullptr;
+	if (g2DQuadVertexShader)			  g2DQuadVertexShader = nullptr;
+	if (gChromaticAberrationPostProcess)  gChromaticAberrationPostProcess = nullptr;
+	if (gGaussionBlurPostProcess)		  gGaussionBlurPostProcess = nullptr;
+	if (gBloomPostProcess)				  gBloomPostProcess = nullptr;
+	if (gBloomLastPostProcess)			  gBloomLastPostProcess = nullptr;
+	if (gSsaoLastPostProcess)			  gSsaoLastPostProcess = nullptr;
+	if (gSsaoPostProcess)				  gSsaoPostProcess = nullptr;
+	if (gGodRaysPostProcess)			  gGodRaysPostProcess = nullptr;
+	if (gDepthOnlyNormalPixelShader)	  gDepthOnlyNormalPixelShader = nullptr;
 
-	if (gPBRVertexShader)					gPBRVertexShader				->Release();  gPBRVertexShader					= nullptr;
-	if (gPBRNormalVertexShader)				gPBRNormalVertexShader			->Release();  gPBRNormalVertexShader			= nullptr;
-	if (gPBRPixelShader)					gPBRPixelShader					->Release();  gPBRPixelShader					= nullptr;
-	if (gPBRNormalPixelShader)				gPBRNormalPixelShader			->Release();  gPBRNormalPixelShader				= nullptr;
-	
-	if (gTintedTexturePixelShader)			gTintedTexturePixelShader		->Release();  gTintedTexturePixelShader			= nullptr;
-	if (gSkyPixelShader)					gSkyPixelShader					->Release();  gSkyPixelShader					= nullptr;
+	if (gPBRVertexShader)				  gPBRVertexShader = nullptr;
+	if (gPBRNormalVertexShader)			  gPBRNormalVertexShader = nullptr;
+	if (gPBRPixelShader)				  gPBRPixelShader = nullptr;
+	if (gPBRNormalPixelShader)			  gPBRNormalPixelShader = nullptr;
+
+	if (gTintedTexturePixelShader)		  gTintedTexturePixelShader = nullptr;
+	if (gSkyPixelShader)				  gSkyPixelShader = nullptr;
+	if (gSkyVertexShader)				  gSkyVertexShader = nullptr;
 
 }
 

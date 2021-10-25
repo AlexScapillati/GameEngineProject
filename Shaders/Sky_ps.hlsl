@@ -5,7 +5,7 @@
 
 #include "Common.hlsli" // Shaders can also use include files - note the extension
 
-Texture2D SpecularDiffuseTexture : register(t0);
+TextureCube AmbientMap : register(t0);
 
 SamplerState TexSampler : register(s0);
 
@@ -15,5 +15,5 @@ SamplerState TexSampler : register(s0);
 
 float4 main(LightingPixelShaderInput input) : SV_TARGET
 {
-    return SpecularDiffuseTexture.Sample(TexSampler,input.uv);
+    return AmbientMap.Sample(TexSampler, input.projectedPosition.xyz);
 }

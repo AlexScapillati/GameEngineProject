@@ -13,6 +13,7 @@
 #include "ColourRGBA.h"
 #include "GameObjectManager.h"
 #include "State.h"
+#include "Sky.h"
 
 //copy constructor
 CGameObject::CGameObject(CGameObject& obj)
@@ -20,7 +21,7 @@ CGameObject::CGameObject(CGameObject& obj)
 	mEnabled = true;
 	mMaterial = new CMaterial(*obj.mMaterial);
 	mMeshFiles = obj.mMeshFiles;
-	mMesh = new CMesh(obj.mMesh->MeshFileName(),mMaterial->HasNormals());
+	mMesh = new CMesh(obj.mMesh->MeshFileName(), mMaterial->HasNormals());
 	mName = "new" + obj.mName;
 
 	mLODs = obj.mLODs;
@@ -29,6 +30,7 @@ CGameObject::CGameObject(CGameObject& obj)
 
 	mParallaxDepth = obj.ParallaxDepth();
 	mRoughness = obj.Roughness();
+	mMetalness = obj.mMetalness;
 
 	//initialize ambient map variables
 	mAmbientMap.size = obj.AmbientMap()->size;
@@ -53,6 +55,7 @@ CGameObject::CGameObject(std::string mesh, std::string name, std::string& diffus
 
 	mParallaxDepth = 0.f;
 	mRoughness = 0.5f;
+	mMetalness = 0.0f;
 
 	mEnabled = true;
 
@@ -167,6 +170,7 @@ CGameObject::CGameObject(std::string dirPath, std::string name, CVector3 positio
 
 	mParallaxDepth = 0.f;
 	mRoughness = 0.5f;
+	mMetalness = 0.0f;
 
 	//search for files with the same id
 	std::vector<std::string>files;
@@ -306,9 +310,20 @@ void CGameObject::Render(bool basicGeometry)
 
 	// Set the material roughness to the constant buffer
 	gPerModelConstants.roughness = mRoughness;
+	gPerModelConstants.metalness = mMetalness;
 
-	if (mAmbientMap.enabled)
-		gD3DContext->PSSetShaderResources(6, 1, &mAmbientMap.mapSRV);
+	if (!basicGeometry)
+	{
+		if (mAmbientMap.enabled)
+		{
+			gD3DContext->PSSetShaderResources(6, 1, &mAmbientMap.mapSRV);
+		}
+		/*else if (dynamic_cast<CSky*>(GOM->GetSky())->HasCubeMap());
+		{
+			auto environmentMap = GOM->GetSky()->TextureSRV();
+			gD3DContext->PSSetShaderResources(6, 1, &environmentMap);
+		}*/
+	}
 
 	// Render the material
 	mMaterial->RenderMaterial(basicGeometry);
@@ -330,8 +345,6 @@ void CGameObject::RenderToAmbientMap()
 {
 	// if the ambient map is disabled, nothing to do here
 	if (!mAmbientMap.enabled) return;
-
-	if (!mChangedPos) return;
 
 	// Store current RS state
 	ID3D11RasterizerState* prevRS = nullptr;
@@ -383,11 +396,11 @@ void CGameObject::RenderToAmbientMap()
 		gPerFrameConstants.viewProjectionMatrix = gPerFrameConstants.viewMatrix * gPerFrameConstants.projectionMatrix;
 
 		// Update Constant buffer
-		UpdateFrameConstantBuffer(gPerFrameConstantBuffer, gPerFrameConstants);
+		UpdateFrameConstantBuffer(gPerFrameConstantBuffer.Get(), gPerFrameConstants);
 
 		// Set it to the GPU
-		gD3DContext->PSSetConstantBuffers(1, 1, &gPerFrameConstantBuffer);
-		gD3DContext->VSSetConstantBuffers(1, 1, &gPerFrameConstantBuffer);
+		gD3DContext->PSSetConstantBuffers(1, 1, gPerFrameConstantBuffer.GetAddressOf());
+		gD3DContext->VSSetConstantBuffers(1, 1, gPerFrameConstantBuffer.GetAddressOf());
 
 		//render just the objects that can cast shadows
 		for (auto& it : GOM->mObjects)
@@ -440,7 +453,7 @@ void CGameObject::LoadNewMesh(std::string newMesh)
 		auto prevPos = Position();
 		auto prevScale = Scale();
 		auto prevRotation = Rotation();
-		
+
 		// Recalculate matrix based on mesh
 		mWorldMatrices.resize(mMesh->NumberNodes());
 		for (auto i = 0; i < mWorldMatrices.size(); ++i)
@@ -463,10 +476,10 @@ void CGameObject::LoadNewMesh(std::string newMesh)
 // It will check if the variation is valid
 // Not performance friendly, it will delete the current mesh and load a new one
 
-void CGameObject::SetVariation(int variation) 
-{ 
-	if (variation >= 0 && variation < mLODs[mCurrentLOD].size()) 
-		LoadNewMesh(mLODs[mCurrentLOD][variation]); 
+void CGameObject::SetVariation(int variation)
+{
+	if (variation >= 0 && variation < mLODs[mCurrentLOD].size())
+		LoadNewMesh(mLODs[mCurrentLOD][variation]);
 }
 
 void CGameObject::sAmbientMap::Init()
@@ -571,8 +584,8 @@ CGameObject::~CGameObject()
 
 void CGameObject::Release()
 {
-	if(mMesh) delete mMesh;
-	if(mMaterial) delete mMaterial;
+	if (mMesh) delete mMesh;
+	if (mMaterial) delete mMaterial;
 
 	mAmbientMap.Release();
 }
@@ -618,22 +631,20 @@ void CGameObject::Control(int node, float frameTime, KeyCode turnUp, KeyCode tur
 	{
 		matrix.SetRow(3, matrix.GetRow(3) - localZDir * MOVEMENT_SPEED * frameTime);
 	}
-	mChangedPos = true;
 }
 
 // Getters - model only stores matrices. Position, rotation and scale are extracted if requested.
 
-CVector3 CGameObject::Position(int node) { mChangedPos = true; return mWorldMatrices[node].GetRow(3);  }
+CVector3 CGameObject::Position(int node) { return mWorldMatrices[node].GetRow(3); }
 
 // Position is on bottom row of matrix
 
-CVector3 CGameObject::Rotation(int node) {  mChangedPos = true; return mWorldMatrices[node].GetEulerAngles(); }
+CVector3 CGameObject::Rotation(int node) { return mWorldMatrices[node].GetEulerAngles(); }
 
 // Getting angles from a matrix is complex - see .cpp file
 
 CVector3 CGameObject::Scale(int node)
 {
-	mChangedPos = true;
 	return {
 		Length(mWorldMatrices[node].GetRow(0)),
 		Length(mWorldMatrices[node].GetRow(1)),
@@ -654,7 +665,7 @@ CMesh* CGameObject::Mesh() const { return mMesh; }
 
 // Setters - model only stores matricies , so if user sets position, rotation or scale, just update those aspects of the matrix
 
-void CGameObject::SetPosition(CVector3 position, int node) { mWorldMatrices[node].SetRow(3, position);  mChangedPos = true; }
+void CGameObject::SetPosition(CVector3 position, int node) { mWorldMatrices[node].SetRow(3, position); }
 
 void CGameObject::SetRotation(CVector3 rotation, int node)
 {
@@ -662,7 +673,6 @@ void CGameObject::SetRotation(CVector3 rotation, int node)
 	mWorldMatrices[node] = MatrixScaling(Scale(node)) *
 		MatrixRotationZ(rotation.z) * MatrixRotationX(rotation.x) * MatrixRotationY(rotation.y) *
 		MatrixTranslation(Position(node));
-	mChangedPos = true;
 }
 
 // Two ways to set scale: x,y,z separately, or all to the same value
@@ -673,12 +683,11 @@ void CGameObject::SetScale(CVector3 scale, int node)
 	mWorldMatrices[node].SetRow(0, Normalise(mWorldMatrices[node].GetRow(0)) * scale.x);
 	mWorldMatrices[node].SetRow(1, Normalise(mWorldMatrices[node].GetRow(1)) * scale.y);
 	mWorldMatrices[node].SetRow(2, Normalise(mWorldMatrices[node].GetRow(2)) * scale.z);
-	mChangedPos = true;
 }
 
-void CGameObject::SetScale(float scale) { SetScale({ scale, scale, scale }); mChangedPos = true; }
+void CGameObject::SetScale(float scale) { SetScale({ scale, scale, scale }); }
 
-void CGameObject::SetWorldMatrix(CMatrix4x4 matrix, int node) { mWorldMatrices[node] = matrix; mChangedPos = true; }
+void CGameObject::SetWorldMatrix(CMatrix4x4 matrix, int node) { mWorldMatrices[node] = matrix; }
 
 
 bool& CGameObject::AmbientMapEnabled()
@@ -705,6 +714,6 @@ void CGameObject::sAmbientMap::Release()
 	if (mapSRV) mapSRV->Release();
 	for (auto& it : RTV)
 	{
-		it->Release();
+		if (it) it->Release();
 	}
 }

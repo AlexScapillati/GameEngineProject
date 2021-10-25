@@ -38,7 +38,7 @@ void InitGui()
 	io.Fonts->AddFontFromFileTTF("External\\imgui\\misc\\fonts\\Roboto-Light.ttf", 15);
 
 	// Setup Platform/Renderer bindings
-	ImGui_ImplDX11_Init(gD3DDevice, gD3DContext);
+	ImGui_ImplDX11_Init(gD3DDevice.Get(), gD3DContext.Get());
 	ImGui_ImplWin32_Init(gHWnd);
 	// Setup Dear ImGui style
 	ImGui::StyleColorsDark();
@@ -379,41 +379,6 @@ std::string ChooseTexture(bool& selected, imgui_addons::ImGuiFileBrowser fileDia
 template <class T>
 void CScene::DisplayDeque(std::deque<T*>& deque)
 {
-	//auto it = deque.begin();
-
-	//while (it != deque.end())
-	//{
-	//	//if a button is pressed
-	//	if (ImGui::Button((*it)->Name().c_str()))
-	//	{
-	//		//store the object pointer
-	//		mSelectedObj = *it;
-	//	}
-
-	//	ImGui::SameLine();
-
-	//	auto deleteLabel = "Delete##" + (*it)->Name();
-
-	//	//draw a button on the same line to delete the current object
-	//	if (ImGui::Button(deleteLabel.c_str()))
-	//	{
-	//		//delete the current iterator from the container
-	//		delete *it;
-
-	//		*it->
-
-	//		it = deque.erase(it);
-	//		mSelectedObj = nullptr;
-	//	}
-	//	else
-	//	{
-	//		//increment the iterator
-	//		it++;
-	//	}
-	//}
-
-
-
 	for (auto i = 0; i < deque.size(); ++i)
 	{
 		//if a button is pressed
@@ -575,12 +540,11 @@ void CScene::DisplayPropertiesWindow()
 			mSelectedObj->SetScale(scale);
 		}
 
-		ImGui::Checkbox("Show Bounds", &showBounds);
-
 		if (mSelectedObj->Material()->HasNormals())
 			ImGui::DragFloat("ParallaxDepth", &mSelectedObj->ParallaxDepth(), 0.0001f, 0.0f, 1.0f, "%.6f");
 
-			ImGui::DragFloat("Roughness", &mSelectedObj->Roughness(), 0.001f, 0.0f, 1.0f);
+			ImGui::DragFloat("Roughness", &mSelectedObj->Roughness(), 0.001f);
+			ImGui::DragFloat("Metalness", &mSelectedObj->Metalness(), 0.001f);
 
 
 		//----------------------------------------------------------------
@@ -614,39 +578,23 @@ void CScene::DisplayPropertiesWindow()
 			//if it is a spotlight let it modify few things
 			if (auto spotLight = dynamic_cast<CSpotLight*>(mSelectedObj))
 			{
-				//modify facing
-				static CVector3 facingV = spotLight->GetFacing();
-
-				if (ImGui::DragFloat3("Facing", facingV.GetValuesArray(), 0.001f, -1.0f, 1.0f))
-				{
-					CVector3 facing = Normalise(facingV);
-					spotLight->SetFacing(facing);
-				}
 
 				//modify cone angle
 				ImGui::DragFloat("Cone Angle", &spotLight->GetConeAngle(), 1.0f, 0.0f, 180.0f);
 
 				//modify shadow map size
 				static int size = std::log2(spotLight->GetShadowMapSize());
-				if (ImGui::DragInt("ShadowMapsSize", &size, 1, 1, D3D11_MAX_TEXTURE_DIMENSION_2_TO_EXP))
+				if (ImGui::DragInt("ShadowMapsSize", &size, 1, 1, 14))
 				{
 					spotLight->SetShadowMapsSize(pow(2, size));
 				}
 			}
 			else if (auto dirLight = dynamic_cast<CDirLight*>(mSelectedObj))
 			{
-				//modify direction
-				static auto facingV = dirLight->GetDirection();
-
-				if (ImGui::DragFloat3("Facing", facingV.GetValuesArray(), 0.001f, -1.0f, 1.0f))
-				{
-					CVector3 facing = Normalise(facingV);
-					dirLight->SetDirection(facing);
-				}
-
+				
 				//modify shadow map size
 				static int size = std::log2(dirLight->GetShadowMapSize());
-				if (ImGui::DragInt("ShadowMapsSize", &size, 1, 1, D3D11_MAX_TEXTURE_DIMENSION_2_TO_EXP))
+				if (ImGui::DragInt("ShadowMapsSize", &size, 1, 1, 14))
 				{
 					dirLight->SetShadowMapSize(pow(2, size));
 				}
@@ -684,7 +632,7 @@ void CScene::DisplayPropertiesWindow()
 			{
 				//modify shadow map size
 				static int size = std::log2(point->GetShadowMapSize());
-				if (ImGui::DragInt("ShadowMapsSize", &size, 1, 1, D3D11_MAX_TEXTURE_DIMENSION_2_TO_EXP))
+				if (ImGui::DragInt("ShadowMapsSize", &size, 1, 1, 12))
 				{
 					point->SetShadowMapSize(pow(2, size));
 				}
@@ -737,7 +685,6 @@ void CScene::DisplayPropertiesWindow()
 			if (ImGui::DragInt("Size (base 2)", &size, 1, 1, 12))
 			{
 				mSelectedObj->AmbientMap()->SetSize(pow(2, size));
-				mSelectedObj->mChangedPos = true;
 			}
 
 			// Debug porpuses, It saves to file the ambient map, 
@@ -806,17 +753,17 @@ void CScene::DisplaySceneSettings(bool& b)
 	{
 		ImGui::Checkbox("VSync", &mLockFPS);
 
-		ImGui::DragInt("PCF Samples", &mPcfSamples, 1, 0, 64);
+		//ImGui::DragInt("PCF Samples", &mPcfSamples, 1, 0, 64);
 
-		static float bg[] = { mBackgroundColor.r,mBackgroundColor.g,mBackgroundColor.b,mBackgroundColor.a };
+		//static float bg[] = { mBackgroundColor.r,mBackgroundColor.g,mBackgroundColor.b,mBackgroundColor.a };
 
 		static auto minMax = (&gPerFrameConstants.parallaxMinSamples, &gPerFrameConstants.parallaxMaxSamples);
 		ImGui::DragFloat2("Min/Max parallax occlusion samples", minMax, 1.0f, 0.0f, D3D11_FLOAT32_MAX);
 
-		if (ImGui::ColorEdit4("Background Colour", bg))
-		{
-			mBackgroundColor.Set(bg);
-		}
+		//if (ImGui::ColorEdit4("Background Colour", bg))
+		//{
+		//	mBackgroundColor.Set(bg);
+		//}
 
 		ImGui::DragFloat("Depth Adjust", &gPerFrameConstants.gDepthAdjust, 0.0000001f, 0.0f, 0.1f, "%.7f");
 

@@ -6,8 +6,8 @@
         <Entity Type="Plant" Name="Common Fern_rhDso_3D Plant">
             <Geometry ID="Common Fern_rhDso_3D Plant//Common Fern_LOD0_Var1.fbx"/>
             <Position X="71.438797" Y="-16.941364" Z="-96.924339"/>
-            <Rotation X="21.007231" Y="-5.1833258" Z="1.3631645"/>
-            <Scale X="0.99999821" Y="0.99999833" Z="0.99999827"/>
+            <Rotation X="21.007231" Y="-5.1833267" Z="1.3631645"/>
+            <Scale X="0.99999815" Y="0.99999827" Z="0.99999821"/>
         </Entity>
         <Entity Type="GameObject" Name="Mossy Embankment_tlnvecpfa_3D Assembly">
             <Geometry ID="Mossy Embankment_tlnvecpfa_3D Assembly//Mossy Embankment_LOD0_.fbx"/>
@@ -144,27 +144,27 @@
         </Entity>
         <Entity Type="Sky" Name="Sphere">
             <Geometry Mesh="Sphere.x" Diffuse="lauter_waterfall.jpg"/>
-            <Position X="10.853884" Y="-3.7367382" Z="-83.484032"/>
+            <Position X="-57.668186" Y="31.128954" Z="-52.649548"/>
             <Rotation X="-0" Y="0" Z="0"/>
             <Scale X="87.624542" Y="87.624542" Z="87.624542"/>
         </Entity>
         <Entity Type="PointLight" Name="Light">
             <Geometry Mesh="Light.x" Diffuse="Flare.jpg"/>
-            <Position X="14.64027" Y="35.556999" Z="-83.921654"/>
+            <Position X="65.454079" Y="23.602657" Z="-90.349228"/>
             <Rotation X="-0" Y="-179.99998" Z="0"/>
             <Scale X="1" Y="1" Z="1"/>
             <Colour X="1" Y="0.99998999" Z="0.99998999"/>
             <Strength S="4000"/>
         </Entity>
         <Entity Type="Camera">
-            <Position X="10.853884" Y="-3.7367382" Z="-83.484032"/>
-            <Rotation X="4.6466374" Y="-10743.99" Z="0"/>
+            <Position X="-57.668186" Y="31.128954" Z="-52.649548"/>
+            <Rotation X="13.267943" Y="-10335.331" Z="0"/>
         </Entity>
     </Entities>
     <PostProcessingEffects>
         <Effect Type="GodRays" Mode="FullScreen"/>
         <Effect Type="SSAO" Mode="FullScreen"/>
         <Effect Type="ChromaticAberration" Mode="FullScreen"/>
-        <Settings setting0="0" setting1="0" setting2="1" setting3="1" setting4="0" setting5="0" setting6="0" setting7="0" setting8="0" setting9="0" setting10="0" setting11="0" setting12="0" setting13="0" setting14="0" setting15="0" setting16="0" setting17="0" setting18="0" setting19="0" setting20="0" setting21="0" setting22="0" setting23="0" setting24="1" setting25="1" setting26="1" setting27="0.5" setting28="0" setting29="0" setting30="0" setting31="0" setting32="0" setting33="0" setting34="0" setting35="0" setting36="0.78798282" setting37="0" setting38="0" setting39="0" setting40="0.029999999" setting41="0" setting42="0" setting43="0" setting44="5.6541901" setting45="0" setting46="0" setting47="0" setting48="5229.4243" setting49="0.0049999999" setting50="0.125" setting51="0" setting52="0.0020000001" setting53="0.361" setting54="0.44800001" setting55="0" setting56="8.9683102e-44" setting57="4" setting58="3.0999999" setting59="0" setting60="0.50400001" setting61="0" setting62="0" setting63="0" setting64="1" setting65="1" setting66="4.73e-07" setting67="0.1" setting68="-0.5784803" setting69="-0.96074581" setting70="1.234" setting71="1.007" setting72="0.51300001" setting73="0.182" setting74="9.9492191e-44" setting75="0"/>
+        <Settings setting0="0" setting1="0" setting2="1" setting3="1" setting4="0" setting5="0" setting6="0" setting7="0" setting8="0" setting9="0" setting10="0" setting11="0" setting12="0" setting13="0" setting14="0" setting15="0" setting16="0" setting17="0" setting18="0" setting19="0" setting20="0" setting21="0" setting22="0" setting23="0" setting24="1" setting25="1" setting26="1" setting27="0.5" setting28="0" setting29="0" setting30="0" setting31="0" setting32="0" setting33="0" setting34="0" setting35="0" setting36="0.54998159" setting37="0" setting38="0" setting39="0" setting40="0.029999999" setting41="0" setting42="0" setting43="0" setting44="6.9352779" setting45="0" setting46="0" setting47="0" setting48="5348.2271" setting49="0.0049999999" setting50="0.125" setting51="0" setting52="0.0020000001" setting53="0.361" setting54="0.44800001" setting55="0" setting56="8.9683102e-44" setting57="4" setting58="3.0999999" setting59="0" setting60="0.50400001" setting61="0" setting62="0" setting63="0" setting64="1" setting65="1" setting66="4.73e-07" setting67="0.1" setting68="0.52220976" setting69="-0.45578003" setting70="1.234" setting71="1.007" setting72="0.51300001" setting73="0.182" setting74="9.9492191e-44" setting75="0"/>
     </PostProcessingEffects>
 </Scene>

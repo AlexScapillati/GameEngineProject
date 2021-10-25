@@ -76,58 +76,28 @@ float3 CalculateLight(float3 lightPos, float lightIntensity, float3 colour, floa
     return diffuse;
 }
 
-    
-static const float totalTexels = (gPcfSamples * 2.0f + 1.0f) * (gPcfSamples * 2.0f + 1.0f);
-
+// Percentage closer filtering
 float PCF(float depthFromLight, float2 shadowMapUV, int i)
 {
-    
-    
     //get the shadow map size
-    float2 size = 0;
+    float2 size;
     ShadowMaps[i].GetDimensions(size.x, size.y);
     
     //store the texel size
     const float texelSize = 1.0f / size.x;
-	
-  //  float total = 0.0f;
     
-  //  float dx = ddx(shadowMapUV);
-  //  float dy = ddy(shadowMapUV);
+    // Get the derivates
+    float dx = ddx(shadowMapUV);
+    float dy = ddy(shadowMapUV);
     
-  //  //go through the nearby pixels in the X and in the Y coordinates
-  //  [fastopt]
-  //  for (float x = -gPcfSamples; x <= gPcfSamples; x += 1.0)
-  //  {
-  //      [fastopt]
-  //      for (float y = -gPcfSamples; y <= gPcfSamples; y += 1.0)
-  //      {
-  //          //get the depth value for that coordinate
-  //          const float objNearestLight = ShadowMaps[i].Sample(PointClamp, shadowMapUV + float2(x, y) * texelSize).r;
-            
-  //          //if it less than the depth of the light
-  //          if (depthFromLight > objNearestLight)
-  //          //add one to the total variable
-  //              total += 1.0f;
-  //      }
-  //  }
-		////after the loops are done, make the average
-  //  total /= totalTexels;
-		
-  //  //return the average multiplied by the depth form light inverted
-  //  return 1.0f - (total * depthFromLight);
-    
-    float sum = 0;
+    float sum = 0.0f;
     float x, y;
 
-    float pcfPoints = 1.5;
-    
-    for (y = -pcfPoints; y <= pcfPoints; y += 1.0)
-        for (x = -pcfPoints; x <= pcfPoints; x += 1.0)
-            sum += ShadowMaps[i].Sample(PointClamp,shadowMapUV + float2(x, y) * texelSize);
+    for (y = -1.5f; y <= 1.5f; y += 1.0f)
+        for (x = -1.5f; x <= 1.5f; x += 1.0f)
+            sum += ShadowMaps[i].SampleGrad(PointClamp, shadowMapUV + float2(x, y) * texelSize, dx, dy);
 
-    return sum / 16;
-    
+    return sum / 16.0f;
 }
 
 //--------------------------------------------------------------------------------------
@@ -148,12 +118,13 @@ float4 main(LightingPixelShaderInput input) : SV_Target
     
     float3 albedo = DiffuseSpecularMap.Sample(TexSampler, input.uv);
     
+    // The opacity value is stored in the alpha channel of the albedo map (personal choice)
     float opacity = DiffuseSpecularMap.Sample(TexSampler, input.uv).a;
     
+    // If the opacity is 0 discard this pixel (it will be transparent)
     if (!opacity)
         discard;
    
-    
     float ao = 1;
     if(gHasAoMap) 
         ao = AOMap.Sample(TexSampler, input.uv).r;
@@ -196,12 +167,13 @@ float4 main(LightingPixelShaderInput input) : SV_Target
     
 	//// Lights ////
     
+    // Simple Lights
     for (int i = 0; i < gNumLights && gLights[i].enabled; ++i)
     {
         resDiffuse += CalculateLight(gLights[i].position, gLights[i].intensity, gLights[i].colour, resDiffuse, resSpecular, input.worldNormal, cameraDirection, input.worldPosition, gRoughness, albedo);
     }
     
-	//for each spot light
+	// Spot lights
     for (int j = 0; j < gNumSpotLights && gSpotLights[j].enabled; ++j)
     {
         const float3 lightDir = normalize(gSpotLights[j].pos - input.worldPosition);
@@ -227,22 +199,24 @@ float4 main(LightingPixelShaderInput input) : SV_Target
 			// Get depth of this pixel if it were visible from the light (another advanced projection step)
             const float depthFromLight = projection.z / projection.w - bias; //*** Adjustment so polygons don't shadow themselves
             
-		        // Calcluate pcf value   
-            float PCFvalue = PCF(depthFromLight, shadowMapUV, j);
+		    // Calcluate pcf value   
+            float PCFValue = PCF(depthFromLight, shadowMapUV, j);
             
-			// Compare pixel depth from light with depth held in shadow map of the light. If shadow map depth is less than something is nearer
-			// to the light than this pixel - so the pixel gets no effect from this light
-            if (1 /*depthFromLight < ShadowMaps[j].Sample(PointClamp, float2(shadowMapUV)).r*/)
+            float depth = ShadowMaps[j].Sample(PointClamp, shadowMapUV).r;
+            
+            // Calculate lighting based on the pcf value, 
+            //if it is 0 there is no point to calculate it since we are in complete shadow
+            if (PCFValue > 0.1)
             {
-                resDiffuse += CalculateLight(gSpotLights[j].pos, gSpotLights[j].intensity, gSpotLights[j].colour, resDiffuse, resSpecular, input.worldNormal, cameraDirection, input.worldPosition, gRoughness, DiffuseSpecularMap.Sample(TexSampler, input.uv).rgb) * PCFvalue;
+                resDiffuse += CalculateLight(gSpotLights[j].pos, gSpotLights[j].intensity, gSpotLights[j].colour, resDiffuse, resSpecular, input.worldNormal, cameraDirection, input.worldPosition, gRoughness, DiffuseSpecularMap.Sample(TexSampler, input.uv).rgb) * PCFValue;
             }
         }
     }
 
-    //for each dir light
+    // Directional Lights
     for (int k = 0; k < gNumDirLights && gDirLights[k].enabled; ++k)
     {
-        const float3 lightDir = gDirLights[k].facing;
+        const float3 lightDir = normalize(gDirLights[k].facing - input.worldPosition);
         
     	// Using the world position of the current pixel and the matrices of the light (as a camera), find the 2D position of the
 		// pixel *as seen from the light*. Will use this to find which part of the shadow map to look at.
@@ -261,13 +235,16 @@ float4 main(LightingPixelShaderInput input) : SV_Target
         
 		// Get depth of this pixel if it were visible from the light (another advanced projection step)
         const float depthFromLight = projection.z / projection.w - bias; //*** Adjustment so polygons don't shadow themselves
+        
+        float depth = ShadowMaps[k].Sample(PointClamp, shadowMapUV);
 		
         float PCFValue = PCF(depthFromLight, shadowMapUV, k);
-            
-		// Compare pixel depth from light with depth held in shadow map of the light. If shadow map depth is less than something is nearer
-		// to the light than this pixel - so the pixel gets no effect from this light
-        if (1 /*depthFromLight < ShadowMaps[k /*+ numSpotLights].Sample(PointClamp, shadowMapUV).r*/)
+        
+        // Calculate lighting based on the pcf value, 
+        //if it is 0 or less there is no point to calculate it since we are in complete shadow
+        if (PCFValue > 0)
         {
+            // Do not use the function here since there is no light position
             float nDotV = max(dot(input.worldNormal, cameraDirection), 0.001f);
             
             float li = gDirLights[k].intensity;
@@ -312,12 +289,10 @@ float4 main(LightingPixelShaderInput input) : SV_Target
     }
     
     //for each point light
-    [fastopt]
     for (int l = 0; l < gNumPointLights && gPointLights[l].enabled; ++l)
     {
         const float3 lightDir = normalize(gPointLights[l].pos - input.worldPosition);
         
-        [fastopt]
         for (int face = 0; face < 6; ++face)
         {
     	    // Using the world position of the current pixel and the matrices of the light (as a camera), find the 2D position of the
@@ -344,13 +319,11 @@ float4 main(LightingPixelShaderInput input) : SV_Target
             
             float depth = ShadowMaps[l /*+ gNumSpotLights + gNumDirLights */ + face].Sample(PointClamp, shadowMapUV).r;
            
-            float3 currDiffuse = CalculateLight(gPointLights[l].pos, gPointLights[l].intensity, gPointLights[l].colour, resDiffuse, resSpecular, input.worldNormal, cameraDirection, input.worldPosition, gRoughness, DiffuseSpecularMap.Sample(TexSampler, input.uv).rgb);
-            
-            float PCFValue = PCF(depthFromLight, shadowMapUV, l + face);
-            
             if (depthFromLight > 0 && depthFromLight < depth)
             {
-                resDiffuse += currDiffuse /** PCFValue*/;
+                float3 currDiffuse = CalculateLight(gPointLights[l].pos, gPointLights[l].intensity, gPointLights[l].colour, resDiffuse, resSpecular, input.worldNormal, cameraDirection, input.worldPosition, gRoughness, DiffuseSpecularMap.Sample(TexSampler, input.uv).rgb);
+                float PCFValue = PCF(depthFromLight, shadowMapUV, l + face);
+                resDiffuse += currDiffuse * PCFValue;
             }
         }
     }

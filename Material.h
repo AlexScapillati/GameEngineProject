@@ -41,8 +41,8 @@ public:
 	//-------------------------------------
 
 	auto TextureFileName() { return mMapsStr.front(); }
-	auto GetTexture() { return mPbrMaps.Albedo; }
-	auto TextureSRV() { return mPbrMaps.AlbedoSRV; }
+	auto& Texture() { return mPbrMaps.Albedo; }
+	auto& TextureSRV() { return mPbrMaps.AlbedoSRV; }
 	auto GetPtrVertexShader() { return mVertexShader; }
 	auto GetPtrPixelShader() { return mPixelShader; }
 

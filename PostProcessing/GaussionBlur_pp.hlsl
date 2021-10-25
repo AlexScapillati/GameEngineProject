@@ -20,32 +20,38 @@ SamplerState PointSample : register(s0); // We don't usually want to filter (bil
 float4 main(PostProcessingInput input) : SV_TARGET
 {
     
-    float3 res;
+    float2 dimentions;
     
-    SceneTexture.GetDimensions(0, res.x, res.y, res.z);
+    // Get the texture dimentions (width, heigth)
+    SceneTexture.GetDimensions(dimentions.x, dimentions.y);
  
     float Pi = 6.28318530718; // Pi*2
     
-   
-    float2 Radius = gBlurSize / res.xy;
+    // This is the "radius" of blurring
+    float2 radius = gBlurSize / dimentions.xy;
     
     // Normalized pixel coordinates (from 0 to 1)
-    float2 uv = input.sceneUV / res.xy;
+    float2 uv = input.sceneUV / dimentions.xy;
     
-    // Pixel colour
-    float3 Color = SceneTexture.Sample(PointSample, input.sceneUV).rgb;
+    // The scene colour
+    float3 res = SceneTexture.Sample(PointSample, input.sceneUV).rgb;
     
-    // Blur calculations
-    for (float d = 0.0; d < Pi; d += Pi / gBlurDirections)
+    // For every direction (for every "ray" starting from the current pixel to the cos and sin of the direction)
+    for (float currDir = 0.0f; currDir < Pi; currDir += Pi / gBlurDirections)
     {
-        for (float i = 1.0 / gBlurQuality; i <= 1.0; i += 1.0 / gBlurQuality)
+        // For every point along the direction (given by 1 / gBlurQuality)
+        for (float i = 1.0f / gBlurQuality; i <= 1.0f; i += 1.0f / gBlurQuality)
         {
-            Color += SceneTexture.Sample(PointSample, input.sceneUV + float2(cos(d), sin(d)) * Radius * i);
+            // calculate the offset
+            float2 offset = float2(cos(currDir), sin(currDir)) * radius * i;
+            
+            // sample at the offset
+            res += SceneTexture.Sample(PointSample, input.sceneUV + offset);
         }
     }
     
-    // Output to screen
-    Color /= gBlurQuality * gBlurDirections - 15.0;
+    // Divide by the quality and the directions 
+    res /= gBlurQuality * gBlurDirections - 15.0f;
     
-    return float4(Color, 1.0f);
+    return float4(res, 1.0f);
 }

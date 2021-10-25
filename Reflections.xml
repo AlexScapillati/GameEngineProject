@@ -1,0 +1,56 @@
+<Scene>
+    <Default>
+        <Shaders/>
+    </Default>
+    <Entities>
+        <Entity Type="Sky" Name="Sky">
+            <Geometry Mesh="Sphere.x" Diffuse="lauter_waterfall.jpg"/>
+            <Position X="26.111773" Y="24.853487" Z="-86.647041"/>
+            <Rotation X="-0" Y="0" Z="0"/>
+            <Scale X="100" Y="100" Z="100"/>
+        </Entity>
+        <Entity Type="GameObject" Name="Roughness0">
+            <Geometry ID="Steel_sfcqbiec_Surface/Steel_LOD0.x"/>
+            <Position X="-2.8227" Y="10.901945" Z="4.9841623"/>
+            <Rotation X="-0" Y="0" Z="0"/>
+            <Scale X="1" Y="1" Z="1"/>
+            <AmbientMap Enabled="true" Size="4"/>
+        </Entity>
+        <Entity Type="GameObject" Name="Roughness1">
+            <Geometry ID="Steel_sfcqbiec_Surface/Steel_LOD0.x"/>
+            <Position X="17.386711" Y="10.901945" Z="4.9841623"/>
+            <Rotation X="-0" Y="0" Z="0"/>
+            <Scale X="1" Y="1" Z="1"/>
+            <AmbientMap Enabled="true" Size="4"/>
+        </Entity>
+        <Entity Type="GameObject" Name="Roughness2">
+            <Geometry ID="Steel_sfcqbiec_Surface/Steel_LOD0.x"/>
+            <Position X="39.211609" Y="10.901945" Z="4.9841623"/>
+            <Rotation X="-0" Y="0" Z="0"/>
+            <Scale X="1" Y="1" Z="1"/>
+            <AmbientMap Enabled="true" Size="4"/>
+        </Entity>
+        <Entity Type="GameObject" Name="Roughness3">
+            <Geometry ID="Steel_sfcqbiec_Surface/Steel_LOD0.x"/>
+            <Position X="61.301029" Y="10.901945" Z="4.9841623"/>
+            <Rotation X="-0" Y="0" Z="0"/>
+            <Scale X="1" Y="1" Z="1"/>
+            <AmbientMap Enabled="true" Size="8"/>
+        </Entity>
+        <Entity Type="Light" Name="Light">
+            <Geometry Mesh="Light.x" Diffuse="Flare.jpg"/>
+            <Position X="27.0511" Y="51.542645" Z="-89.942757"/>
+            <Rotation X="-0" Y="0" Z="0"/>
+            <Scale X="1" Y="1" Z="1"/>
+            <Colour X="1" Y="0.99998999" Z="0.99998999"/>
+            <Strength S="4000"/>
+        </Entity>
+        <Entity Type="Camera">
+            <Position X="26.111773" Y="24.853487" Z="-86.647041"/>
+            <Rotation X="-352.03952" Y="-16191.951" Z="0"/>
+        </Entity>
+    </Entities>
+    <PostProcessingEffects>
+        <Settings setting0="0" setting1="0" setting2="1" setting3="1" setting4="0" setting5="0" setting6="0" setting7="0" setting8="0" setting9="0" setting10="0" setting11="0" setting12="0" setting13="0" setting14="0" setting15="0" setting16="0" setting17="0" setting18="0" setting19="0" setting20="0" setting21="0" setting22="0" setting23="0" setting24="1" setting25="1" setting26="1" setting27="0.5" setting28="0" setting29="0" setting30="0" setting31="0" setting32="0" setting33="0" setting34="0" setting35="0" setting36="0.4917047" setting37="0" setting38="0" setting39="0" setting40="0.029999999" setting41="0" setting42="0" setting43="0" setting44="4.5353451" setting45="0" setting46="0" setting47="0" setting48="15078.383" setting49="0.0049999999" setting50="0.125" setting51="0" setting52="0.0020000001" setting53="0.361" setting54="0.48100001" setting55="0" setting56="8.9683102e-44" setting57="3.3" setting58="2" setting59="0" setting60="0.50400001" setting61="0" setting62="0" setting63="0" setting64="1" setting65="0.991" setting66="2.511e-06" setting67="0.0074999998" setting68="0.47683692" setting69="-0.28477669" setting70="1.696" setting71="1.007" setting72="0.38499999" setting73="0.26899999" setting74="6.2638041e-43" setting75="0"/>
+    </PostProcessingEffects>
+</Scene>

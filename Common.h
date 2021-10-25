@@ -11,6 +11,10 @@
 #include <d3d11.h>
 #include <string>
 #include <CVector2.h>
+#include <wrl.h>
+
+using namespace Microsoft::WRL;
+
 
 class CGameObjectManager;
 
@@ -33,14 +37,14 @@ extern CVector2 gViewportWindowPos;
 extern bool gViewportFullscreen;
 
 // Important DirectX variables
-extern ID3D11Device* gD3DDevice;
-extern ID3D11DeviceContext* gD3DContext;
-extern ID3D11Debug* gD3DDebug;
+extern ComPtr<ID3D11Device> gD3DDevice;
+extern ComPtr<ID3D11DeviceContext> gD3DContext;
+extern ComPtr<ID3D11Debug> gD3DDebug;
 
-extern IDXGISwapChain* gSwapChain;
-extern ID3D11RenderTargetView* gBackBufferRenderTarget; // Back buffer is where we render to
-extern ID3D11DepthStencilView* gDepthStencil;           // The depth buffer contains a depth for each back buffer pixel
-extern ID3D11ShaderResourceView* gDepthShaderView;        // Allows access to the depth buffer as a texture for certain specialised shaders
+extern ComPtr<IDXGISwapChain> gSwapChain;
+extern ComPtr<ID3D11RenderTargetView> gBackBufferRenderTarget; // Back buffer is where we render to
+extern ComPtr<ID3D11DepthStencilView> gDepthStencil;           // The depth buffer contains a depth for each back buffer pixel
+extern ComPtr<ID3D11ShaderResourceView> gDepthShaderView;        // Allows access to the depth buffer as a texture for certain specialised shaders
 
 extern CGameObjectManager* GOM;
 
@@ -140,7 +144,7 @@ struct PerFrameConstants
 };
 
 extern PerFrameConstants gPerFrameConstants;      // This variable holds the CPU-side constant buffer described above
-extern ID3D11Buffer* gPerFrameConstantBuffer; // This variable controls the GPU-side constant buffer matching to the above structure
+extern ComPtr < ID3D11Buffer> gPerFrameConstantBuffer; // This variable controls the GPU-side constant buffer matching to the above structure
 
 struct PerFrameLights
 {
@@ -148,7 +152,7 @@ struct PerFrameLights
 };
 
 extern PerFrameLights gPerFrameLightsConstants;
-extern ID3D11Buffer* gPerFrameLightsConstBuffer;
+extern ComPtr < ID3D11Buffer> gPerFrameLightsConstBuffer;
 
 struct PerFrameSpotLights
 {
@@ -156,7 +160,7 @@ struct PerFrameSpotLights
 };
 
 extern PerFrameSpotLights gPerFrameSpotLightsConstants;
-extern ID3D11Buffer* gPerFrameSpotLightsConstBuffer;
+extern ComPtr < ID3D11Buffer> gPerFrameSpotLightsConstBuffer;
 
 struct PerFrameDirLights
 {
@@ -164,7 +168,7 @@ struct PerFrameDirLights
 };
 
 extern PerFrameDirLights gPerFrameDirLightsConstants;
-extern ID3D11Buffer* gPerFrameDirLightsConstBuffer;
+extern ComPtr < ID3D11Buffer> gPerFrameDirLightsConstBuffer;
 
 struct PerFramePointLights
 {
@@ -172,7 +176,7 @@ struct PerFramePointLights
 };
 
 extern PerFramePointLights gPerFramePointLightsConstants;
-extern ID3D11Buffer* gPerFramePointLightsConstBuffer;
+extern ComPtr < ID3D11Buffer> gPerFramePointLightsConstBuffer;
 
 static const int MAX_BONES = 64;
 
@@ -192,12 +196,14 @@ struct PerModelConstants
 	float		hasMetallnessMap;
 
 	float       roughness;
-	CVector2    padding;
+	float		metalness;
+	float		padding;
 
 	CMatrix4x4 boneMatrices[MAX_BONES];
 };
+
 extern PerModelConstants gPerModelConstants;      // This variable holds the CPU-side constant buffer described above
-extern ID3D11Buffer* gPerModelConstantBuffer; // This variable controls the GPU-side constant buffer related to the above structure
+extern ComPtr<ID3D11Buffer> gPerModelConstantBuffer; // This variable controls the GPU-side constant buffer related to the above structure
 
 
 
@@ -271,5 +277,5 @@ struct PostProcessingConstants
 	float	 paddingJ;
 };
 extern PostProcessingConstants gPostProcessingConstants; // This variable holds the CPU-side constant buffer described above
-extern ID3D11Buffer* gPostProcessingConstBuffer; // This variable controls the GPU-side constant buffer related to the above structure
+extern ComPtr<ID3D11Buffer> gPostProcessingConstBuffer; // This variable controls the GPU-side constant buffer related to the above structure
 

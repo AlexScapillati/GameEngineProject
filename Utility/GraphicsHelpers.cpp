@@ -29,12 +29,11 @@ bool LoadTexture(std::string filename, ID3D11Resource** texture, ID3D11ShaderRes
 	if (filename.size() >= 4 &&
 		std::equal(dds.rbegin(), dds.rend(), filename.rbegin(), [](unsigned char a, unsigned char b) { return std::tolower(a) == std::tolower(b); }))
 	{
-		res = SUCCEEDED(DirectX::CreateDDSTextureFromFile(gD3DDevice, CA2CT(filename.c_str()), texture, textureSRV));
+		res = SUCCEEDED(DirectX::CreateDDSTextureFromFile(gD3DDevice.Get(), CA2CT(filename.c_str()), texture, textureSRV));
 	}
 	else
 	{
-		res = SUCCEEDED(DirectX::CreateWICTextureFromFile(gD3DDevice, gD3DContext, CA2CT(filename.c_str()), texture, textureSRV));
-		gD3DContext->GenerateMips(*textureSRV);
+		res = SUCCEEDED(DirectX::CreateWICTextureFromFile(gD3DDevice.Get(), gD3DContext.Get(), CA2CT(filename.c_str()), texture, textureSRV));
 	}
 
 	return res;
@@ -103,5 +102,5 @@ bool SaveTextureToFile(ID3D11Resource* tex, std::string& fileName)
 {
 	std::wstring name(fileName.begin(), fileName.end());
 
-	return SUCCEEDED(DirectX::SaveDDSTextureToFile(gD3DContext, tex, name.c_str()));
+	return SUCCEEDED(DirectX::SaveDDSTextureToFile(gD3DContext.Get(), tex, name.c_str()));
 }

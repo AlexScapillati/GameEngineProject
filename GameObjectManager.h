@@ -10,6 +10,7 @@ class CGameObject;
 class CSpotLight;
 class CDirLight;
 class CPointLight;
+class CSky;
 
 class CGameObjectManager
 {
@@ -61,6 +62,8 @@ public:
 
 	void UpdateObjects(float updateTime);
 
+	CGameObject* GetSky() { return (CGameObject*)mSky; }
+
 	~CGameObjectManager();
 
 	std::deque<CGameObject*> mObjects;
@@ -80,4 +83,6 @@ private:
 	int mMaxSize;
 
 	int mMaxShadowMaps;
+
+	CSky* mSky;
 };

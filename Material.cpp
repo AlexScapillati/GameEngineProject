@@ -38,13 +38,13 @@ CMaterial::CMaterial(std::vector<std::string> fileMaps)
 	// Set the shaders
 	if (HasNormals())
 	{
-		mVertexShader = gPBRNormalVertexShader;
-		mPixelShader = gPBRNormalPixelShader;
+		mVertexShader = gPBRNormalVertexShader.Get();
+		mPixelShader = gPBRNormalPixelShader.Get();
 	}
 	else
 	{
-		mVertexShader = gPBRVertexShader;
-		mPixelShader = gPBRPixelShader;
+		mVertexShader = gPBRVertexShader.Get();
+		mPixelShader = gPBRPixelShader.Get();
 	}
 }
 
@@ -66,6 +66,8 @@ CMaterial::CMaterial(CMaterial& m)
 	mPbrMaps.NormalSRV = nullptr;
 	mPbrMaps.Roughness = nullptr;
 	mPbrMaps.RoughnessSRV = nullptr;
+	mPbrMaps.Metalness = nullptr;
+	mPbrMaps.MetalnessSRV = nullptr;
 
 	mMapsStr = m.mMapsStr;
 
@@ -98,9 +100,9 @@ void CMaterial::RenderMaterial(bool basicGeometry)
 
 		// Use special depth-only rendering shaders
 		if (HasNormals())
-			gD3DContext->PSSetShader(gDepthOnlyNormalPixelShader, nullptr, 0);
+			gD3DContext->PSSetShader(gDepthOnlyNormalPixelShader.Get(), nullptr, 0);
 		else
-			gD3DContext->PSSetShader(gDepthOnlyPixelShader, nullptr, 0);
+			gD3DContext->PSSetShader(gDepthOnlyPixelShader.Get(), nullptr, 0);
 
 		// States - no blending, normal depth buffer and culling
 		gD3DContext->OMSetBlendState(gNoBlendingState, nullptr, 0xffffff);

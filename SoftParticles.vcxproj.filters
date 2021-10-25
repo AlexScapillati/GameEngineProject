@@ -171,12 +171,6 @@
     <ClInclude Include="Sky.h">
       <Filter>Engine\Objects</Filter>
     </ClInclude>
-    <ClInclude Include="ParticleEmitter.h">
-      <Filter>Engine\Objects</Filter>
-    </ClInclude>
-    <ClInclude Include="Particle.h">
-      <Filter>Engine\Objects</Filter>
-    </ClInclude>
     <ClInclude Include="Plant.h">
       <Filter>Engine\Objects</Filter>
     </ClInclude>
@@ -266,6 +260,7 @@
   </ItemGroup>
   <ItemGroup>
     <Xml Include="Scene1.xml" />
+    <Xml Include="Scene2.xml" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\BasicTransform_vs.hlsl">
@@ -341,6 +336,9 @@
       <Filter>Engine\PostProcessing</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\DepthOnlyNormal_ps.hlsl">
+      <Filter>Engine\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Sky_vs.hlsl">
       <Filter>Engine\Shaders</Filter>
     </FxCompile>
   </ItemGroup>

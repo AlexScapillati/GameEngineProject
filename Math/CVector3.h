@@ -93,6 +93,10 @@ CVector3 operator* (float s, const CVector3& v);
 CVector3 operator/ (const CVector3& v, float s);
 CVector3 operator/ (float s,const CVector3& v);
 
+// Vector-vector multiplication
+CVector3 operator* (const CVector3& v, const CVector3& w);
+
+
 /*-----------------------------------------------------------------------------------------
 	Non-member functions
 -----------------------------------------------------------------------------------------*/

@@ -711,7 +711,6 @@ void CMesh::RenderSubMesh(const SubMesh& subMesh)
 
 // Render the mesh with the given matrices
 // Handles rigid body meshes (including single part meshes) as well as skinned meshes
-// LIMITATION: The mesh must use a single texture throughout
 void CMesh::Render(std::vector<CMatrix4x4>& modelMatrices)
 {
 	// Skinning needs all matrices available in the shader at the same time, so first calculate all the absolute
@@ -745,12 +744,12 @@ void CMesh::Render(std::vector<CMatrix4x4>& modelMatrices)
 			gPerModelConstants.boneMatrices[nodeIndex] = absoluteMatrices[nodeIndex];
 		}
 
-		UpdateModelConstantBuffer(gPerModelConstantBuffer, gPerModelConstants); // Send to GPU
+		UpdateModelConstantBuffer(gPerModelConstantBuffer.Get(), gPerModelConstants); // Send to GPU
 
 		// Indicate that the constant buffer we just updated is for use in the vertex shader (VS), geometry shader (GS) and pixel shader (PS)
-		gD3DContext->VSSetConstantBuffers(0, 1, &gPerModelConstantBuffer); // First parameter must match constant buffer number in the shader
-		gD3DContext->GSSetConstantBuffers(0, 1, &gPerModelConstantBuffer); // First parameter must match constant buffer number in the shader
-		gD3DContext->PSSetConstantBuffers(0, 1, &gPerModelConstantBuffer);
+		gD3DContext->VSSetConstantBuffers(0, 1, gPerModelConstantBuffer.GetAddressOf()); // First parameter must match constant buffer number in the shader
+		gD3DContext->GSSetConstantBuffers(0, 1, gPerModelConstantBuffer.GetAddressOf()); // First parameter must match constant buffer number in the shader
+		gD3DContext->PSSetConstantBuffers(0, 1, gPerModelConstantBuffer.GetAddressOf());
 
 		// Already sent over all the absolute matrices for the entire mesh so we can render sub-meshes directly
 		// rather than iterating through the nodes.
@@ -768,12 +767,12 @@ void CMesh::Render(std::vector<CMatrix4x4>& modelMatrices)
 		{
 			// Send this node's matrix to the GPU via a constant buffer
 			gPerModelConstants.worldMatrix = absoluteMatrices[nodeIndex];
-			UpdateModelConstantBuffer(gPerModelConstantBuffer, gPerModelConstants); // Send to GPU
+			UpdateModelConstantBuffer(gPerModelConstantBuffer.Get(), gPerModelConstants); // Send to GPU
 
 			// Indicate that the constant buffer we just updated is for use in the vertex shader (VS) and pixel shader (PS)
-			gD3DContext->VSSetConstantBuffers(0, 1, &gPerModelConstantBuffer); // First parameter must match constant buffer number in the shader
-			gD3DContext->GSSetConstantBuffers(0, 1, &gPerModelConstantBuffer);
-			gD3DContext->PSSetConstantBuffers(0, 1, &gPerModelConstantBuffer);
+			gD3DContext->VSSetConstantBuffers(0, 1, gPerModelConstantBuffer.GetAddressOf()); // First parameter must match constant buffer number in the shader
+			gD3DContext->GSSetConstantBuffers(0, 1, gPerModelConstantBuffer.GetAddressOf());
+			gD3DContext->PSSetConstantBuffers(0, 1, gPerModelConstantBuffer.GetAddressOf());
 
 			// Render the sub-meshes attached to this node (no bones - rigid movement)
 			for (auto& subMeshIndex : mNodes[nodeIndex].subMeshes)

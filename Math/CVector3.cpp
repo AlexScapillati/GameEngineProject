@@ -122,6 +122,11 @@ CVector3 operator/(float s, const CVector3& v)
 	return CVector3{v.x/s,v.y/s,v.z/s};
 }
 
+CVector3 operator*(const CVector3& v, const CVector3& w)
+{
+	return CVector3(v.x*w.x,v.y*w.y,v.z*w.z);
+}
+
 // Addition of another vector to this one, e.g. Position += Velocity
 CVector3& CVector3::operator /= (const float v)
 {

@@ -4,6 +4,7 @@
 #include "PointLight.h"
 #include "DirLight.h"
 #include "Light.h"
+#include "Sky.h"
 #include "GraphicsHelpers.h"
 #include "MathHelpers.h"
 
@@ -19,6 +20,12 @@ void CGameObjectManager::AddObject(CGameObject* obj)
 {
 	if (mObjects.size() < mMaxSize)
 	{
+		// Try to cast it to the sky object // useful for the ambient map
+		if (!mSky)
+		{
+			mSky = dynamic_cast<CSky*>(obj);
+		}
+
 		mObjects.push_back(obj);
 	}
 	else
@@ -98,10 +105,10 @@ void CGameObjectManager::UpdateSpotLightsBuffer()
 			FLB->spotLights[i].enabled = 1;
 			FLB->spotLights[i].colour = mSpotLights[i]->GetColour();
 			FLB->spotLights[i].pos = mSpotLights[i]->Position();
-			FLB->spotLights[i].facing = mSpotLights[i]->GetFacing();
+			FLB->spotLights[i].facing =  Normalise(mSpotLights[i]->WorldMatrix().GetRow(2));
 			FLB->spotLights[i].cosHalfAngle = cos(ToRadians(mSpotLights[i]->GetConeAngle() / 2));
 			FLB->spotLights[i].viewMatrix = InverseAffine(mSpotLights[i]->WorldMatrix());
-			FLB->spotLights[i].projMatrix = MakeProjectionMatrix(1.0f, mSpotLights[i]->GetConeAngle());
+			FLB->spotLights[i].projMatrix = MakeProjectionMatrix(1.0f, ToRadians(mSpotLights[i]->GetConeAngle()));
 			FLB->spotLights[i].intensity = mSpotLights[i]->GetStrength();
 		}
 		else
@@ -122,10 +129,8 @@ void CGameObjectManager::UpdateDirLightsBuffer()
 		{
 			FLB->dirLights[i].enabled = 1;
 			FLB->dirLights[i].colour = mDirLights[i]->GetColour();
-			FLB->dirLights[i].facing = mDirLights[i]->GetDirection();
-			auto m = mDirLights[i]->WorldMatrix();
-			m.SetRow(3, { 0.0f,0.0f,0.0f });
-			FLB->dirLights[i].viewMatrix = InverseAffine(m);
+			FLB->dirLights[i].facing = mDirLights[i]->Position();
+			FLB->dirLights[i].viewMatrix = InverseAffine(mDirLights[i]->WorldMatrix());
 			FLB->dirLights[i].projMatrix = MakeOrthogonalMatrix(mDirLights[i]->GetWidth(), mDirLights[i]->GetWidth(), mDirLights[i]->GetNearClip(), mDirLights[i]->GetFarClip());
 			FLB->dirLights[i].intensity = mDirLights[i]->GetStrength();
 		}
@@ -243,11 +248,20 @@ void CGameObjectManager::RenderAmbientMaps()
 
 bool CGameObjectManager::RenderAllObjects()
 {
+	// Firstly render the sky (if any)
+	if (mSky) mSky->Render();
+
+	// Render the objects
 	for (auto it : mObjects)
 	{
+		// If the sky is present, do not render it two times
+		if (dynamic_cast<CSky*>(it)) continue;
+
+		// Render the objects
 		it->Render();
 	}
 
+	// Render the lights 
 	for (auto it : mLights)
 	{
 		it->Render();

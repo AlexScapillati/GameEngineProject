@@ -160,7 +160,8 @@ cbuffer PerModelConstants : register(b0) // The b1 gives this constant buffer th
     float       gHasMetallnessMap;
     
     float       gRoughness;
-    float2      padding1;
+    float       gMetalness;
+    float      padding1;
 
 	float4x4    gBoneMatrices[MAX_BONES];
 }

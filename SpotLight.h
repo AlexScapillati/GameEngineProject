@@ -13,8 +13,7 @@ public:
 		float strength = 0.0f,
 		CVector3 position = { 0, 0, 0 },
 		CVector3 rotation = { 0, 0, 0 },
-		float scale = 1,
-		CVector3 facing = { 0,0,1 });
+		float scale = 1);
 
 	CSpotLight(CSpotLight& s);
 
@@ -33,21 +32,11 @@ public:
 		return mConeAngle;
 	}
 
-	CVector3& GetFacing()
-	{
-		return mFacing;
-	}
 
-	void SetFacing(CVector3 v)
-	{
-		mFacing = v;
-		mWorldMatrices[0].FaceTarget(Position() + v);
-	}
 
 	void SetRotation(CVector3 rotation, int node = 0) override
 	{
 		CGameObject::SetRotation(rotation);
-		mFacing = Normalise(Rotation());
 	}
 
 	~CSpotLight();
@@ -58,7 +47,6 @@ private:
 
 	int mShadowMapSize;
 	float mConeAngle;
-	CVector3 mFacing;
 
 	void InitTextures();
 

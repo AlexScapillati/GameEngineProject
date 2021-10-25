@@ -18,6 +18,9 @@
 #include <list>
 #include <stdexcept>
 #include <utility>
+#include <wrl.h>
+
+using namespace Microsoft::WRL;
 
 class CScene
 {
@@ -33,7 +36,7 @@ public:
 	// Scene Render and Update
 	//--------------------------------------------------------------------------------------
 
-	ID3D11ShaderResourceView* RenderScene(float frameTime);
+	ComPtr<ID3D11ShaderResourceView> RenderScene(float frameTime);
 
 	// frameTime is the time passed since the last frame
 	void UpdateScene(float frameTime);
@@ -74,10 +77,6 @@ public:
 	void Save(std::string fileName = "");
 
 	~CScene();
-
-	void ReleaseTextures();
-
-	void ReleaseSRVandRTVs();
 
 	void Resize(UINT newX, UINT newY);
 
@@ -146,10 +145,10 @@ public:
 		PostProcessMode mode = PostProcessMode::Fullscreen;
 
 		std::string shaderFileName = "";		//not used
-		ID3D11PixelShader* shader = nullptr;	//not used
+		ComPtr < ID3D11PixelShader> shader = nullptr;	//not used
 
-		ID3D11Texture2D* tex = nullptr;			//not used
-		ID3D11ShaderResourceView* texSRV = nullptr;	//not used
+		ComPtr < ID3D11Texture2D> tex = nullptr;			//not used
+		ComPtr < ID3D11ShaderResourceView> texSRV = nullptr;	//not used
 	};
 
 	std::list<PostProcessFilter> mPostProcessingFilters;
@@ -176,47 +175,47 @@ private:
 
 	CGameObject* mSelectedObj;
 
-	ID3D11Texture2D* mTextrue;
-	ID3D11ShaderResourceView* mSceneSRV;
-	ID3D11RenderTargetView* mSceneRTV;
+	ComPtr<ID3D11Texture2D> mTextrue;
+	ComPtr<ID3D11ShaderResourceView> mSceneSRV;
+	ComPtr<ID3D11RenderTargetView> mSceneRTV;
 
-	ID3D11Texture2D* mDepthStencil;
-	ID3D11ShaderResourceView* mDepthStencilSRV;
-	ID3D11DepthStencilView* mDepthStencilRTV;
+	ComPtr<ID3D11Texture2D> mDepthStencil;
+	ComPtr<ID3D11ShaderResourceView> mDepthStencilSRV;
+	ComPtr<ID3D11DepthStencilView> mDepthStencilRTV;
 
-	ID3D11Texture2D* mFinalTextrue;
-	ID3D11ShaderResourceView* mFinalTextureSRV;
-	ID3D11RenderTargetView* mFinalRTV;
+	ComPtr<ID3D11Texture2D> mFinalTextrue;
+	ComPtr<ID3D11ShaderResourceView> mFinalTextureSRV;
+	ComPtr<ID3D11RenderTargetView> mFinalRTV;
 
-	ID3D11Texture2D* mFinalDepthStencil;
-	ID3D11ShaderResourceView* mFinalDepthStencilSRV;
-	ID3D11DepthStencilView* mFinalDepthStencilRTV;
+	ComPtr<ID3D11Texture2D> mFinalDepthStencil;
+	ComPtr<ID3D11ShaderResourceView> mFinalDepthStencilSRV;
+	ComPtr<ID3D11DepthStencilView> mFinalDepthStencilRTV;
 
 	//****************************
 	// Post processing textures
 
 	// Additional textures used for specific post-processes
-	ID3D11Resource* mNoiseMap = nullptr;
-	ID3D11ShaderResourceView* mNoiseMapSRV = nullptr;
+	ComPtr<ID3D11Resource> mNoiseMap = nullptr;
+	ComPtr<ID3D11ShaderResourceView> mNoiseMapSRV = nullptr;
 
-	ID3D11Resource* mBurnMap = nullptr;
-	ID3D11ShaderResourceView* mBurnMapSRV = nullptr;
+	ComPtr<ID3D11Resource> mBurnMap = nullptr;
+	ComPtr<ID3D11ShaderResourceView> mBurnMapSRV = nullptr;
 
-	ID3D11Resource* mDistortMap = nullptr;
-	ID3D11ShaderResourceView* mDistortMapSRV = nullptr;
+	ComPtr<ID3D11Resource> mDistortMap = nullptr;
+	ComPtr<ID3D11ShaderResourceView> mDistortMapSRV = nullptr;
 
-	ID3D11Texture2D* mLuminanceMap = nullptr;
-	ID3D11ShaderResourceView* mLuminanceMapSRV = nullptr;
-	ID3D11RenderTargetView* mLuminanceRTV = nullptr;
+	ComPtr<ID3D11Texture2D> mLuminanceMap = nullptr;
+	ComPtr<ID3D11ShaderResourceView> mLuminanceMapSRV = nullptr;
+	ComPtr<ID3D11RenderTargetView> mLuminanceRTV = nullptr;
 
-	ID3D11Resource* mRandomMap = nullptr;
-	ID3D11ShaderResourceView* mRandomMapSRV = nullptr;
+	ComPtr<ID3D11Resource> mRandomMap = nullptr;
+	ComPtr<ID3D11ShaderResourceView> mRandomMapSRV = nullptr;
 
 	bool mSsaoBlur = false;
 
-	ID3D11Texture2D* mSsaoMap = nullptr;
-	ID3D11ShaderResourceView* mSsaoMapSRV = nullptr;
-	ID3D11RenderTargetView* mSsaoMapRTV = nullptr;
+	ComPtr<ID3D11Texture2D > mSsaoMap = nullptr;
+	ComPtr<ID3D11ShaderResourceView > mSsaoMapSRV = nullptr;
+	ComPtr<ID3D11RenderTargetView > mSsaoMapRTV = nullptr;
 
 	//****************************
 

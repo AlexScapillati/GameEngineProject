@@ -80,6 +80,16 @@ void CLevelImporter::SaveScene(std::string& fileName /* ="" */, CScene* ptrScene
 }
 
 
+void CLevelImporter::SavePostitionRotationScale(tinyxml2::XMLElement* obj, CGameObject* it)
+{
+	//save position, position and scale
+	auto childEl = obj->InsertNewChildElement("Position");
+	SaveVector3(it->Position(), childEl);
+	childEl = obj->InsertNewChildElement("Rotation");
+	SaveVector3(ToDegrees(it->Rotation()), childEl);
+	childEl = obj->InsertNewChildElement("Scale");
+	SaveVector3(it->Scale(), childEl);
+}
 
 void CLevelImporter::SaveObjects(tinyxml2::XMLElement* el, CScene* ptrScene)
 {
@@ -120,13 +130,7 @@ void CLevelImporter::SaveObjects(tinyxml2::XMLElement* el, CScene* ptrScene)
 			childEl->SetAttribute("Diffuse", it->TextrueFileName().c_str());
 		}
 
-		//save position, position and scale
-		childEl = obj->InsertNewChildElement("Position");
-		SaveVector3(it->Position(), childEl);
-		childEl = obj->InsertNewChildElement("Rotation");
-		SaveVector3(ToDegrees(it->Rotation()), childEl);
-		childEl = obj->InsertNewChildElement("Scale");
-		SaveVector3(it->Scale(), childEl);
+		SavePostitionRotationScale(obj, it);
 
 		// Ambient Map
 		if (it->AmbientMapEnabled())
@@ -153,12 +157,7 @@ void CLevelImporter::SaveObjects(tinyxml2::XMLElement* el, CScene* ptrScene)
 		childEl->SetAttribute("Diffuse", it->TextrueFileName().c_str());
 
 		//save position, position and scale
-		childEl = obj->InsertNewChildElement("Position");
-		SaveVector3(it->Position(), childEl);
-		childEl = obj->InsertNewChildElement("Rotation");
-		SaveVector3(ToDegrees(it->Rotation()), childEl);
-		childEl = obj->InsertNewChildElement("Scale");
-		SaveVector3(it->Scale(), childEl);
+		SavePostitionRotationScale(obj, it);
 
 		//save colour and strength
 		childEl = obj->InsertNewChildElement("Colour");
@@ -174,7 +173,7 @@ void CLevelImporter::SaveObjects(tinyxml2::XMLElement* el, CScene* ptrScene)
 	for (auto it : GOM->mSpotLights)
 	{
 		auto obj = el->InsertNewChildElement("Entity");
-		obj->SetAttribute("Type", "Light");
+		obj->SetAttribute("Type", "SpotLight");
 		obj->SetAttribute("Name", it->Name().c_str());
 
 		auto childEl = obj->InsertNewChildElement("Geometry");
@@ -183,12 +182,7 @@ void CLevelImporter::SaveObjects(tinyxml2::XMLElement* el, CScene* ptrScene)
 		childEl->SetAttribute("Diffuse", it->TextrueFileName().c_str());
 
 		//save position, position and scale
-		childEl = obj->InsertNewChildElement("Position");
-		SaveVector3(it->Position(), childEl);
-		childEl = obj->InsertNewChildElement("Rotation");
-		SaveVector3(ToDegrees(it->Rotation()), childEl);
-		childEl = obj->InsertNewChildElement("Scale");
-		SaveVector3(it->Scale(), childEl);
+		SavePostitionRotationScale(obj, it);
 
 		//save colour and strength
 		childEl = obj->InsertNewChildElement("Colour");
@@ -196,9 +190,6 @@ void CLevelImporter::SaveObjects(tinyxml2::XMLElement* el, CScene* ptrScene)
 		childEl = obj->InsertNewChildElement("Strength");
 		childEl->SetAttribute("S", it->GetStrength());
 
-		//save facing
-		childEl = obj->InsertNewChildElement("Facing");
-		SaveVector3(it->GetFacing(), childEl);
 	}
 
 	//----------------------------------------------------
@@ -208,7 +199,7 @@ void CLevelImporter::SaveObjects(tinyxml2::XMLElement* el, CScene* ptrScene)
 	for (auto it : GOM->mDirLights)
 	{
 		auto obj = el->InsertNewChildElement("Entity");
-		obj->SetAttribute("Type", "Light");
+		obj->SetAttribute("Type", "DirectionalLight");
 		obj->SetAttribute("Name", it->Name().c_str());
 
 		auto childEl = obj->InsertNewChildElement("Geometry");
@@ -217,11 +208,7 @@ void CLevelImporter::SaveObjects(tinyxml2::XMLElement* el, CScene* ptrScene)
 		childEl->SetAttribute("Diffuse", it->TextrueFileName().c_str());
 
 		//save rotation and scale
-		//no position, since this is a directional light
-		childEl = obj->InsertNewChildElement("Rotation");
-		SaveVector3(ToDegrees(it->Rotation()), childEl);
-		childEl = obj->InsertNewChildElement("Scale");
-		SaveVector3(it->Scale(), childEl);
+		SavePostitionRotationScale(obj, it);
 
 		//save colour and strength
 		childEl = obj->InsertNewChildElement("Colour");
@@ -229,9 +216,6 @@ void CLevelImporter::SaveObjects(tinyxml2::XMLElement* el, CScene* ptrScene)
 		childEl = obj->InsertNewChildElement("Strength");
 		childEl->SetAttribute("S", it->GetStrength());
 
-		//save facing
-		childEl = obj->InsertNewChildElement("Facing");
-		SaveVector3(it->GetDirection(), childEl);
 	}
 
 	//----------------------------------------------------
@@ -250,12 +234,7 @@ void CLevelImporter::SaveObjects(tinyxml2::XMLElement* el, CScene* ptrScene)
 		childEl->SetAttribute("Diffuse", it->TextrueFileName().c_str());
 
 		//save position, position and scale
-		childEl = obj->InsertNewChildElement("Position");
-		SaveVector3(it->Position(), childEl);
-		childEl = obj->InsertNewChildElement("Rotation");
-		SaveVector3(ToDegrees(it->Rotation()), childEl);
-		childEl = obj->InsertNewChildElement("Scale");
-		SaveVector3(it->Scale(), childEl);
+		SavePostitionRotationScale(obj, it);
 
 		//save colour and strength
 		childEl = obj->InsertNewChildElement("Colour");
@@ -331,7 +310,6 @@ bool CLevelImporter::ParseScene(tinyxml2::XMLElement* sceneEl, CScene* scene)
 
 	return true;
 }
-
 
 CVector3 LoadVector3(tinyxml2::XMLElement* el)
 {
@@ -436,7 +414,6 @@ void CLevelImporter::LoadPointLight(tinyxml2::XMLElement* currEntity, CScene* sc
 	float strength = 0;
 	CVector3 pos = { 0,0,0 };
 	CVector3 rot = { 0,0,0 };
-	CVector3 facing = { 0,0,0 };
 	auto scale = 1.0f;
 
 	const auto entityNameAttr = currEntity->FindAttribute("Name");
@@ -504,7 +481,74 @@ void CLevelImporter::LoadLight(tinyxml2::XMLElement* currEntity, CScene* scene)
 	float strength = 0;
 	CVector3 pos = { 0,0,0 };
 	CVector3 rot = { 0,0,0 };
-	CVector3 facing = { 0,0,0 };
+	auto scale = 1.0f;
+
+	const auto entityNameAttr = currEntity->FindAttribute("Name");
+	if (entityNameAttr) name = entityNameAttr->Value();
+
+	const auto geometry = currEntity->FirstChildElement("Geometry");
+	if (geometry)
+	{
+		const auto meshAttr = geometry->FindAttribute("Mesh");
+		if (meshAttr) mesh = meshAttr->Value();
+
+		const auto diffuseAttr = geometry->FindAttribute("Diffuse");
+		if (diffuseAttr) diffuse = diffuseAttr->Value();
+
+	}
+
+	const auto positionEl = currEntity->FirstChildElement("Position");
+	if (positionEl)
+	{
+		pos = LoadVector3(positionEl);
+	}
+
+	const auto rotationEl = currEntity->FirstChildElement("Rotation");
+	if (rotationEl)
+	{
+		rot = LoadVector3(rotationEl);
+	}
+
+	const auto scaleEl = currEntity->FirstChildElement("Scale");
+	if (scaleEl)
+	{
+		scale = scaleEl->FindAttribute("X")->FloatValue();
+	}
+
+	const auto strengthEl = currEntity->FirstChildElement("Strength");
+	if (strengthEl)
+	{
+		strength = strengthEl->FindAttribute("S")->FloatValue();
+	}
+
+	const auto colourEl = currEntity->FirstChildElement("Colour");
+	if (colourEl)
+	{
+		colour = LoadVector3(colourEl);
+	}
+	try
+	{
+		auto obj = new CLight(mesh, name, diffuse, colour, strength, pos, rot, scale);
+
+		scene->mObjManager->AddLight(obj);
+	}
+	catch (const std::exception& e)
+	{
+		throw std::runtime_error(std::string(e.what()) + " of object " + name);
+	}
+}
+
+
+void CLevelImporter::LoadSpotLight(tinyxml2::XMLElement* currEntity, CScene* scene)
+{
+	std::string mesh;
+	std::string name;
+	std::string diffuse;
+
+	CVector3 colour = { 0,0,0 };
+	float strength = 0;
+	CVector3 pos = { 0,0,0 };
+	CVector3 rot = { 0,0,0 };
 	auto scale = 1.0f;
 
 	const auto entityNameAttr = currEntity->FindAttribute("Name");
@@ -551,53 +595,89 @@ void CLevelImporter::LoadLight(tinyxml2::XMLElement* currEntity, CScene* scene)
 		colour = LoadVector3(colourEl);
 	}
 
-	// Facing Settings
-	const auto facingEl = currEntity->FirstChildElement("Facing");
-
-	if (facingEl)
+	try
 	{
-		facing = LoadVector3(facingEl);
+		auto obj = new CSpotLight(mesh, name, diffuse, colour, strength, pos, rot, scale);
 
-		facing = Normalise(facing);
+		scene->mObjManager->AddSpotLight(obj);
 
-		//the light is a spot light so create spotLight obj
-		try
-		{
-			//if there is position create a spotlight
-			if (positionEl)
-			{
-				auto obj = new CSpotLight(mesh, name, diffuse, colour, strength, pos, rot, scale, facing);
-
-
-				scene->mObjManager->AddSpotLight(obj);
-			}
-			else
-			{
-				//otherwise create a directional light
-				auto obj = new CDirLight(mesh, name, diffuse, colour, strength, pos, rot, scale, facing);
-
-				scene->mObjManager->AddDirLight(obj);
-			}
-		}
-		catch (const std::exception& e)
-		{
-			throw std::runtime_error(std::string(e.what()) + " of object " + name);
-		}
 	}
-	else
+	catch (const std::exception& e)
 	{
-		try
-		{
-			auto obj = new CLight(mesh, name, diffuse, colour, strength, pos, rot, scale);
-
-			scene->mObjManager->AddLight(obj);
-		}
-		catch (const std::exception& e)
-		{
-			throw std::runtime_error(std::string(e.what()) + " of object " + name);
-		}
+		throw std::runtime_error(std::string(e.what()) + " of object " + name);
 	}
 }
+
+
+void CLevelImporter::LoadDirLight(tinyxml2::XMLElement* currEntity, CScene* scene)
+{
+	std::string mesh;
+	std::string name;
+	std::string diffuse;
+
+	CVector3 colour = { 0,0,0 };
+	float strength = 0;
+	CVector3 pos = { 0,0,0 };
+	CVector3 rot = { 0,0,0 };
+	auto scale = 1.0f;
+
+	const auto entityNameAttr = currEntity->FindAttribute("Name");
+	if (entityNameAttr) name = entityNameAttr->Value();
+
+	const auto geometry = currEntity->FirstChildElement("Geometry");
+	if (geometry)
+	{
+		const auto meshAttr = geometry->FindAttribute("Mesh");
+		if (meshAttr) mesh = meshAttr->Value();
+
+		const auto diffuseAttr = geometry->FindAttribute("Diffuse");
+		if (diffuseAttr) diffuse = diffuseAttr->Value();
+
+	}
+
+	const auto positionEl = currEntity->FirstChildElement("Position");
+	if (positionEl)
+	{
+		pos = LoadVector3(positionEl);
+	}
+
+	const auto rotationEl = currEntity->FirstChildElement("Rotation");
+	if (rotationEl)
+	{
+		rot = LoadVector3(rotationEl);
+	}
+
+	const auto scaleEl = currEntity->FirstChildElement("Scale");
+	if (scaleEl)
+	{
+		scale = scaleEl->FindAttribute("X")->FloatValue();
+	}
+
+	const auto strengthEl = currEntity->FirstChildElement("Strength");
+	if (strengthEl)
+	{
+		strength = strengthEl->FindAttribute("S")->FloatValue();
+	}
+
+	const auto colourEl = currEntity->FirstChildElement("Colour");
+	if (colourEl)
+	{
+		colour = LoadVector3(colourEl);
+	}
+
+	try
+	{
+		auto obj = new CDirLight(mesh, name, diffuse, colour, strength, pos, rot, scale);
+
+		scene->mObjManager->AddDirLight(obj);
+
+	}
+	catch (const std::exception& e)
+	{
+		throw std::runtime_error(std::string(e.what()) + " of object " + name);
+	}
+}
+
 
 void CLevelImporter::LoadSky(tinyxml2::XMLElement* currEntity, CScene* scene)
 {
@@ -804,9 +884,9 @@ void CLevelImporter::SavePostProcessingEffect(tinyxml2::XMLElement* curr, CScene
 
 	// Insert the settings element
 	auto settingsEl = curr->InsertNewChildElement("Settings");
-	
+
 	// For every setting 
-	for (auto i = 0; i< ARRAYSIZE(settings);++i)
+	for (auto i = 0; i < ARRAYSIZE(settings); ++i)
 	{
 		// create a different name for each setting
 		std::string name = "setting";
@@ -869,7 +949,7 @@ void CLevelImporter::ParsePostProcessingEffects(tinyxml2::XMLElement* curr, CSce
 
 			for (auto i = 0; i < sizeof(gPostProcessingConstants) / sizeof(float); ++i)
 			{
-				
+
 				// get the different name for each setting
 				std::string name = "setting";
 				name.append(std::to_string(i));
@@ -882,7 +962,7 @@ void CLevelImporter::ParsePostProcessingEffects(tinyxml2::XMLElement* curr, CSce
 			memcpy(&gPostProcessingConstants, values, sizeof(values));
 
 		}
-			currEffect = currEffect->NextSiblingElement();
+		currEffect = currEffect->NextSiblingElement();
 	}
 
 }
@@ -914,6 +994,14 @@ bool CLevelImporter::ParseEntities(tinyxml2::XMLElement* entitiesEl, CScene* sce
 				else if (typeValue == "PointLight")
 				{
 					LoadPointLight(currEntity, scene);
+				}
+				else if (typeValue == "DirectionalLight")
+				{
+					LoadDirLight(currEntity, scene);
+				}
+				else if (typeValue == "SpotLight")
+				{
+					LoadSpotLight(currEntity, scene);
 				}
 				else if (typeValue == "Sky")
 				{

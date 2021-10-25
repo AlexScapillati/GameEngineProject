@@ -65,7 +65,7 @@ ID3D11ShaderResourceView** CPointLight::RenderFromThis()
 		gPerFrameConstants.viewProjectionMatrix = gPerFrameConstants.viewMatrix * gPerFrameConstants.projectionMatrix;
 
 		// Update the constant buffer
-		UpdateFrameConstantBuffer(gPerFrameConstantBuffer, gPerFrameConstants);
+		UpdateFrameConstantBuffer(gPerFrameConstantBuffer.Get(), gPerFrameConstants);
 
 		// Set it to the GPU
 		gD3DContext->VSSetConstantBuffers(1, 1, &gPerFrameConstantBuffer);
@@ -78,6 +78,7 @@ ID3D11ShaderResourceView** CPointLight::RenderFromThis()
 			it->Render(true);
 		}
 
+		// Unbind the shadow map from the render target
 		ID3D11DepthStencilView* nullD = nullptr;
 		gD3DContext->OMSetRenderTargets(0, nullptr, nullD);
 	}
@@ -100,7 +101,6 @@ void CPointLight::Release()
 {
 	for (int i = 0; i < 6; ++i)
 	{
-		//if (mShadowMap[i])				mShadowMap[i]->Release();				mShadowMap[i] = nullptr;
 		if (mShadowMapSRV[i])			mShadowMapSRV[i]->Release();			mShadowMapSRV[i] = nullptr;
 		if (mShadowMapDepthStencils[i]) mShadowMapDepthStencils[i]->Release();	mShadowMapDepthStencils[i] = nullptr;
 	}

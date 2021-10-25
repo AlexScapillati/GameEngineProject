@@ -96,6 +96,8 @@ public:
 
 	auto& Roughness() { return mRoughness; }
 
+	auto& Metalness() { return mMetalness; }
+
 	auto SetRoughness(float r) { mRoughness = r; }
 
 	// Setters - model only stores matricies , so if user sets position, rotation or scale, just update those aspects of the matrix
@@ -112,10 +114,6 @@ public:
 
 	// This function will set the model world matrix
 	void SetWorldMatrix(CMatrix4x4 matrix, int node = 0);
-
-	// Set the value of mChangedPos
-	// Static since we are using a static variable
-	void SetChangedPos(bool b) { mChangedPos = b; }
 
 	// WIP, This will handle all the scripts and update the model's behaviour (similar to unity)
 	bool Update(float updateTime);
@@ -173,18 +171,11 @@ public:
 	// Render the whole scene from the model perspective. Very expensive, needs optimization
 	void RenderToAmbientMap();
 
+protected:
+
 	//-------------------------------------
 	// Private data / members
 	//-------------------------------------
-
-	// This variable decides whether to render a ambient map or not.
-	// Since the rendering of an ambient map could be expensive
-	// Static is to ensure that this variable is linked to every instance of this class.
-	// This because if an object changed its position, this instance will need to re-render the ambient map
-	bool mChangedPos;
-
-protected:
-
 
 	// The material
 	// It will hold all the textures and send them to the shader with RenderMaterial()
@@ -210,6 +201,7 @@ protected:
 	// Each model has a roughness value. This because not every model will have a roguhness map. So we can change its roughness manually.
 	// If a model has a roughness map. This will not make any changes.
 	float mRoughness;
+	float mMetalness;
 
 	std::string mName;
 

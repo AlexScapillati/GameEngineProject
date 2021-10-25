@@ -24,6 +24,8 @@ private:
 	
 	void SavePostProcessingEffect(tinyxml2::XMLElement* curr, CScene* scene);
 
+	void SavePostitionRotationScale(tinyxml2::XMLElement* obj, CGameObject* it);
+
 	void SaveObjects(tinyxml2::XMLElement* el, CScene* ptrScene);
 
 	void SaveVector3(CVector3 v, tinyxml2::XMLElement* el);
@@ -35,6 +37,10 @@ private:
 	void LoadPointLight(tinyxml2::XMLElement* currEntity, CScene* scene);
 
 	void LoadLight(tinyxml2::XMLElement* currEntity, CScene* scene);
+
+	void LoadSpotLight(tinyxml2::XMLElement* currEntity, CScene* scene);
+
+	void LoadDirLight(tinyxml2::XMLElement* currEntity, CScene* scene);
 
 	void LoadSky(tinyxml2::XMLElement* currEntity, CScene* scene);
 

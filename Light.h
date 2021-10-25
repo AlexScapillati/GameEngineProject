@@ -28,8 +28,8 @@ public:
 	{
 		try
 		{
-			mMaterial->SetVertexShader(gBasicTransformVertexShader);
-			mMaterial->SetPixelShader(gTintedTexturePixelShader);
+			mMaterial->SetVertexShader(gBasicTransformVertexShader.Get());
+			mMaterial->SetPixelShader(gTintedTexturePixelShader.Get());
 		}
 		catch (std::exception e)
 		{

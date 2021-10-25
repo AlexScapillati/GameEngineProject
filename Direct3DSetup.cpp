@@ -15,18 +15,18 @@
 // Globals used to keep code simpler, but try to architect your own code in a better way
 
 // The main Direct3D (D3D) variables
-ID3D11Device* gD3DDevice = nullptr; // D3D device for overall features
-ID3D11DeviceContext* gD3DContext = nullptr; // D3D context for specific rendering tasks
-ID3D11Debug* gD3DDebug = nullptr;
+ComPtr<ID3D11Device> gD3DDevice = nullptr; // D3D device for overall features
+ComPtr<ID3D11DeviceContext> gD3DContext = nullptr; // D3D context for specific rendering tasks
+ComPtr<ID3D11Debug> gD3DDebug = nullptr;
 
 // Swap chain and back buffer
-IDXGISwapChain* gSwapChain = nullptr;
-ID3D11RenderTargetView* gBackBufferRenderTarget = nullptr;
+ComPtr<IDXGISwapChain> gSwapChain = nullptr;
+ComPtr<ID3D11RenderTargetView> gBackBufferRenderTarget = nullptr;
 
 // Depth buffer (can also contain "stencil" values, which we will see later)
-ID3D11Texture2D* gDepthStencilTexture = nullptr; // The texture holding the depth values
-ID3D11DepthStencilView* gDepthStencil = nullptr; // The depth buffer referencing above texture
-ID3D11ShaderResourceView* gDepthShaderView = nullptr; // Allows access to the depth buffer as a texture for certain specialised shaders
+ComPtr<ID3D11Texture2D> gDepthStencilTexture = nullptr; // The texture holding the depth values
+ComPtr<ID3D11DepthStencilView> gDepthStencil = nullptr; // The depth buffer referencing above texture
+ComPtr<ID3D11ShaderResourceView> gDepthShaderView = nullptr; // Allows access to the depth buffer as a texture for certain specialised shaders
 
 //--------------------------------------------------------------------------------------
 // Initialise / uninitialise Direct3D
@@ -59,7 +59,7 @@ bool InitDirect3D()
 	UINT flags = D3D11_CREATE_DEVICE_DEBUG;
 
 	hr = D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, 0, flags, 0, 0, D3D11_SDK_VERSION,
-		&swapDesc, &gSwapChain, &gD3DDevice, nullptr, &gD3DContext);
+		&swapDesc, gSwapChain.GetAddressOf(), gD3DDevice.GetAddressOf(), nullptr, gD3DContext.GetAddressOf());
 	if (FAILED(hr))
 	{
 		gLastError = "Error creating Direct3D device";
@@ -74,7 +74,7 @@ bool InitDirect3D()
 		gLastError = "Error creating swap chain";
 		return false;
 	}
-	hr = gD3DDevice->CreateRenderTargetView(backBuffer, NULL, &gBackBufferRenderTarget);
+	hr = gD3DDevice->CreateRenderTargetView(backBuffer, NULL, gBackBufferRenderTarget.GetAddressOf());
 	backBuffer->Release();
 	if (FAILED(hr))
 	{
@@ -83,7 +83,7 @@ bool InitDirect3D()
 	}
 
 	//create debug device
-	if (FAILED(gD3DDevice->QueryInterface(IID_PPV_ARGS(&gD3DDebug))))
+	if (FAILED(gD3DDevice->QueryInterface(IID_PPV_ARGS(gD3DDebug.GetAddressOf()))))
 	{
 		throw std::runtime_error("Unable to create debug device");
 	}
@@ -104,7 +104,7 @@ bool InitDirect3D()
 	dbDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE; // Using this depth buffer in shaders so must say so;
 	dbDesc.CPUAccessFlags = 0;
 	dbDesc.MiscFlags = 0;
-	hr = gD3DDevice->CreateTexture2D(&dbDesc, nullptr, &gDepthStencilTexture);
+	hr = gD3DDevice->CreateTexture2D(&dbDesc, nullptr, gDepthStencilTexture.GetAddressOf());
 	if (FAILED(hr))
 	{
 		gLastError = "Error creating depth buffer texture";
@@ -117,7 +117,7 @@ bool InitDirect3D()
 	dsvDesc.Format = DXGI_FORMAT_D32_FLOAT; // Important point for when using depth buffer as texture, ensure you use this setting - different from other labs
 	dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	dsvDesc.Texture2D.MipSlice = 0;
-	hr = gD3DDevice->CreateDepthStencilView(gDepthStencilTexture, &dsvDesc, &gDepthStencil);
+	hr = gD3DDevice->CreateDepthStencilView(gDepthStencilTexture.Get(), &dsvDesc, gDepthStencil.GetAddressOf());
 	if (FAILED(hr))
 	{
 		gLastError = "Error creating depth buffer view";
@@ -131,7 +131,7 @@ bool InitDirect3D()
 	descSRV.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	descSRV.Texture2D.MipLevels = 1;
 	descSRV.Texture2D.MostDetailedMip = 0;
-	hr = gD3DDevice->CreateShaderResourceView(gDepthStencilTexture, &descSRV, &gDepthShaderView);
+	hr = gD3DDevice->CreateShaderResourceView(gDepthStencilTexture.Get(), &descSRV, gDepthShaderView.GetAddressOf());
 	if (FAILED(hr))
 	{
 		gLastError = "Error creating depth buffer shader resource view";
@@ -146,15 +146,6 @@ void ShutdownDirect3D()
 {
 	ReleaseStates();
 
-	if (gDepthShaderView)        gDepthShaderView->Release();			gDepthShaderView = nullptr;
-	if (gDepthStencil)           gDepthStencil->Release();				gDepthStencil = nullptr;
-	if (gDepthStencilTexture)    gDepthStencilTexture->Release();		gDepthStencilTexture = nullptr;
-	
-	if (gBackBufferRenderTarget) gBackBufferRenderTarget->Release();	gBackBufferRenderTarget = nullptr;
-	if (gSwapChain)              gSwapChain->Release();					gSwapChain = nullptr;
-	
-	if (gD3DDevice)              gD3DDevice->Release();					gD3DDevice = nullptr;
-
 	// Release each Direct3D object to return resources to the system. Leaving these out will cause memory
 	// leaks. Check documentation to see which objects need to be released when adding new features in your
 	// own projects.
@@ -162,14 +153,8 @@ void ShutdownDirect3D()
 	{
 		gD3DContext->ClearState(); // This line is also needed to reset the GPU before shutting down DirectX
 		gD3DContext->Flush();
-		gD3DContext->Release(); 
 		gD3DContext = nullptr;
 	}
-
-	//check for memory leaks
-	gD3DDebug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL | D3D11_RLDO_IGNORE_INTERNAL);
-
-	if (gD3DDebug) gD3DDebug->Release();
 }
 
 void Resize(UINT w, UINT h)
@@ -182,11 +167,11 @@ void Resize(UINT w, UINT h)
 	gD3DContext->OMSetRenderTargets(0, 0, 0);
 
 	// Release all outstanding references to the swap chain's buffers.
-	gBackBufferRenderTarget->Release();
+	gBackBufferRenderTarget.Reset();
 
-	gDepthShaderView->Release();
-	gDepthStencil->Release();
-	gDepthStencilTexture->Release();
+	gDepthShaderView.Reset();
+	gDepthStencil.Reset();
+	gDepthStencilTexture.Reset();
 
 	//// Create depth buffer to go along with the back buffer ////
 
@@ -204,7 +189,7 @@ void Resize(UINT w, UINT h)
 	dbDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE; // Using this depth buffer in shaders so must say so;
 	dbDesc.CPUAccessFlags = 0;
 	dbDesc.MiscFlags = 0;
-	hr = gD3DDevice->CreateTexture2D(&dbDesc, nullptr, &gDepthStencilTexture);
+	hr = gD3DDevice->CreateTexture2D(&dbDesc, nullptr, gDepthStencilTexture.GetAddressOf());
 	if (FAILED(hr))
 	{
 		gLastError = "Error creating depth buffer texture";
@@ -217,7 +202,7 @@ void Resize(UINT w, UINT h)
 	dsvDesc.Format = DXGI_FORMAT_D32_FLOAT; // Important point for when using depth buffer as texture, ensure you use this setting - different from other labs
 	dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	dsvDesc.Texture2D.MipSlice = 0;
-	hr = gD3DDevice->CreateDepthStencilView(gDepthStencilTexture, &dsvDesc, &gDepthStencil);
+	hr = gD3DDevice->CreateDepthStencilView(gDepthStencilTexture.Get(), &dsvDesc, gDepthStencil.GetAddressOf());
 	if (FAILED(hr))
 	{
 		gLastError = "Error creating depth buffer view";
@@ -231,7 +216,7 @@ void Resize(UINT w, UINT h)
 	descSRV.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	descSRV.Texture2D.MipLevels = 1;
 	descSRV.Texture2D.MostDetailedMip = 0;
-	hr = gD3DDevice->CreateShaderResourceView(gDepthStencilTexture, &descSRV, &gDepthShaderView);
+	hr = gD3DDevice->CreateShaderResourceView(gDepthStencilTexture.Get(), &descSRV, gDepthShaderView.GetAddressOf());
 	if (FAILED(hr))
 	{
 		gLastError = "Error creating depth buffer shader resource view";
@@ -256,7 +241,7 @@ void Resize(UINT w, UINT h)
 		throw std::runtime_error(gLastError);
 	}
 
-	hr = gD3DDevice->CreateRenderTargetView(pBuffer, NULL, &gBackBufferRenderTarget);
+	hr = gD3DDevice->CreateRenderTargetView(pBuffer, NULL, gBackBufferRenderTarget.GetAddressOf());
 	if (FAILED(hr))
 	{
 		gLastError = "Error creating render target view";

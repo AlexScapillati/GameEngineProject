@@ -21,6 +21,6 @@ public:
 
 private:
 
-	CScene* mMainScene;
+	std::unique_ptr<CScene> mMainScene;
 	Timer mTimer;
 };

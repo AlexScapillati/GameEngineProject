@@ -75,15 +75,11 @@ float3 CalculateLight(float3 lightPos, float lightIntensity, float3 colour, floa
     return diffuse;
 }
 
-static const int pcfCount = gPcfSamples;
-    
-static const float totalTexels = (pcfCount * 2.0f + 1.0f) * (pcfCount * 2.0f + 1.0f);
-
-float PCF(float depthFromLight, float2 shadowMapUV, int i)
+float PCF(Texture2D shadowMap, float2 shadowMapUV)
 {
     //get the shadow map size
     float2 size = 0.0f;
-    ShadowMaps[i].GetDimensions(size.x, size.y);
+    shadowMap.GetDimensions(size.x, size.y);
     
     //store the texel size
     const float texelSize = 1.0f / size.x;
@@ -97,7 +93,7 @@ float PCF(float depthFromLight, float2 shadowMapUV, int i)
 
     for (y = -1.5f; y <= 1.5f; y += 1.0f)
         for (x = -1.5f; x <= 1.5f; x += 1.0f)
-            sum += ShadowMaps[i].SampleGrad(PointClamp, shadowMapUV + float2(x, y) * texelSize, dx, dy);
+            sum += shadowMap.SampleGrad(PointClamp, shadowMapUV + float2(x, y) * texelSize, dx, dy);
 
     return sum / 16.0f;
 }
@@ -108,8 +104,8 @@ float2 ParallaxMapping(float2 UV, float3 v)
     //------------------------------
     // Parallax offset mapping
     
-    float depth = gParallaxDepth * (DisplacementMap.Sample(TexSampler, UV).r - 0.5f);
-    return UV + depth * v.xy / v.z; // Remove the / v.z to get parallax offset mapping with limiting
+    //float depth = gParallaxDepth * (DisplacementMap.Sample(TexSampler, UV).r - 0.5f);
+    //return UV + depth * v.xy / v.z; // Remove the / v.z to get parallax offset mapping with limiting
     
     //------------------------------
     // Common linear search for parallax occlusion mapping and relief mapping
@@ -205,26 +201,6 @@ float2 ParallaxMapping(float2 UV, float3 v)
 // Shader code
 //--------------------------------------------------------------------------------------
 
-//***| INFO |*********************************************************************************
-// Normal mapping pixel shader function. The lighting part of the shader is the same as the
-// per-pixel lighting shader - only the source of the surface normal is different
-//
-// An extra "Normal Map" texture is used - this contains normal (x,y,z) data in place of
-// (r,g,b) data indicating the normal of the surface *per-texel*. This allows the lighting
-// to take account of bumps on the texture surface. Using these normals is complex:
-//    1. We must store a "tangent" vector as well as a normal for each vertex (the tangent
-//       is basically the direction of the texture U axis in model space for each vertex)
-//    2. Get the (interpolated) model normal and tangent at this pixel from the vertex
-//       shader - these are the X and Z axes of "tangent space"
-//    3. Use a "cross-product" to calculate the bi-tangent - the missing Y axis
-//    4. Form the "tangent matrix" by combining these axes
-//    5. Extract the normal from the normal map texture for this pixel
-//    6. Use the tangent matrix to transform the texture normal into model space, then
-//       use the world matrix to transform it into world space
-//    7. This final world-space normal can be used in the usual lighting calculations, and
-//       will show the "bumpiness" of the normal map
-//
-//********************************************************************************************
 float4 main(NormalMappingPixelShaderInput input) : SV_Target
 {
     
@@ -249,10 +225,6 @@ float4 main(NormalMappingPixelShaderInput input) : SV_Target
 	// Get normalised vector to camera for parallax mapping and specular equation (this vector was calculated later in previous shaders)
     const float3 cameraDirection = normalize(gCameraPosition - input.worldPosition);
     
-	// Transform camera vector from world into model space. Need *inverse* world matrix for this.
-	// Only need 3x3 matrix to transform vectors, to invert a 3x3 matrix we transpose it (flip it about its diagonal)
-    const float3x3 invWorldMatrix = transpose((float3x3) gWorldMatrix);
-
 	// Then transform model-space camera vector into tangent space (texture coordinate space) to give the direction to offset texture
 	// coordinate
     const float3x3 tangentMatrix = float3x3(worldTangent, worldBitangent, worldNormal);
@@ -296,44 +268,42 @@ float4 main(NormalMappingPixelShaderInput input) : SV_Target
     float roughness = gRoughness;
     if (gHasRoughnessMap != 0.0f)
     {
-        roughness = RoughnessMap.Sample(TexSampler, offsetTexCoord).r;
+        roughness = RoughnessMap.Sample(TexSampler, offsetTexCoord).r * gRoughness;
     }
     
     // Sample ambient occlusion map
-    float ao = 0.0f;
+    float ao = 1.0f;
     if (gHasAoMap != 0.0f)
     {
         ao = AOMap.Sample(TexSampler, offsetTexCoord).r;
     }
     
-    float metalness = 1.0f;
+    float metalness = gMetalness;
     if (gHasMetallnessMap != 0.0f)
     {
-        metalness = MetalnessMap.Sample(TexSampler, offsetTexCoord);
+        metalness = MetalnessMap.Sample(TexSampler, offsetTexCoord) * gMetalness;
     }
     
 	///////////////////////
     // Global illumination
-    
-    float nDotV = max(dot(worldNormal, cameraDirection), 0.001f);
+    float nDotV = max(dot(textureNormal, cameraDirection), 0.001f);
 
     // Select specular color based on metalness
     float3 specularColour = lerp(float3(0.04f, 0.04f, 0.04f), albedo, metalness);
 
     // Reflection vector for sampling the cubemap for specular reflections
-    float3 r = reflect(-cameraDirection, worldNormal);
-    
+    float3 r = reflect(-cameraDirection, textureNormal);
+
     // Sample environment cubemap, use small mipmap for diffuse, use mipmap based on roughness for specular
-    float roughnessMip = 8 * log2(roughness + 1); // Heuristic to convert roughness to mip-map. Rougher surfaces will use smaller (blurrier) mip-maps
-    float3 diffuseIBL = IBLMap.Sample(TexSampler, textureNormal).rgb * 2.0f; // This approximation gives somewhat weak diffuse, so scale by 2
+    float3 diffuseIBL = IBLMap.SampleLevel(TexSampler, r, 1.0f).rgb * 2.0f; // This approximation gives somewhat weak diffuse, so scale by 2
+    float roughnessMip = 8 * log2(gRoughness + 1.0f); // Heuristic to convert roughness to mip-map. Rougher surfaces will use smaller (blurrier) mip-maps
     float3 specularIBL = IBLMap.SampleLevel(TexSampler, r, roughnessMip).rgb;
 
     // Fresnel for IBL: when surface is at more of a glancing angle reflection of the scene increases
     float3 F_IBL = specularColour + (1.0f - specularColour) * pow(max(1.0f - nDotV, 0.0f), 5.0f);
-
+    
     // Overall global illumination - rough approximation
     float3 resDiffuse = ao * (albedo * diffuseIBL + (1.0f - roughness) * F_IBL * specularIBL);
-    
     
 	///////////////////////
 	// Calculate lighting
@@ -374,23 +344,22 @@ float4 main(NormalMappingPixelShaderInput input) : SV_Target
 			// Get depth of this pixel if it were visible from the light (another advanced projection step)
             const float depthFromLight = projection.z / projection.w - bias; //*** Adjustment so polygons don't shadow themselves
                         
-            float depth = ShadowMaps[j].Sample(PointClamp, float2(shadowMapUV)).r;
-		
-			// Compare pixel depth from light with depth held in shadow map of the light. If shadow map depth is less than something is nearer
-			// to the light than this pixel - so the pixel gets no effect from this light
-            if (depthFromLight < depth)
+			// Calcluate pcf value   
+            float PCFValue = PCF(ShadowMaps[j], shadowMapUV);
+            
+            // Calculate lighting based on the pcf value, 
+            //if it is 0 or less there is no point to calculate it since we are in complete shadow
+            if (PCFValue > 0)
             {
-                //calculate amount of PCF
-                float PCFValue = PCF(depthFromLight, shadowMapUV, j);
                 resDiffuse += CalculateLight(gSpotLights[j].pos, gSpotLights[j].intensity, gSpotLights[j].colour, resDiffuse, resSpecular, textureNormal, cameraDirection, input.worldPosition, roughness, albedo) * PCFValue;
             }
         }
     }
     
-    [unroll]
+    [fastopt]
     for (int k = 0; k < gNumDirLights && gDirLights[k].enabled; ++k)
     {
-        const float3 lightDir = normalize(gSpotLights[j].pos - input.worldPosition);
+        const float3 lightDir = normalize(gDirLights[k].facing - input.worldPosition);
         
     	//Using the world position of the current pixel and the matrices of the light (as a camera), find the 2D position of the
 		//pixel *as seen from the light*. Will use this to find which part of the shadow map to look at.
@@ -410,57 +379,57 @@ float4 main(NormalMappingPixelShaderInput input) : SV_Target
 		//Get depth of this pixel if it were visible from the light (another advanced projection step)
         const float depthFromLight = projection.z / projection.w - bias; //*** Adjustment so polygons don't shadow themselves
 		
-		
-		//Compare pixel depth from light with depth held in shadow map of the light. If shadow map depth is less than something is nearer
-		//to the light than this pixel - so the pixel gets no effect from this light
-        float depth = 1;
-        depth = ShadowMaps[k /*+ gNumSpotLights*/].Sample(PointClamp, shadowMapUV).r;
-        
-        // Calcluate pcf value   
-        float PCFvalue = PCF(depthFromLight, shadowMapUV, k);
-        
-      
         // Calculate pcf value
-        float PCFValue = PCF(depthFromLight, shadowMapUV, k);
-        float nDotV = max(dot(textureNormal, cameraDirection), 0.001f);
+        float PCFValue = PCF(ShadowMaps[k], shadowMapUV);
+        
+        // Lighting calculations
+        
+        if (PCFValue > 0)
+        {
+            float nDotV = max(dot(textureNormal, cameraDirection), 0.001f);
             
-        float li = gDirLights[k].intensity;
-        float3 l = gDirLights[k].facing;
-        float3 lc = gDirLights[k].colour;
+            float li = gDirLights[k].intensity;
+            float3 l = gDirLights[k].facing;
+            float3 lc = gDirLights[k].colour;
 
             // Halfway vector (normal halfway between view and light vector)
-        float3 h = normalize(l + cameraDirection);
+            float3 h = normalize(l + cameraDirection);
 
             // Various dot products used throughout
-        float nDotL = max(dot(textureNormal, l), 0.001f);
-        float nDotH = max(dot(textureNormal, h), 0.001f);
-        float vDotH = max(dot(cameraDirection, h), 0.001f);
+            float nDotL = max(dot(textureNormal, l), 0.001f);
+            float nDotH = max(dot(textureNormal, h), 0.001f);
+            float vDotH = max(dot(cameraDirection, h), 0.001f);
 
             // Lambert diffuse
-        float3 lambert = albedo / PI;
+            float3 lambert = albedo / PI;
 
             // Microfacet specular - fresnel term
-        float3 F = resSpecular + (1 - resSpecular) * pow(max(1.0f - vDotH, 0.0f), 5.0f);
+            float3 F = resSpecular + (1 - resSpecular) * pow(max(1.0f - vDotH, 0.0f), 5.0f);
 
             // Microfacet specular - normal distribution term
-        float alpha = max(roughness * roughness, 2.0e-3f); // Dividing by alpha in the dn term so don't allow it to reach 0
-        float alpha2 = alpha * alpha;
-        float nDotH2 = nDotH * nDotH;
-        float dn = nDotH2 * (alpha2 - 1) + 1;
-        float D = alpha2 / (PI * dn * dn);
+            float alpha = max(roughness * roughness, 2.0e-3f); // Dividing by alpha in the dn term so don't allow it to reach 0
+            float alpha2 = alpha * alpha;
+            float nDotH2 = nDotH * nDotH;
+            float dn = nDotH2 * (alpha2 - 1) + 1;
+            float D = alpha2 / (PI * dn * dn);
 
             // Microfacet specular - geometry term
-        float k = (roughness + 1);
-        k = k * k / 8;
-        float gV = nDotV / (nDotV * (1 - k) + k);
-        float gL = nDotL / (nDotL * (1 - k) + k);
-        float G = gV * gL;
+            float k = (roughness + 1);
+            k = k * k / 8;
+            float gV = nDotV / (nDotV * (1 - k) + k);
+            float gL = nDotL / (nDotL * (1 - k) + k);
+            float G = gV * gL;
 
-            // Full brdf, diffuse + specular
-        float3 brdf = lambert + F * G * D / (4 * nDotL * nDotV);
+        // Full brdf, diffuse + specular
+            float3 brdf = lambert + F * G * D / (4 * nDotL * nDotV);
 
-            // Accumulate punctual light equation for this light
-        resDiffuse += (PI * li * lc * brdf * nDotL) * PCFvalue;
+        // Accumulate punctual light equation for this light
+            float3 diffuse = PI * li * lc * brdf * nDotL;
+        
+        
+        // Multiply for the pcf value 
+            resDiffuse += diffuse * PCFValue;
+        }
     }
     
     //for each point light
@@ -495,7 +464,7 @@ float4 main(NormalMappingPixelShaderInput input) : SV_Target
             if (depthFromLight > 0 && depthFromLight < depth)
             {
                 // Calcluate pcf value   
-                float PCFvalue = PCF(depthFromLight, shadowMapUV, l + face);
+                float PCFvalue = PCF(ShadowMaps[l /*+ gNumSpotLights + gNumDirLights */ + face], shadowMapUV);
                 // Calculate lighting
                 resDiffuse += CalculateLight(gPointLights[l].pos, gPointLights[l].intensity, gPointLights[l].colour, resDiffuse, resSpecular, textureNormal, cameraDirection, input.worldPosition, roughness, albedo) * PCFvalue;
             }

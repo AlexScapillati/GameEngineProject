@@ -3,11 +3,10 @@
 
 CSpotLight::CSpotLight(std::string mesh, std::string name, std::string& diffuse,
 	CVector3 colour, float strength, CVector3 position, CVector3 rotation,
-	float scale, CVector3 facing) 
+	float scale)
 	: CLight(std::move(mesh), std::move(name), diffuse, colour, strength, position,
 		rotation, scale)
 {
-	mFacing = facing;
 
 	//initialize private values
 	mShadowMap = nullptr;
@@ -22,8 +21,6 @@ CSpotLight::CSpotLight(std::string mesh, std::string name, std::string& diffuse,
 
 CSpotLight::CSpotLight(CSpotLight& s) : CLight(s)
 {
-	mFacing = s.GetFacing();
-
 	mShadowMapSize = s.GetShadowMapSize();
 	mConeAngle = s.GetConeAngle();
 
@@ -64,15 +61,17 @@ ID3D11ShaderResourceView* CSpotLight::RenderFromThis()
 	gPerFrameConstants.projectionMatrix = MakeProjectionMatrix(1.0f, ToRadians(mConeAngle));
 	gPerFrameConstants.viewProjectionMatrix = gPerFrameConstants.viewMatrix * gPerFrameConstants.projectionMatrix;
 
-	UpdateFrameConstantBuffer(gPerFrameConstantBuffer, gPerFrameConstants);
+	UpdateFrameConstantBuffer(gPerFrameConstantBuffer.Get(), gPerFrameConstants);
 
 	gD3DContext->VSSetConstantBuffers(1, 1, &gPerFrameConstantBuffer);
 
 	//render just the objects that can cast shadows
 	for (auto it : GOM->mObjects)
 	{
-		//basic geometry rendered, that means just render the model's geometry, leaving all the fancy shaders
-		it->Render(true);
+		// Do not render this object
+		if (it != this)
+			//basic geometry rendered, that means just render the model's geometry, leaving all the fancy shaders
+			it->Render(true);
 	}
 
 	// unbind the render target

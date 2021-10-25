@@ -16,8 +16,6 @@ CDXEngine::~CDXEngine()
 {
 	ShutdownGui();
 	
-	delete mMainScene;
-	
 	ShutdownDirect3D();
 }
 
@@ -62,7 +60,7 @@ CDXEngine::CDXEngine(HINSTANCE hInstance, int nCmdShow)
 
 	try
 	{
-		mMainScene = new CScene("Scene1.xml");
+		mMainScene =  std::make_unique<CScene>("Scene2.xml");
 	}
 	catch (std::exception e)
 	{
@@ -145,9 +143,7 @@ bool CDXEngine::Update()
 
 				if (fileDialog.showFileDialog("OpenScene", imgui_addons::ImGuiFileBrowser::DialogMode::OPEN, ImVec2(700, 310), ".xml"))
 				{
-					delete mMainScene;
-
-					mMainScene = new CScene(fileDialog.selected_fn);
+					mMainScene = std::make_unique<CScene>(fileDialog.selected_fn);
 					open = false;
 				}
 
@@ -207,14 +203,14 @@ bool CDXEngine::Update()
 
 					// Set the back buffer as the target for rendering and select the main depth buffer.
 					// When finished the back buffer is sent to the "front buffer" - which is the monitor.
-					gD3DContext->OMSetRenderTargets(1, &gBackBufferRenderTarget, gDepthStencil);
+					gD3DContext->OMSetRenderTargets(1, gBackBufferRenderTarget.GetAddressOf(), gDepthStencil.Get());
 
 					// Clear the back buffer to a fixed colour and the depth buffer to the far distance
-					gD3DContext->ClearRenderTargetView(gBackBufferRenderTarget, &mMainScene->mBackgroundColor.r);
-					gD3DContext->ClearDepthStencilView(gDepthStencil, D3D11_CLEAR_DEPTH, 1.0f, 0);
+					gD3DContext->ClearRenderTargetView(gBackBufferRenderTarget.Get(), &mMainScene->mBackgroundColor.r);
+					gD3DContext->ClearDepthStencilView(gDepthStencil.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 					//render the scene image to ImGui
-					ImGui::Image(sceneTexture, size);
+					ImGui::Image(sceneTexture.Get(), size);
 
 					gViewportWindowPos.x = ImGui::GetWindowPos().x;
 					gViewportWindowPos.y = ImGui::GetWindowPos().y;
