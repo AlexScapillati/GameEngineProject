@@ -22,29 +22,8 @@
     <ClCompile Include="Camera.cpp">
       <Filter>Engine</Filter>
     </ClCompile>
-    <ClCompile Include="Direct3DSetup.cpp">
-      <Filter>Engine</Filter>
-    </ClCompile>
-    <ClCompile Include="Main.cpp">
-      <Filter>Engine</Filter>
-    </ClCompile>
-    <ClCompile Include="Mesh.cpp">
-      <Filter>Engine</Filter>
-    </ClCompile>
-    <ClCompile Include="Scene.cpp">
-      <Filter>Engine</Filter>
-    </ClCompile>
-    <ClCompile Include="Shader.cpp">
-      <Filter>Engine</Filter>
-    </ClCompile>
-    <ClCompile Include="State.cpp">
-      <Filter>Engine</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine.cpp">
-      <Filter>Engine</Filter>
-    </ClCompile>
     <ClCompile Include="tinyxml2\tinyxml2.cpp">
-      <Filter>Engine\tinyxml2</Filter>
+      <Filter>Engine\External\tinyxml2</Filter>
     </ClCompile>
     <ClCompile Include="GameObject.cpp">
       <Filter>Engine\Objects</Filter>
@@ -56,22 +35,22 @@
       <Filter>Engine\Objects</Filter>
     </ClCompile>
     <ClCompile Include="External\imgui\imgui.cpp">
-      <Filter>Engine\GUI</Filter>
+      <Filter>Engine\External\GUI</Filter>
     </ClCompile>
     <ClCompile Include="External\imgui\imgui_draw.cpp">
-      <Filter>Engine\GUI</Filter>
+      <Filter>Engine\External\GUI</Filter>
     </ClCompile>
     <ClCompile Include="External\imgui\imgui_impl_dx11.cpp">
-      <Filter>Engine\GUI</Filter>
+      <Filter>Engine\External\GUI</Filter>
     </ClCompile>
     <ClCompile Include="External\imgui\imgui_impl_win32.cpp">
-      <Filter>Engine\GUI</Filter>
+      <Filter>Engine\External\GUI</Filter>
     </ClCompile>
     <ClCompile Include="External\imgui\imgui_tables.cpp">
-      <Filter>Engine\GUI</Filter>
+      <Filter>Engine\External\GUI</Filter>
     </ClCompile>
     <ClCompile Include="External\imgui\imgui_widgets.cpp">
-      <Filter>Engine\GUI</Filter>
+      <Filter>Engine\External\GUI</Filter>
     </ClCompile>
     <ClCompile Include="Material.cpp">
       <Filter>Engine\Objects</Filter>
@@ -88,27 +67,55 @@
     <ClCompile Include="PointLight.cpp">
       <Filter>Engine\Objects\Lights</Filter>
     </ClCompile>
-    <ClCompile Include="LevelImporter.cpp">
-      <Filter>Engine</Filter>
-    </ClCompile>
     <ClCompile Include="Math\CVector4.cpp">
       <Filter>Engine\Math</Filter>
     </ClCompile>
     <ClCompile Include="External\imgui\ImGuizmo.cpp">
-      <Filter>Engine\GUI</Filter>
+      <Filter>Engine\External\GUI</Filter>
     </ClCompile>
     <ClCompile Include="External\imgui\FileBrowser\ImGuiFileBrowser.cpp">
-      <Filter>Engine\GUI</Filter>
+      <Filter>Engine\External\GUI</Filter>
     </ClCompile>
     <ClCompile Include="GUI.h">
       <Filter>Engine</Filter>
     </ClCompile>
-    <ClCompile Include="External\imgui\imgui_demo.cpp">
-      <Filter>Engine\GUI</Filter>
-    </ClCompile>
     <ClCompile Include="PostProcessing.cpp">
       <Filter>Engine\PostProcessing</Filter>
     </ClCompile>
+    <ClCompile Include="DX11Engine.cpp">
+      <Filter>Engine\DX11</Filter>
+    </ClCompile>
+    <ClCompile Include="DX11Gui.cpp">
+      <Filter>Engine\DX11</Filter>
+    </ClCompile>
+    <ClCompile Include="Shader.cpp">
+      <Filter>Engine\DX11</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene.cpp">
+      <Filter>Engine\DX11</Filter>
+    </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>Engine\DX11</Filter>
+    </ClCompile>
+    <ClCompile Include="LevelImporter.cpp">
+      <Filter>Engine\DX11</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12Engine.cpp">
+      <Filter>Engine\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12Gui.cpp">
+      <Filter>Engine\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="Window.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="State.cpp">
+      <Filter>Engine\DX11</Filter>
+    </ClCompile>
+    <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Utility\ColourRGBA.h">
@@ -138,29 +145,11 @@
     <ClInclude Include="Camera.h">
       <Filter>Engine</Filter>
     </ClInclude>
-    <ClInclude Include="Common.h">
-      <Filter>Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="Direct3DSetup.h">
-      <Filter>Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="Mesh.h">
-      <Filter>Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="Scene.h">
-      <Filter>Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="Shader.h">
-      <Filter>Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="State.h">
-      <Filter>Engine</Filter>
-    </ClInclude>
     <ClInclude Include="Engine.h">
       <Filter>Engine</Filter>
     </ClInclude>
     <ClInclude Include="tinyxml2\tinyxml2.h">
-      <Filter>Engine\tinyxml2</Filter>
+      <Filter>Engine\External\tinyxml2</Filter>
     </ClInclude>
     <ClInclude Include="GameObject.h">
       <Filter>Engine\Objects</Filter>
@@ -175,31 +164,31 @@
       <Filter>Engine\Objects</Filter>
     </ClInclude>
     <ClInclude Include="External\imgui\imconfig.h">
-      <Filter>Engine\GUI</Filter>
+      <Filter>Engine\External\GUI</Filter>
     </ClInclude>
     <ClInclude Include="External\imgui\imgui.h">
-      <Filter>Engine\GUI</Filter>
+      <Filter>Engine\External\GUI</Filter>
     </ClInclude>
     <ClInclude Include="External\imgui\imgui_impl_dx11.h">
-      <Filter>Engine\GUI</Filter>
+      <Filter>Engine\External\GUI</Filter>
     </ClInclude>
     <ClInclude Include="External\imgui\imgui_impl_win32.h">
-      <Filter>Engine\GUI</Filter>
+      <Filter>Engine\External\GUI</Filter>
     </ClInclude>
     <ClInclude Include="External\imgui\imgui_internal.h">
-      <Filter>Engine\GUI</Filter>
+      <Filter>Engine\External\GUI</Filter>
     </ClInclude>
     <ClInclude Include="External\imgui\imstb_rectpack.h">
-      <Filter>Engine\GUI</Filter>
+      <Filter>Engine\External\GUI</Filter>
     </ClInclude>
     <ClInclude Include="External\imgui\imstb_textedit.h">
-      <Filter>Engine\GUI</Filter>
+      <Filter>Engine\External\GUI</Filter>
     </ClInclude>
     <ClInclude Include="External\imgui\imstb_truetype.h">
-      <Filter>Engine\GUI</Filter>
+      <Filter>Engine\External\GUI</Filter>
     </ClInclude>
     <ClInclude Include="External\imgui\stb_image.h">
-      <Filter>Engine\GUI</Filter>
+      <Filter>Engine\External\GUI</Filter>
     </ClInclude>
     <ClInclude Include="Material.h">
       <Filter>Engine\Objects</Filter>
@@ -216,17 +205,47 @@
     <ClInclude Include="PointLight.h">
       <Filter>Engine\Objects\Lights</Filter>
     </ClInclude>
-    <ClInclude Include="LevelImporter.h">
-      <Filter>Engine</Filter>
-    </ClInclude>
     <ClInclude Include="Math\CVector4.h">
       <Filter>Engine\Math</Filter>
     </ClInclude>
     <ClInclude Include="External\imgui\ImGuizmo.h">
-      <Filter>Engine\GUI</Filter>
+      <Filter>Engine\External\GUI</Filter>
     </ClInclude>
     <ClInclude Include="External\imgui\FileBrowser\ImGuiFileBrowser.h">
-      <Filter>Engine\GUI</Filter>
+      <Filter>Engine\External\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="Common.h">
+      <Filter>Engine\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="DX11Engine.h">
+      <Filter>Engine\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="DX11Gui.h">
+      <Filter>Engine\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene.h">
+      <Filter>Engine\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh.h">
+      <Filter>Engine\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="LevelImporter.h">
+      <Filter>Engine\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12Engine.h">
+      <Filter>Engine\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12Gui.h">
+      <Filter>Engine\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="FactoryEngine.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="FactoryGui.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Window.h">
+      <Filter>Engine</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -242,20 +261,29 @@
     <Filter Include="Engine\Utility">
       <UniqueIdentifier>{3b75a466-1b3f-44db-90a2-73a9bfc56583}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\tinyxml2">
-      <UniqueIdentifier>{428e319b-0be7-46fa-831f-8743c20263dc}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Engine\Objects">
       <UniqueIdentifier>{5be367fb-be94-4471-8851-8c7b470581b0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\GUI">
-      <UniqueIdentifier>{8008c174-8775-4f81-9def-efa80ca57d99}</UniqueIdentifier>
     </Filter>
     <Filter Include="Engine\Objects\Lights">
       <UniqueIdentifier>{91ceb4a8-e3bd-4b14-a123-0675e77474ac}</UniqueIdentifier>
     </Filter>
     <Filter Include="Engine\PostProcessing">
       <UniqueIdentifier>{4c18bcfa-cef5-452e-a056-dd5945010aa9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\DX11">
+      <UniqueIdentifier>{7e89034e-4a29-41bb-9040-c077bf8ca547}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\DX12">
+      <UniqueIdentifier>{89bb2845-7be1-42cb-9deb-e53e370c47b1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\External">
+      <UniqueIdentifier>{14755b4a-26cf-4e0e-bebe-23f12ccd75fa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\External\GUI">
+      <UniqueIdentifier>{8008c174-8775-4f81-9def-efa80ca57d99}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\External\tinyxml2">
+      <UniqueIdentifier>{428e319b-0be7-46fa-831f-8743c20263dc}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

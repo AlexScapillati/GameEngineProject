@@ -4,11 +4,7 @@
 //--------------------------------------------------------------------------------------
 // Code in .cpp file
 
-#ifndef _CVECTOR2_H_DEFINED_
-#define _CVECTOR2_H_DEFINED_
-
-#include "MathHelpers.h"
-#include <cmath>
+#pragma once
 
 class CVector2
 {
@@ -90,6 +86,3 @@ float Dot(const CVector2& v1, const CVector2& v2);
 
 // Return unit length vector in the same direction as given one
 CVector2 Normalise(const CVector2& v);
-
-
-#endif // _CVECTOR3_H_DEFINED_

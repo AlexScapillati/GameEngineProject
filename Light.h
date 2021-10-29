@@ -1,8 +1,6 @@
 #pragma once
 #include <utility>
-#include "Common.h"
 #include "GameObject.h"
-#include "State.h"
 
 /*
 
@@ -17,19 +15,21 @@ public:
 
 	CLight(CLight& l);
 
-	CLight(std::string mesh, std::string name,
+	CLight(CDX11Engine* engine, 
+		std::string mesh, 
+		std::string name,
 		std::string& diffuse,
 		CVector3 colour = { 0.0f,0.0f,0.0f }, 
 		float strength = 0.0f, 
 		CVector3 position = { 0,0,0 },
 		CVector3 rotation = { 0,0,0 }, 
 		float scale = 1)
-		: mColour(colour), mStrength(strength), CGameObject(std::move(mesh), std::move(name), diffuse, position, rotation, scale) 
+		: mColour(colour), mStrength(strength), CGameObject(engine, std::move(mesh), std::move(name), diffuse, position, rotation, scale) 
 	{
 		try
 		{
-			mMaterial->SetVertexShader(gBasicTransformVertexShader.Get());
-			mMaterial->SetPixelShader(gTintedTexturePixelShader.Get());
+			mMaterial->SetVertexShader(mEngine->mBasicTransformVertexShader.Get());
+			mMaterial->SetPixelShader(mEngine->mTintedTexturePixelShader.Get());
 		}
 		catch (std::exception e)
 		{

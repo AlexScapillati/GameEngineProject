@@ -8,16 +8,15 @@
 #include "Scene.h"
 #include <dxgidebug.h>
 #include <utility>
+#include <sstream>
 
 #include "SpotLight.h"
-#include "DirLight.h"
-#include "PointLight.h"
 #include "Plant.h"
 #include "Sky.h"
 
 #include "LevelImporter.h"
+#include "Window.h"
 #include "External\imgui\imgui.h"
-#include "External\imgui\ImGuizmo.h"
 #include "External\imgui\FileBrowser\ImGuiFileBrowser.h"
 
 float ROTATION_SPEED = 0.25f;
@@ -52,10 +51,11 @@ ComPtr<ID3D11Buffer> gPerFramePointLightsConstBuffer;
 PostProcessingConstants gPostProcessingConstants;
 ComPtr<ID3D11Buffer> gPostProcessingConstBuffer;
 
-CGameObjectManager* GOM;
-
-CScene::CScene(std::string fileName)
+IScene::IScene(CDX11Engine* engine, std::string fileName)
 {
+
+	mWindow = engine->GetWindow();
+	mEngine = engine;
 
 	mFileName = fileName;
 
@@ -71,9 +71,7 @@ CScene::CScene(std::string fileName)
 
 	mPcfSamples = 4;
 
-	mObjManager = new CGameObjectManager();
-
-	GOM = mObjManager;
+	mObjManager = std::make_unique<CGameObjectManager>(mEngine);
 
 	gAmbientColour = { 0.03f, 0.03f, 0.04f };
 	gSpecularPower = 256; // Specular power //will be removed since it will be dependent on the material
@@ -101,12 +99,12 @@ CScene::CScene(std::string fileName)
 	try
 	{
 		//load default shaders
-		LoadDefaultShaders();
+		mEngine->LoadDefaultShaders();
 
 		LoadPostProcessingImages();
 
 		//load the scene
-		CLevelImporter importer;
+		CLevelImporter importer(mEngine);
 
 		importer.LoadScene(std::move(fileName), this);
 	}
@@ -123,7 +121,7 @@ CScene::CScene(std::string fileName)
 	////--------------- GPU states ---------------////
 
 	// Create all filtering modes, blending modes etc. used by the app (see State.cpp/.h)
-	if (!CreateStates())
+	if (!mEngine->CreateStates())
 	{
 		throw std::runtime_error("Error creating DirectX states");
 	}
@@ -131,13 +129,13 @@ CScene::CScene(std::string fileName)
 	// Create GPU-side constant buffers to receive the gPerFrameConstants and gPerModelConstants structures above
 	// These allow us to pass data from CPU to shaders such as lighting information or matrices
 	// See the comments above where these variable are declared and also the UpdateScene function
-	gPerFrameConstantBuffer.Attach(CreateConstantBuffer(sizeof(gPerFrameConstants)));
-	gPerModelConstantBuffer.Attach(CreateConstantBuffer(sizeof(gPerModelConstants)));
-	gPerFrameLightsConstBuffer.Attach(CreateConstantBuffer(sizeof(gPerFrameLightsConstants)));
-	gPerFrameSpotLightsConstBuffer.Attach(CreateConstantBuffer(sizeof(gPerFrameSpotLightsConstants)));
-	gPerFrameDirLightsConstBuffer.Attach(CreateConstantBuffer(sizeof(gPerFrameDirLightsConstants)));
-	gPerFramePointLightsConstBuffer.Attach(CreateConstantBuffer(sizeof(gPerFramePointLightsConstants)));
-	gPostProcessingConstBuffer.Attach(CreateConstantBuffer(sizeof(gPostProcessingConstants)));
+	gPerFrameConstantBuffer.Attach(mEngine->CreateConstantBuffer(sizeof(gPerFrameConstants)));
+	gPerModelConstantBuffer.Attach(mEngine->CreateConstantBuffer(sizeof(gPerModelConstants)));
+	gPerFrameLightsConstBuffer.Attach(mEngine->CreateConstantBuffer(sizeof(gPerFrameLightsConstants)));
+	gPerFrameSpotLightsConstBuffer.Attach(mEngine->CreateConstantBuffer(sizeof(gPerFrameSpotLightsConstants)));
+	gPerFrameDirLightsConstBuffer.Attach(mEngine->CreateConstantBuffer(sizeof(gPerFrameDirLightsConstants)));
+	gPerFramePointLightsConstBuffer.Attach(mEngine->CreateConstantBuffer(sizeof(gPerFramePointLightsConstants)));
+	gPostProcessingConstBuffer.Attach(mEngine->CreateConstantBuffer(sizeof(gPostProcessingConstants)));
 
 
 
@@ -158,7 +156,7 @@ CScene::CScene(std::string fileName)
 //--------------------------------------------------------------------------------------
 
 // Render everything in the scene from the given camera
-void CScene::RenderSceneFromCamera(CCamera* camera)
+void IScene::RenderSceneFromCamera(CCamera* camera)
 {
 	// Set camera matrices in the constant buffer and send over to GPU
 	gPerFrameConstants.cameraMatrix = camera->WorldMatrix();
@@ -167,23 +165,23 @@ void CScene::RenderSceneFromCamera(CCamera* camera)
 	gPerFrameConstants.viewProjectionMatrix = camera->ViewProjectionMatrix();
 
 	// Update the frame constant buffer
-	UpdateFrameConstantBuffer(gPerFrameConstantBuffer.Get(), gPerFrameConstants);
+	mEngine->UpdateFrameConstantBuffer(gPerFrameConstantBuffer.Get(), gPerFrameConstants);
 
 	// Set it to the GPU
-	gD3DContext->PSSetConstantBuffers(1, 1, gPerFrameConstantBuffer.GetAddressOf());
-	gD3DContext->VSSetConstantBuffers(1, 1, gPerFrameConstantBuffer.GetAddressOf());
+	mEngine->GetContext()->PSSetConstantBuffers(1, 1, gPerFrameConstantBuffer.GetAddressOf());
+	mEngine->GetContext()->VSSetConstantBuffers(1, 1, gPerFrameConstantBuffer.GetAddressOf());
 
 	////--------------- Render ordinary models ---------------///
 
 	// Select which shaders to use next
-	gD3DContext->GSSetShader(nullptr, nullptr, 0);  ////// Switch off geometry shader when not using it (pass nullptr for first parameter)
+	mEngine->GetContext()->GSSetShader(nullptr, nullptr, 0);  ////// Switch off geometry shader when not using it (pass nullptr for first parameter)
 
 	// States - no blending, normal depth buffer and back-face culling (standard set-up for opaque models)
-	gD3DContext->OMSetBlendState(gNoBlendingState, nullptr, 0xffffff);
-	gD3DContext->OMSetDepthStencilState(gUseDepthBufferState, 0);
-	gD3DContext->RSSetState(gCullBackState);
+	mEngine->GetContext()->OMSetBlendState(mEngine->mNoBlendingState, nullptr, 0xffffff);
+	mEngine->GetContext()->OMSetDepthStencilState(mEngine->mUseDepthBufferState, 0);
+	mEngine->GetContext()->RSSetState(mEngine->mCullBackState);
 
-	gD3DContext->PSSetSamplers(0, 1, &gAnisotropic4xSampler);
+	mEngine->GetContext()->PSSetSamplers(0, 1, &mEngine->mAnisotropic4XSampler);
 
 	//Render All Objects, if something went wrong throw an exception
 	if (!mObjManager->RenderAllObjects())
@@ -193,7 +191,7 @@ void CScene::RenderSceneFromCamera(CCamera* camera)
 }
 
 // Rendering the scene
-ComPtr<ID3D11ShaderResourceView> CScene::RenderScene(float frameTime)
+void IScene::RenderScene(float& frameTime)
 {
 	//// Common settings ////
 
@@ -209,10 +207,10 @@ ComPtr<ID3D11ShaderResourceView> CScene::RenderScene(float frameTime)
 	gPerFrameConstants.nPcfSamples = mPcfSamples;
 
 	// Update constant buffest
-	UpdateLightContantBuffer(gPerFrameLightsConstBuffer.Get(), gPerFrameLightsConstants, mObjManager->mLights.size());
-	UpdateDirLightsContantBuffer(gPerFrameDirLightsConstBuffer.Get(), gPerFrameDirLightsConstants, mObjManager->mDirLights.size());
-	UpdateSpotLightsContantBuffer(gPerFrameSpotLightsConstBuffer.Get(), gPerFrameSpotLightsConstants, mObjManager->mSpotLights.size());
-	UpdatePointLightsContantBuffer(gPerFramePointLightsConstBuffer.Get(), gPerFramePointLightsConstants, mObjManager->mPointLights.size());
+	mEngine->UpdateLightConstantBuffer(gPerFrameLightsConstBuffer.Get(), gPerFrameLightsConstants, mObjManager->mLights.size());
+	mEngine->UpdateDirLightsConstantBuffer(gPerFrameDirLightsConstBuffer.Get(), gPerFrameDirLightsConstants, mObjManager->mDirLights.size());
+	mEngine->UpdateSpotLightsConstantBuffer(gPerFrameSpotLightsConstBuffer.Get(), gPerFrameSpotLightsConstants, mObjManager->mSpotLights.size());
+	mEngine->UpdatePointLightsConstantBuffer(gPerFramePointLightsConstBuffer.Get(), gPerFramePointLightsConstants, mObjManager->mPointLights.size());
 
 	// Set them to the GPU
 	ID3D11Buffer* frameCBuffers[] =
@@ -223,14 +221,15 @@ ComPtr<ID3D11ShaderResourceView> CScene::RenderScene(float frameTime)
 		gPerFramePointLightsConstBuffer.Get()
 	};
 
-	gD3DContext->PSSetConstantBuffers(2, 4, frameCBuffers);
-	gD3DContext->VSSetConstantBuffers(2, 4, frameCBuffers);
+	mEngine->GetContext()->PSSetConstantBuffers(2, 4, frameCBuffers);
+
+	mEngine->GetContext()->VSSetConstantBuffers(2, 4, frameCBuffers);
 
 	// Set the sampler for the material textures
-	gD3DContext->PSSetSamplers(0, 1, &gAnisotropic4xSampler);
+	mEngine->GetContext()->PSSetSamplers(0, 1, &mEngine->mAnisotropic4XSampler);
 
 	// Set Sampler for the Shadow Maps
-	gD3DContext->PSSetSamplers(1, 1, &gPointSamplerBorder);
+	mEngine->GetContext()->PSSetSamplers(1, 1, &mEngine->mPointSamplerBorder);
 
 	////----- Render form the lights point of view ----------////
 
@@ -240,7 +239,7 @@ ComPtr<ID3D11ShaderResourceView> CScene::RenderScene(float frameTime)
 	if (!mObjManager->mShadowsMaps.empty())
 	{
 		//send the shadow maps to the shaders (slot 7)
-		gD3DContext->PSSetShaderResources(7, mObjManager->mShadowsMaps.size(), &mObjManager->mShadowsMaps[0]);
+		mEngine->GetContext()->PSSetShaderResources(7, mObjManager->mShadowsMaps.size(), &mObjManager->mShadowsMaps[0]);
 	}
 
 	////--------------- Render Ambient Maps  ---------------////
@@ -253,10 +252,10 @@ ComPtr<ID3D11ShaderResourceView> CScene::RenderScene(float frameTime)
 	// If using post-processing then render to the scene texture, otherwise to the usual back buffer
 	// Also clear the render target to a fixed colour and the depth buffer to the far distance
 
-	gD3DContext->OMSetRenderTargets(1, mSceneRTV.GetAddressOf(), mDepthStencilRTV.Get());
-	gD3DContext->ClearRenderTargetView(mSceneRTV.Get(), &mBackgroundColor.r);
+	mEngine->GetContext()->OMSetRenderTargets(1, mSceneRTV.GetAddressOf(), mDepthStencilRTV.Get());
+	mEngine->GetContext()->ClearRenderTargetView(mSceneRTV.Get(), &mBackgroundColor.r);
 
-	gD3DContext->ClearDepthStencilView(mDepthStencilRTV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	mEngine->GetContext()->ClearDepthStencilView(mDepthStencilRTV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 	// Setup the viewport to the size of the main window
 	D3D11_VIEWPORT vp;
@@ -266,10 +265,10 @@ ComPtr<ID3D11ShaderResourceView> CScene::RenderScene(float frameTime)
 	vp.MaxDepth = 1.0f;
 	vp.TopLeftX = 0;
 	vp.TopLeftY = 0;
-	gD3DContext->RSSetViewports(1, &vp);
+	mEngine->GetContext()->RSSetViewports(1, &vp);
 
 	// Render the scene from the main camera
-	RenderSceneFromCamera(mCamera);
+	RenderSceneFromCamera(mCamera.get());
 
 	// Render the scene to a depth map, for post processing
 	RenderToDepthMap();
@@ -277,7 +276,7 @@ ComPtr<ID3D11ShaderResourceView> CScene::RenderScene(float frameTime)
 	// PostProcessing pass
 	PostProcessingPass();
 
-	return mSceneSRV;
+	mEngine->Finalize();
 }
 
 //--------------------------------------------------------------------------------------
@@ -285,7 +284,7 @@ ComPtr<ID3D11ShaderResourceView> CScene::RenderScene(float frameTime)
 //--------------------------------------------------------------------------------------
 
 // Update models and camera. frameTime is the time passed since the last frame
-void CScene::UpdateScene(float frameTime)
+void IScene::UpdateScene(float& frameTime)
 {
 	// Post processing settings - all data for post-processes is updated every frame whether in use or not (minimal cost)
 
@@ -302,44 +301,6 @@ void CScene::UpdateScene(float frameTime)
 	// Update heat haze timer
 	gPostProcessingConstants.heatHazeTimer += frameTime;
 
-	// Camera control 
-	if (ImGui::IsWindowFocused())
-	{
-		if (KeyHeld(Mouse_RButton))
-		{
-			POINT mousePos;
-
-			GetCursorPos(&mousePos);
-
-			CVector2 delta = { ImGui::GetMouseDragDelta(1).x, ImGui::GetMouseDragDelta(1).y };
-
-			if (KeyHeld(Key_LShift))
-				MOVEMENT_SPEED = 100.0f;
-			else
-				MOVEMENT_SPEED = 50.0f;
-			/*
-						WIP When the mouse is on the borders of the window set its position the the opposite border
-
-						RECT winRect;
-
-						GetWindowRect(gHWnd, &winRect);
-
-						if (mousePos.x > winRect.right) SetCursorPos(winRect.left, mousePos.y);
-
-						else if (mousePos.x < winRect.left) SetCursorPos(winRect.right, mousePos.y);
-
-						else if (mousePos.y > winRect.bottom) SetCursorPos(mousePos.x, winRect.top);
-
-						else if (mousePos.y < winRect.top) SetCursorPos(mousePos.x, winRect.bottom);
-
-						else
-			*/
-
-			mCamera->ControlMouse(frameTime, delta, Key_W, Key_S, Key_A, Key_D);
-
-			ImGui::ResetMouseDragDelta(1);
-		}
-	}
 
 	// Toggle FPS limiting
 	if (KeyHit(Key_P))
@@ -362,28 +323,22 @@ void CScene::UpdateScene(float frameTime)
 		frameTimeMs << std::fixed << avgFrameTime * 1000;
 		const auto windowTitle = "DirectX 11 - Game Engine Test " + frameTimeMs.str() +
 			"ms, FPS: " + std::to_string(static_cast<int>(1 / avgFrameTime + 0.5f));
-		SetWindowTextA(gHWnd, windowTitle.c_str());
+		SetWindowTextA(mEngine->GetWindow()->GetHandle(), windowTitle.c_str());
 		totalFrameTime = 0;
 		frameCount = 0;
 	}
 }
 
-void CScene::Save(std::string fileName)
+void IScene::Save(std::string fileName)
 {
-	if (fileName == "")
+	if (fileName.empty())
 		fileName = mFileName;
 
-	CLevelImporter importer;
+	CLevelImporter importer(mEngine);
 	importer.SaveScene(fileName, this);
 }
 
-CScene::~CScene()
-{
-	delete mObjManager; mObjManager = nullptr;
-	delete mCamera;		mCamera = nullptr;
-}
-
-void CScene::Resize(UINT newX, UINT newY)
+void IScene::Resize(UINT newX, UINT newY)
 {
 	//set aspect ratio with the new window size
 	//broken
@@ -397,7 +352,7 @@ void CScene::Resize(UINT newX, UINT newY)
 	InitTextures();
 }
 
-void CScene::InitTextures()
+void IScene::InitTextures()
 {
 	mTextrue = nullptr;
 	mFinalTextrue = nullptr;
@@ -436,22 +391,22 @@ void CScene::InitTextures()
 	textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE; // Indicate we will use texture as a depth buffer and also pass it to shaders
 	textureDesc.CPUAccessFlags = 0;
 	textureDesc.MiscFlags = 0;
-	if (FAILED(gD3DDevice->CreateTexture2D(&textureDesc, NULL, mTextrue.GetAddressOf())))
+	if (FAILED(mEngine->GetDevice()->CreateTexture2D(&textureDesc, NULL, mTextrue.GetAddressOf())))
 	{
 		throw std::runtime_error("Error creating scene texture");
 	}
 
-	if (FAILED(gD3DDevice->CreateTexture2D(&textureDesc, NULL, mFinalTextrue.GetAddressOf())))
+	if (FAILED(mEngine->GetDevice()->CreateTexture2D(&textureDesc, NULL, mFinalTextrue.GetAddressOf())))
 	{
 		throw std::runtime_error("Error creating scene texture");
 	}
 
-	if (FAILED(gD3DDevice->CreateTexture2D(&textureDesc, NULL, mLuminanceMap.GetAddressOf())))
+	if (FAILED(mEngine->GetDevice()->CreateTexture2D(&textureDesc, NULL, mLuminanceMap.GetAddressOf())))
 	{
 		throw std::runtime_error("Error creating luminance texture");
 	}
 
-	if (FAILED(gD3DDevice->CreateTexture2D(&textureDesc, NULL, mSsaoMap.GetAddressOf())))
+	if (FAILED(mEngine->GetDevice()->CreateTexture2D(&textureDesc, NULL, mSsaoMap.GetAddressOf())))
 	{
 		throw std::runtime_error("Error creating ssao texture");
 	}
@@ -464,24 +419,24 @@ void CScene::InitTextures()
 
 	// We created the scene texture above, now we get a "view" of it as a render target, i.e. get a special pointer to the texture that
 	// we use when rendering to it (see RenderScene function below)
-	if (FAILED(gD3DDevice->CreateRenderTargetView(mTextrue.Get(), &rtvDesc, mSceneRTV.GetAddressOf())))
+	if (FAILED(mEngine->GetDevice()->CreateRenderTargetView(mTextrue.Get(), &rtvDesc, mSceneRTV.GetAddressOf())))
 	{
-		gLastError = "Error creating scene render target view";
+		throw std::runtime_error("Error creating scene render target view");
 	}
 
-	if (FAILED(gD3DDevice->CreateRenderTargetView(mFinalTextrue.Get(), &rtvDesc, mFinalRTV.GetAddressOf())))
+	if (FAILED(mEngine->GetDevice()->CreateRenderTargetView(mFinalTextrue.Get(), &rtvDesc, mFinalRTV.GetAddressOf())))
 	{
-		gLastError = "Error creating scene render target view";
+		throw std::runtime_error("Error creating scene render target view");
 	}
 
-	if (FAILED(gD3DDevice->CreateRenderTargetView(mLuminanceMap.Get(), &rtvDesc, mLuminanceRTV.GetAddressOf())))
+	if (FAILED(mEngine->GetDevice()->CreateRenderTargetView(mLuminanceMap.Get(), &rtvDesc, mLuminanceRTV.GetAddressOf())))
 	{
-		gLastError = "Error creating luminance render target view";
+		throw std::runtime_error("Error creating luminance render target view");
 	}
 
-	if (FAILED(gD3DDevice->CreateRenderTargetView(mSsaoMap.Get(), &rtvDesc, mSsaoMapRTV.GetAddressOf())))
+	if (FAILED(mEngine->GetDevice()->CreateRenderTargetView(mSsaoMap.Get(), &rtvDesc, mSsaoMapRTV.GetAddressOf())))
 	{
-		gLastError = "Error creating ssao render target view";
+		throw std::runtime_error("Error creating ssao render target view");
 	}
 
 
@@ -494,22 +449,22 @@ void CScene::InitTextures()
 	srvDesc.Texture2D.MostDetailedMip = 0;
 	srvDesc.Texture2D.MipLevels = 1;
 
-	if (FAILED(gD3DDevice->CreateShaderResourceView(mTextrue.Get(), &srvDesc, mSceneSRV.GetAddressOf())))
+	if (FAILED(mEngine->GetDevice()->CreateShaderResourceView(mTextrue.Get(), &srvDesc, mSceneSRV.GetAddressOf())))
 	{
 		throw std::runtime_error("Error creating scene texture shader resource view");
 	}
 
-	if (FAILED(gD3DDevice->CreateShaderResourceView(mFinalTextrue.Get(), &srvDesc, mFinalTextureSRV.GetAddressOf())))
+	if (FAILED(mEngine->GetDevice()->CreateShaderResourceView(mFinalTextrue.Get(), &srvDesc, mFinalTextureSRV.GetAddressOf())))
 	{
 		throw std::runtime_error("Error creating scene texture shader resource view");
 	}
 
-	if (FAILED(gD3DDevice->CreateShaderResourceView(mLuminanceMap.Get(), &srvDesc, mLuminanceMapSRV.GetAddressOf())))
+	if (FAILED(mEngine->GetDevice()->CreateShaderResourceView(mLuminanceMap.Get(), &srvDesc, mLuminanceMapSRV.GetAddressOf())))
 	{
 		throw std::runtime_error("Error creating luminance shader resource view");
 	}
 
-	if (FAILED(gD3DDevice->CreateShaderResourceView(mSsaoMap.Get(), &srvDesc, mSsaoMapSRV.GetAddressOf())))
+	if (FAILED(mEngine->GetDevice()->CreateShaderResourceView(mSsaoMap.Get(), &srvDesc, mSsaoMapSRV.GetAddressOf())))
 	{
 		throw std::runtime_error("Error creating ssao shader resource view");
 	}
@@ -530,12 +485,12 @@ void CScene::InitTextures()
 	dsDesc.CPUAccessFlags = 0;
 	dsDesc.MiscFlags = 0;
 
-	if (FAILED(gD3DDevice->CreateTexture2D(&dsDesc, NULL, mDepthStencil.GetAddressOf())))
+	if (FAILED(mEngine->GetDevice()->CreateTexture2D(&dsDesc, NULL, mDepthStencil.GetAddressOf())))
 	{
 		throw std::runtime_error("Error creating depth stencil");
 	}
 
-	if (FAILED(gD3DDevice->CreateTexture2D(&dsDesc, NULL, mFinalDepthStencil.GetAddressOf())))
+	if (FAILED(mEngine->GetDevice()->CreateTexture2D(&dsDesc, NULL, mFinalDepthStencil.GetAddressOf())))
 	{
 		throw std::runtime_error("Error creating depth stencil");
 	}
@@ -546,12 +501,12 @@ void CScene::InitTextures()
 	dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	dsvDesc.Texture2D.MipSlice = 0;
 
-	if (FAILED(gD3DDevice->CreateDepthStencilView(mDepthStencil.Get(), &dsvDesc, mDepthStencilRTV.GetAddressOf())))
+	if (FAILED(mEngine->GetDevice()->CreateDepthStencilView(mDepthStencil.Get(), &dsvDesc, mDepthStencilRTV.GetAddressOf())))
 	{
 		throw std::runtime_error("Error creating depth stencil view ");
 	}
 
-	if (FAILED(gD3DDevice->CreateDepthStencilView(mFinalDepthStencil.Get(), &dsvDesc, mFinalDepthStencilRTV.GetAddressOf())))
+	if (FAILED(mEngine->GetDevice()->CreateDepthStencilView(mFinalDepthStencil.Get(), &dsvDesc, mFinalDepthStencilRTV.GetAddressOf())))
 	{
 		throw std::runtime_error("Error creating depth stencil view ");
 	}
@@ -563,12 +518,12 @@ void CScene::InitTextures()
 	dsSrvDesc.Texture2D.MostDetailedMip = 0;
 	dsSrvDesc.Texture2D.MipLevels = -1;
 
-	if (FAILED(gD3DDevice->CreateShaderResourceView(mDepthStencil.Get(), &dsSrvDesc, mDepthStencilSRV.GetAddressOf())))
+	if (FAILED(mEngine->GetDevice()->CreateShaderResourceView(mDepthStencil.Get(), &dsSrvDesc, mDepthStencilSRV.GetAddressOf())))
 	{
 		throw std::runtime_error("Error creating depth stencil shader resource view");
 	}
 
-	if (FAILED(gD3DDevice->CreateShaderResourceView(mFinalDepthStencil.Get(), &dsSrvDesc, mFinalDepthStencilSRV.GetAddressOf())))
+	if (FAILED(mEngine->GetDevice()->CreateShaderResourceView(mFinalDepthStencil.Get(), &dsSrvDesc, mFinalDepthStencilSRV.GetAddressOf())))
 	{
 		throw std::runtime_error("Error creating depth stencil shader resource view");
 	}

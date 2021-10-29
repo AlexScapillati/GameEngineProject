@@ -18,7 +18,7 @@ public:
 	// Formats: NAME_RESOLUTION_TYPE.EXTENTION
 	// Types supported: Albedo,AmbientOccusion,Displacement,Roughness,Metallness
 	// It will set automatically the correct shaders depending on the use (Normals = PBR / No Normals = PBRNoNormals)
-	CMaterial(std::vector<std::string> fileMaps);
+	CMaterial(std::vector<std::string> fileMaps, CDX11Engine* engine);
 
 	// Copy Constuctor
 	// Deep Copy
@@ -41,41 +41,39 @@ public:
 	//-------------------------------------
 
 	auto TextureFileName() { return mMapsStr.front(); }
-	auto& Texture() { return mPbrMaps.Albedo; }
-	auto& TextureSRV() { return mPbrMaps.AlbedoSRV; }
-	auto GetPtrVertexShader() { return mVertexShader; }
-	auto GetPtrPixelShader() { return mPixelShader; }
-
-	~CMaterial();
-
-	void Release();
+	auto Texture() { return mPbrMaps.Albedo.Get(); }
+	auto TextureSRV() { return mPbrMaps.AlbedoSRV.Get(); }
+	auto GetPtrVertexShader() { return mVertexShader.Get(); }
+	auto GetPtrPixelShader() { return mPixelShader.Get(); }
 
 private:
+
+	CDX11Engine* mEngine;
 
 	std::vector<std::string> mMapsStr;
 
 	bool mHasNormals;
 
 	//for regular models
-	ID3D11VertexShader* mVertexShader;
-	ID3D11GeometryShader* mGeometryShader; //WIP
-	ID3D11PixelShader* mPixelShader;
+	ComPtr<ID3D11VertexShader> mVertexShader;
+	ComPtr<ID3D11GeometryShader> mGeometryShader; //WIP
+	ComPtr<ID3D11PixelShader> mPixelShader;
 
 	// All the pbr related maps that a model can have
 	struct sPbrMaps
 	{
-		ID3D11Resource* Albedo;
-		ID3D11ShaderResourceView* AlbedoSRV;
-		ID3D11Resource* AO;
-		ID3D11ShaderResourceView* AoSRV;
-		ID3D11Resource* Displacement;
-		ID3D11ShaderResourceView* DisplacementSRV;
-		ID3D11Resource* Normal;
-		ID3D11ShaderResourceView* NormalSRV;
-		ID3D11Resource* Roughness;
-		ID3D11ShaderResourceView* RoughnessSRV;
-		ID3D11Resource* Metalness;
-		ID3D11ShaderResourceView* MetalnessSRV;
+		ComPtr<ID3D11Resource> Albedo;
+		ComPtr<ID3D11ShaderResourceView> AlbedoSRV;
+		ComPtr<ID3D11Resource> AO;
+		ComPtr<ID3D11ShaderResourceView> AoSRV;
+		ComPtr<ID3D11Resource> Displacement;
+		ComPtr<ID3D11ShaderResourceView> DisplacementSRV;
+		ComPtr<ID3D11Resource> Normal;
+		ComPtr<ID3D11ShaderResourceView> NormalSRV;
+		ComPtr<ID3D11Resource> Roughness;
+		ComPtr<ID3D11ShaderResourceView> RoughnessSRV;
+		ComPtr<ID3D11Resource> Metalness;
+		ComPtr<ID3D11ShaderResourceView> MetalnessSRV;
 
 	} mPbrMaps;
 

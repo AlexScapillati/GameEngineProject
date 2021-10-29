@@ -1,26 +1,64 @@
 #pragma once
 
-#include "Scene.h"
 #include <Timer.h>
+#include <wrl.h>
+#include <string>
+#include <memory>
 
-// Forward declarations of functions in this file
-extern BOOL             InitWindow(HINSTANCE, int);
-extern LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+using namespace Microsoft::WRL;
 
-class CDXEngine
+// Forward declarations
+
+class IScene;
+class CWindow;
+class IGui;
+
+class IEngine
 {
 public:
 
-	void RenderGui();
+	virtual bool Update() = 0;
 
-	CDXEngine(HINSTANCE hInstance, int nCmdShow);
+	virtual void Resize(UINT x, UINT y) = 0;
 
-	bool Update();
+	auto GetTimer() const
+	{
+		return mTimer;
+	}
 
-	~CDXEngine();
+	auto GetWindow() const
+	{
+		return mWindow.get();
+	}
 
-private:
+	auto GetScene() const
+	{
+		return mMainScene.get();
+	}
 
-	std::unique_ptr<CScene> mMainScene;
+	auto& GetMediaFolder()
+	{
+		return mMediaFolder;
+	}
+
+	auto GetGui() const
+	{
+		return mGui.get();
+	}
+
+	virtual void Finalize() = 0;
+
+	virtual ~IEngine() = default;
+
+protected:
+
+	std::unique_ptr<IScene> mMainScene;
+
 	Timer mTimer;
+
+	std::unique_ptr<CWindow> mWindow;
+
+	std::unique_ptr<IGui> mGui;
+
+	std::string mMediaFolder;
 };

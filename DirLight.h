@@ -8,14 +8,17 @@ class CDirLight :
 {
 public:
 
-	CDirLight(std::string mesh, std::string name,
+	CDirLight(CDX11Engine* engine, 
+		std::string mesh, 
+		std::string name,
 		std::string& diffuse, 
-		CVector3 colour = { 0.0f, 0.0f, 0.0f }, float strength = 0.0f,
-		CVector3 position = { 0, 0, 0 }, CVector3 rotation = { 0, 0, 0 }, float scale = 1);
+		CVector3 colour = { 0.0f, 0.0f, 0.0f }, 
+		float strength = 0.0f,
+		CVector3 position = { 0, 0, 0 }, 
+		CVector3 rotation = { 0, 0, 0 }, 
+		float scale = 1);
 
-	CDirLight(CDirLight& l) : CLight(l)
-	{
-	}
+	CDirLight(CDirLight& l);
 
 	ID3D11ShaderResourceView* RenderFromThis();
 

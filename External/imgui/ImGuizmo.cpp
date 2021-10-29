@@ -259,7 +259,7 @@ namespace ImGuizmo
       void TransformVector(const vec_t& v, const matrix_t& matrix) { (*this) = v; this->TransformVector(matrix); }
       void TransformPoint(const vec_t& v, const matrix_t& matrix) { (*this) = v; this->TransformPoint(matrix); }
 
-      float& operator [] (size_t index) { return ((float*)&x)[index]; }
+      float& operator [] (size_t index) { return static_cast<float*>(&x)[index]; }
       const float& operator [] (size_t index) const { return ((float*)&x)[index]; }
       bool operator!=(const vec_t& other) const { return memcmp(this, &other, sizeof(vec_t)); }
    };
@@ -721,7 +721,7 @@ namespace ImGuizmo
 
       int mActualID = -1;
       int mEditingID = -1;
-      OPERATION mOperation = OPERATION(-1);
+      OPERATION mOperation = static_cast<OPERATION>(-1);
 
       bool mAllowAxisFlip = true;
    };
@@ -1036,8 +1036,8 @@ namespace ImGuizmo
             colors[0] = (type == MT_MOVE_SCREEN) ? selectionColor : 0xFFFFFFFF;
             for (int i = 0; i < 3; i++)
             {
-               colors[i + 1] = (type == (int)(MT_MOVE_X + i)) ? selectionColor : directionColor[i];
-               colors[i + 4] = (type == (int)(MT_MOVE_YZ + i)) ? selectionColor : planeColor[i];
+               colors[i + 1] = (type == static_cast<int>(MT_MOVE_X + i)) ? selectionColor : directionColor[i];
+               colors[i + 4] = (type == static_cast<int>(MT_MOVE_YZ + i)) ? selectionColor : planeColor[i];
                colors[i + 4] = (type == MT_MOVE_SCREEN) ? selectionColor : colors[i + 4];
             }
             break;
@@ -1045,14 +1045,14 @@ namespace ImGuizmo
             colors[0] = (type == MT_ROTATE_SCREEN) ? selectionColor : 0xFFFFFFFF;
             for (int i = 0; i < 3; i++)
             {
-               colors[i + 1] = (type == (int)(MT_ROTATE_X + i)) ? selectionColor : directionColor[i];
+               colors[i + 1] = (type == static_cast<int>(MT_ROTATE_X + i)) ? selectionColor : directionColor[i];
             }
             break;
          case SCALE:
             colors[0] = (type == MT_SCALE_XYZ) ? selectionColor : 0xFFFFFFFF;
             for (int i = 0; i < 3; i++)
             {
-               colors[i + 1] = (type == (int)(MT_SCALE_X + i)) ? selectionColor : directionColor[i];
+               colors[i + 1] = (type == static_cast<int>(MT_SCALE_X + i)) ? selectionColor : directionColor[i];
             }
             break;
          // note: this internal function is only called with three possible values for operation
@@ -1178,7 +1178,7 @@ namespace ImGuizmo
       if (gContext.mIsOrthographic)
       {
          matrix_t viewInverse;
-         viewInverse.Inverse(*(matrix_t*)&gContext.mViewMat);
+         viewInverse.Inverse(*static_cast<matrix_t*>(&gContext.mViewMat));
          cameraToModelNormalized = viewInverse.v.dir;
       }
       else
@@ -1198,13 +1198,13 @@ namespace ImGuizmo
          {
             continue;
          }
-         ImVec2* circlePos = (ImVec2*) alloca(sizeof(ImVec2) * (circleMul * halfCircleSegmentCount + 1));
+         ImVec2* circlePos = static_cast<ImVec2*>(alloca(sizeof(ImVec2) * (circleMul * halfCircleSegmentCount + 1)));
 
          float angleStart = atan2f(cameraToModelNormalized[(4 - axis) % 3], cameraToModelNormalized[(3 - axis) % 3]) + ZPI * 0.5f;
 
          for (unsigned int i = 0; i < circleMul * halfCircleSegmentCount + 1; i++)
          {
-            float ng = angleStart + circleMul * ZPI * ((float)i / (float)halfCircleSegmentCount);
+            float ng = angleStart + circleMul * ZPI * (static_cast<float>(i) / static_cast<float>(halfCircleSegmentCount));
             vec_t axisPos = makeVect(cosf(ng), sinf(ng), 0.f);
             vec_t pos = makeVect(axisPos[axis], axisPos[(axis + 1) % 3], axisPos[(axis + 2) % 3]) * gContext.mScreenFactor;
             circlePos[i] = worldToPos(pos, gContext.mMVP);
@@ -1230,7 +1230,7 @@ namespace ImGuizmo
          circlePos[0] = worldToPos(gContext.mModel.v.position, gContext.mViewProjection);
          for (unsigned int i = 1; i < halfCircleSegmentCount; i++)
          {
-            float ng = gContext.mRotationAngle * ((float)(i - 1) / (float)(halfCircleSegmentCount - 1));
+            float ng = gContext.mRotationAngle * (static_cast<float>(i - 1) / static_cast<float>(halfCircleSegmentCount - 1));
             matrix_t rotateVectorMatrix;
             rotateVectorMatrix.RotationAxis(gContext.mTranslationPlan, ng);
             vec_t pos;
@@ -1253,8 +1253,8 @@ namespace ImGuizmo
    {
       for (int j = 1; j < 10; j++)
       {
-         ImVec2 baseSSpace2 = worldToPos(axis * 0.05f * (float)(j * 2) * gContext.mScreenFactor, gContext.mMVP);
-         ImVec2 worldDirSSpace2 = worldToPos(axis * 0.05f * (float)(j * 2 + 1) * gContext.mScreenFactor, gContext.mMVP);
+         ImVec2 baseSSpace2 = worldToPos(axis * 0.05f * static_cast<float>(j * 2) * gContext.mScreenFactor, gContext.mMVP);
+         ImVec2 worldDirSSpace2 = worldToPos(axis * 0.05f * static_cast<float>(j * 2 + 1) * gContext.mScreenFactor, gContext.mMVP);
          gContext.mDrawList->AddLine(baseSSpace2, worldDirSSpace2, 0x80000000, 6.f);
       }
    }
@@ -1536,13 +1536,13 @@ namespace ImGuizmo
                continue;
             }
             float boundDistance = sqrtf(ImLengthSqr(worldBound1 - worldBound2));
-            int stepCount = (int)(boundDistance / 10.f);
+            int stepCount = static_cast<int>(boundDistance / 10.f);
             stepCount = min(stepCount, 1000);
-            float stepLength = 1.f / (float)stepCount;
+            float stepLength = 1.f / static_cast<float>(stepCount);
             for (int j = 0; j < stepCount; j++)
             {
-               float t1 = (float)j * stepLength;
-               float t2 = (float)j * stepLength + stepLength * 0.5f;
+               float t1 = static_cast<float>(j) * stepLength;
+               float t2 = static_cast<float>(j) * stepLength + stepLength * 0.5f;
                ImVec2 worldBoundSS1 = ImLerp(worldBound1, worldBound2, ImVec2(t1, t1));
                ImVec2 worldBoundSS2 = ImLerp(worldBound1, worldBound2, ImVec2(t2, t2));
                //drawList->AddLine(worldBoundSS1, worldBoundSS2, 0x000000 + anchorAlpha, 3.f);
@@ -2338,7 +2338,7 @@ namespace ImGuizmo
          ImVec2 faceCoordsScreen[4];
          ImU32 color;
       };
-      CubeFace* faces = (CubeFace*)_malloca(sizeof(CubeFace) * matrixCount * 6);
+      CubeFace* faces = static_cast<CubeFace*>((0));
 
       if (!faces)
       {
@@ -2585,7 +2585,7 @@ namespace ImGuizmo
             const vec_t origin = directionUnary[normalIndex] - dx - dy;
             for (int iPanel = 0; iPanel < 9; iPanel++)
             {
-               vec_t boxCoord = boxOrigin + indexVectorX * float(iPanel % 3) + indexVectorY * float(iPanel / 3) + makeVect(1.f, 1.f, 1.f);
+               vec_t boxCoord = boxOrigin + indexVectorX * static_cast<float>(iPanel % 3) + indexVectorY * static_cast<float>(iPanel / 3) + makeVect(1.f, 1.f, 1.f);
                const ImVec2 p = panelPosition[iPanel] * 2.f;
                const ImVec2 s = panelSize[iPanel] * 2.f;
                ImVec2 faceCoordsScreen[4];
@@ -2601,7 +2601,7 @@ namespace ImGuizmo
 
                const ImVec2 panelCorners[2] = { panelPosition[iPanel], panelPosition[iPanel] + panelSize[iPanel] };
                bool insidePanel = localx > panelCorners[0].x && localx < panelCorners[1].x&& localy > panelCorners[0].y && localy < panelCorners[1].y;
-               int boxCoordInt = int(boxCoord.x * 9.f + boxCoord.y * 3.f + boxCoord.z);
+               int boxCoordInt = static_cast<int>(boxCoord.x * 9.f + boxCoord.y * 3.f + boxCoord.z);
                assert(boxCoordInt < 27);
                boxes[boxCoordInt] |= insidePanel && (!isDraging);
 

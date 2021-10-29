@@ -8,6 +8,7 @@
 
 #include "CVector3.h"
 #include "CVector4.h"
+#include "MathHelpers.h"
 
 // Matrix class
 class CMatrix4x4

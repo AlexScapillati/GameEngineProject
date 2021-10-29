@@ -9,7 +9,6 @@
 #include "Math\CMatrix4x4.h"
 
 #include <d3d11.h>
-#include <string>
 #include <CVector2.h>
 #include <wrl.h>
 
@@ -26,39 +25,9 @@ class CGameObjectManager;
 // use of globals, but done this way to keep code simpler so the DirectX content is
 // clearer. However, try to architect your own code in a better way.
 
-// Windows variables
-extern HWND gHWnd;
-
-// Viewport size
-extern UINT gViewportWidth;
-extern UINT gViewportHeight;
-extern CVector2 gViewportWindowPos;
-
-extern bool gViewportFullscreen;
-
-// Important DirectX variables
-extern ComPtr<ID3D11Device> gD3DDevice;
-extern ComPtr<ID3D11DeviceContext> gD3DContext;
-extern ComPtr<ID3D11Debug> gD3DDebug;
-
-extern ComPtr<IDXGISwapChain> gSwapChain;
-extern ComPtr<ID3D11RenderTargetView> gBackBufferRenderTarget; // Back buffer is where we render to
-extern ComPtr<ID3D11DepthStencilView> gDepthStencil;           // The depth buffer contains a depth for each back buffer pixel
-extern ComPtr<ID3D11ShaderResourceView> gDepthShaderView;        // Allows access to the depth buffer as a texture for certain specialised shaders
-
-extern CGameObjectManager* GOM;
-
-// Input constsnts
+// Input constants
 extern float ROTATION_SPEED;
 extern float MOVEMENT_SPEED;
-
-// A global error message to help track down fatal errors - set it to a useful message
-// when a serious error occurs
-extern std::string gLastError;
-
-extern std::string gMediaFolder;
-
-
 
 //--------------------------------------------------------------------------------------
 // Light Structures
@@ -252,7 +221,7 @@ struct PostProcessingConstants
 	float paddingG;
 
 	//gaussian blur settings
-	int blurDirections = 16.0; // BLUR DIRECTIONS (Default 16.0 - More is better but slower)
+	int blurDirections = 16; // BLUR DIRECTIONS (Default 16.0 - More is better but slower)
 	float blurQuality = 3.0; // BLUR QUALITY (Default 4.0 - More is better but slower)
 	float blurSize = 8.0; // BLUR SIZE (Radius)
 	float paddingH;

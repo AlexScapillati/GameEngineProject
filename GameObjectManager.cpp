@@ -3,15 +3,17 @@
 #include "SpotLight.h"
 #include "PointLight.h"
 #include "DirLight.h"
+#include "DX11Gui.h"
 #include "Light.h"
 #include "Sky.h"
 #include "GraphicsHelpers.h"
 #include "MathHelpers.h"
+#include "GUI.h"
 
-extern void DisplayShadowMaps();
-
-CGameObjectManager::CGameObjectManager()
+CGameObjectManager::CGameObjectManager(CDX11Engine* engine)
 {
+	mSky = nullptr;
+	mEngine = engine;
 	mMaxSize = 100;
 	mMaxShadowMaps = 10;
 }
@@ -76,7 +78,7 @@ void CGameObjectManager::AddDirLight(CDirLight* obj)
 
 void CGameObjectManager::UpdateLightsBuffer()
 {
-	auto FCB = &gPerFrameLightsConstants;
+	const auto FCB = &gPerFrameLightsConstants;
 
 	for (auto i = 0; i < mLights.size(); ++i)
 	{
@@ -96,7 +98,7 @@ void CGameObjectManager::UpdateLightsBuffer()
 
 void CGameObjectManager::UpdateSpotLightsBuffer()
 {
-	auto FLB = &gPerFrameSpotLightsConstants;
+	const auto FLB = &gPerFrameSpotLightsConstants;
 
 	for (auto i = 0; i < mSpotLights.size(); ++i)
 	{
@@ -120,8 +122,7 @@ void CGameObjectManager::UpdateSpotLightsBuffer()
 
 void CGameObjectManager::UpdateDirLightsBuffer()
 {
-
-	auto FLB = &gPerFrameDirLightsConstants;
+	const auto FLB = &gPerFrameDirLightsConstants;
 
 	for (auto i = 0; i < mDirLights.size(); ++i)
 	{
@@ -143,7 +144,7 @@ void CGameObjectManager::UpdateDirLightsBuffer()
 
 void CGameObjectManager::UpdatePointLightsBuffer()
 {
-	for (auto i = 0; i < mPointLights.size(); ++i)
+	for (unsigned long long i = 0; i < mPointLights.size(); ++i)
 	{
 		if (*mPointLights[i]->Enabled())
 		{
@@ -240,7 +241,7 @@ bool CGameObjectManager::RemoveDirLight(int pos)
 
 void CGameObjectManager::RenderAmbientMaps()
 {
-	for (auto it : mObjects)
+	for (const auto it : mObjects)
 	{
 		it->RenderToAmbientMap();
 	}
@@ -252,7 +253,7 @@ bool CGameObjectManager::RenderAllObjects()
 	if (mSky) mSky->Render();
 
 	// Render the objects
-	for (auto it : mObjects)
+	for (const auto it : mObjects)
 	{
 		// If the sky is present, do not render it two times
 		if (dynamic_cast<CSky*>(it)) continue;
@@ -262,47 +263,47 @@ bool CGameObjectManager::RenderAllObjects()
 	}
 
 	// Render the lights 
-	for (auto it : mLights)
+	for (const auto it : mLights)
 	{
 		it->Render();
 	}
 
-	for (auto it : mSpotLights)
+	for (const auto it : mSpotLights)
 	{
 		it->Render();
 	}
 
-	for (auto it : mDirLights)
+	for (const auto it : mDirLights)
 	{
 		it->Render();
 	}
 
-	for (auto it : mPointLights)
+	for (const auto it : mPointLights)
 	{
 		it->Render();
 	}
-
-	if (!gViewportFullscreen)
+	
+	if (!mEngine->GetGui()->IsSceneFullscreen())
 	{
-		DisplayShadowMaps();
+		//dynamic_cast<CDX11Gui*>(mEngine->GetGui())->DisplayShadowMaps();
 	}
 
 	mShadowsMaps.clear();
 
 	// Unbind shadow maps from shaders - prevents warnings from DirectX when we try to render to the shadow maps again next frame
-	auto nShadowMaps = mSpotLights.size() + mDirLights.size() + (mPointLights.size() * 6);
+	const auto nShadowMaps = mSpotLights.size() + mDirLights.size() + (mPointLights.size() * 6);
 
 	for (int i = 0; i < nShadowMaps; ++i)
 	{
 		ID3D11ShaderResourceView* nullView = nullptr;
-		gD3DContext->PSSetShaderResources(7 + i, 1, &nullView);
+		mEngine->GetContext()->PSSetShaderResources(7 + i, 1, &nullView);
 	}
 	return true;
 }
 
 void CGameObjectManager::RenderFromSpotLights()
 {
-	for (auto it : mSpotLights)
+	for (const auto it : mSpotLights)
 	{
 		if (*it->Enabled())
 		{
@@ -317,7 +318,7 @@ void CGameObjectManager::RenderFromSpotLights()
 
 void CGameObjectManager::RenderFromPointLights()
 {
-	for (auto it : mPointLights)
+	for (const auto it : mPointLights)
 	{
 		if (*it->Enabled())
 		{
@@ -333,7 +334,7 @@ void CGameObjectManager::RenderFromPointLights()
 
 void CGameObjectManager::RenderFromDirLights()
 {
-	for (auto it : mDirLights)
+	for (const auto it : mDirLights)
 	{
 		if (*it->Enabled())
 		{
@@ -355,7 +356,7 @@ void CGameObjectManager::UpdateObjects(float updateTime)
 {
 	auto pos = 0;
 
-	for (auto it : mObjects)
+	for (const auto it : mObjects)
 	{
 		if (!it->Update(updateTime))
 		{
@@ -367,32 +368,32 @@ void CGameObjectManager::UpdateObjects(float updateTime)
 
 CGameObjectManager::~CGameObjectManager()
 {
-	for (auto& it : mObjects)
+	for (const auto& it : mObjects)
 	{
 		if (it)delete it;
 	}
 
-	for (auto& it : mLights)
+	for (const auto& it : mLights)
 	{
 		if (it)delete it;
 	}
 
-	for (auto& it : mSpotLights)
+	for (const auto& it : mSpotLights)
 	{
 		if (it)delete it;
 	}
 
-	for (auto& it : mPointLights)
+	for (const auto& it : mPointLights)
 	{
 		if (it)delete it;
 	}
 
-	for (auto& it : mDirLights)
+	for (const auto& it : mDirLights)
 	{
 		if (it) delete it;
 	}
 
-	for (auto& it : mShadowsMaps)
+	for (const auto& it : mShadowsMaps)
 	{
 		if (it) it->Release();
 	}

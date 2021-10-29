@@ -8,44 +8,17 @@
 
 #pragma once
 
-#include "State.h"
-#include "Common.h"
+#include <stdexcept>
 
-//--------------------------------------------------------------------------------------
-// Global Variables
-//--------------------------------------------------------------------------------------
-// Globals used to keep code simpler, but try to architect your own code in a better way
-//**** Update State.h if you add things here ****//
+#include "DX11Engine.h"
 
-// GPU "States" //
-
-// A sampler state object represents a way to filter textures, such as bilinear or trilinear. We have one object for each method we want to use
-ID3D11SamplerState* gPointSampler = nullptr;
-ID3D11SamplerState* gTrilinearSampler = nullptr;
-ID3D11SamplerState* gPointSamplerBorder = nullptr;
-ID3D11SamplerState* gAnisotropic4xSampler = nullptr;
-
-// Blend states allow us to switch between blending modes (none, additive, multiplicative etc.)
-ID3D11BlendState* gNoBlendingState = nullptr;
-ID3D11BlendState* gAdditiveBlendingState = nullptr;
-ID3D11BlendState* gAlphaBlendingState = nullptr;
-
-// Rasterizer states affect how triangles are drawn
-ID3D11RasterizerState* gCullBackState = nullptr;
-ID3D11RasterizerState* gCullFrontState = nullptr;
-ID3D11RasterizerState* gCullNoneState = nullptr;
-
-// Depth-stencil states allow us change how the depth buffer is used
-ID3D11DepthStencilState* gUseDepthBufferState = nullptr;
-ID3D11DepthStencilState* gDepthReadOnlyState = nullptr;
-ID3D11DepthStencilState* gNoDepthBufferState = nullptr;
 
 //--------------------------------------------------------------------------------------
 // State creation / destruction
 //--------------------------------------------------------------------------------------
 
 // Create all the states used in this app, returns true on success
-bool CreateStates()
+bool CDX11Engine::CreateStates()
 {
 	//--------------------------------------------------------------------------------------
 	// Texture Samplers
@@ -64,10 +37,10 @@ bool CreateStates()
 	samplerDesc.MinLOD = 0;                 // --"--
 
 	// Then create a DirectX object for your description that can be used by a shader
-	if (FAILED(gD3DDevice->CreateSamplerState(&samplerDesc, &gPointSampler)))
+	if (FAILED(mD3DDevice->CreateSamplerState(&samplerDesc, &mPointSampler)))
 	{
-		gLastError = "Error creating point sampler";
-		return false;
+		throw std::runtime_error("Error creating point sampler");
+
 	}
 
 	////-------- Point Sampling with 0 outside 0->1 UV range (border mode) used for shadow maps --------////
@@ -82,10 +55,10 @@ bool CreateStates()
 	samplerDesc.MinLOD = 0;                 // --"--
 
 	// Then create a DirectX object for your description that can be used by a shader
-	if (FAILED(gD3DDevice->CreateSamplerState(&samplerDesc, &gPointSamplerBorder)))
+	if (FAILED(mD3DDevice->CreateSamplerState(&samplerDesc, &mPointSamplerBorder)))
 	{
-		gLastError = "Error creating point sampler";
-		return false;
+		throw std::runtime_error("Error creating point sampler");
+
 	}
 
 	////-------- Trilinear Sampling --------////
@@ -99,10 +72,10 @@ bool CreateStates()
 	samplerDesc.MinLOD = 0;                 // --"--
 
 	// Then create a DirectX object for your description that can be used by a shader
-	if (FAILED(gD3DDevice->CreateSamplerState(&samplerDesc, &gTrilinearSampler)))
+	if (FAILED(mD3DDevice->CreateSamplerState(&samplerDesc, &mTrilinearSampler)))
 	{
-		gLastError = "Error creating point sampler";
-		return false;
+		throw std::runtime_error("Error creating point sampler");
+
 	}
 
 	////-------- Anisotropic filtering --------////
@@ -116,10 +89,10 @@ bool CreateStates()
 	samplerDesc.MinLOD = 0;                 // --"--
 
 	// Then create a DirectX object for your description that can be used by a shader
-	if (FAILED(gD3DDevice->CreateSamplerState(&samplerDesc, &gAnisotropic4xSampler)))
+	if (FAILED(mD3DDevice->CreateSamplerState(&samplerDesc, &mAnisotropic4XSampler)))
 	{
-		gLastError = "Error creating anisotropic 4x sampler";
-		return false;
+		throw std::runtime_error("Error creating anisotropic 4x sampler");
+
 	}
 
 	//--------------------------------------------------------------------------------------
@@ -137,10 +110,10 @@ bool CreateStates()
 	rasterizerDesc.DepthClipEnable = TRUE; // Advanced setting - only used in rare cases
 
 	// Create a DirectX object for the description above that can be used by a shader
-	if (FAILED(gD3DDevice->CreateRasterizerState(&rasterizerDesc, &gCullBackState)))
+	if (FAILED(mD3DDevice->CreateRasterizerState(&rasterizerDesc, &mCullBackState)))
 	{
-		gLastError = "Error creating cull-back state";
-		return false;
+		throw std::runtime_error("Error creating cull-back state");
+
 	}
 
 	////-------- Front face culling --------////
@@ -150,10 +123,10 @@ bool CreateStates()
 	rasterizerDesc.DepthClipEnable = TRUE; // Advanced setting - only used in rare cases
 
 	// Create a DirectX object for the description above that can be used by a shader
-	if (FAILED(gD3DDevice->CreateRasterizerState(&rasterizerDesc, &gCullFrontState)))
+	if (FAILED(mD3DDevice->CreateRasterizerState(&rasterizerDesc, &mCullFrontState)))
 	{
-		gLastError = "Error creating cull-front state";
-		return false;
+		throw std::runtime_error("Error creating cull-front state");
+
 	}
 
 	////-------- No culling --------////
@@ -163,10 +136,10 @@ bool CreateStates()
 	rasterizerDesc.DepthClipEnable = TRUE; // Advanced setting - only used in rare cases
 
 	// Create a DirectX object for the description above that can be used by a shader
-	if (FAILED(gD3DDevice->CreateRasterizerState(&rasterizerDesc, &gCullNoneState)))
+	if (FAILED(mD3DDevice->CreateRasterizerState(&rasterizerDesc, &mCullNoneState)))
 	{
-		gLastError = "Error creating cull-none state";
-		return false;
+		throw std::runtime_error("Error creating cull-none state");
+
 	}
 
 	//--------------------------------------------------------------------------------------
@@ -189,10 +162,10 @@ bool CreateStates()
 	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
 	// Then create a DirectX object for the description that can be used by a shader
-	if (FAILED(gD3DDevice->CreateBlendState(&blendDesc, &gNoBlendingState)))
+	if (FAILED(mD3DDevice->CreateBlendState(&blendDesc, &mNoBlendingState)))
 	{
-		gLastError = "Error creating no-blend state";
-		return false;
+		throw std::runtime_error("Error creating no-blend state");
+
 	}
 
 	////-------- Additive Blending State --------////
@@ -209,10 +182,10 @@ bool CreateStates()
 	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
 	// Then create a DirectX object for the description that can be used by a shader
-	if (FAILED(gD3DDevice->CreateBlendState(&blendDesc, &gAdditiveBlendingState)))
+	if (FAILED(mD3DDevice->CreateBlendState(&blendDesc, &mAdditiveBlendingState)))
 	{
-		gLastError = "Error creating additive blending state";
-		return false;
+		throw std::runtime_error("Error creating additive blending state");
+
 	}
 
 	////-------- Alpha Blending State --------////
@@ -229,10 +202,10 @@ bool CreateStates()
 	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
 	// Then create a DirectX object for the description that can be used by a shader
-	if (FAILED(gD3DDevice->CreateBlendState(&blendDesc, &gAlphaBlendingState)))
+	if (FAILED(mD3DDevice->CreateBlendState(&blendDesc, &mAlphaBlendingState)))
 	{
-		gLastError = "Error creating additive blending state";
-		return false;
+		throw std::runtime_error("Error creating additive blending state");
+
 	}
 
 	//--------------------------------------------------------------------------------------
@@ -250,10 +223,10 @@ bool CreateStates()
 	depthStencilDesc.StencilEnable = FALSE;
 
 	// Create a DirectX object for the description above that can be used by a shader
-	if (FAILED(gD3DDevice->CreateDepthStencilState(&depthStencilDesc, &gUseDepthBufferState)))
+	if (FAILED(mD3DDevice->CreateDepthStencilState(&depthStencilDesc, &mUseDepthBufferState)))
 	{
-		gLastError = "Error creating use-depth-buffer state";
-		return false;
+		throw std::runtime_error("Error creating use-depth-buffer state");
+
 	}
 
 	////-------- Enable depth buffer reads only --------////
@@ -264,10 +237,10 @@ bool CreateStates()
 	depthStencilDesc.StencilEnable = FALSE;
 
 	// Create a DirectX object for the description above that can be used by a shader
-	if (FAILED(gD3DDevice->CreateDepthStencilState(&depthStencilDesc, &gDepthReadOnlyState)))
+	if (FAILED(mD3DDevice->CreateDepthStencilState(&depthStencilDesc, &mDepthReadOnlyState)))
 	{
-		gLastError = "Error creating depth-read-only state";
-		return false;
+		throw std::runtime_error("Error creating depth-read-only state");
+
 	}
 
 	////-------- Disable depth buffer --------////
@@ -277,32 +250,32 @@ bool CreateStates()
 	depthStencilDesc.StencilEnable = FALSE;
 
 	// Create a DirectX object for the description above that can be used by a shader
-	if (FAILED(gD3DDevice->CreateDepthStencilState(&depthStencilDesc, &gNoDepthBufferState)))
+	if (FAILED(mD3DDevice->CreateDepthStencilState(&depthStencilDesc, &mNoDepthBufferState)))
 	{
-		gLastError = "Error creating no-depth-buffer state";
-		return false;
+		throw std::runtime_error("Error creating no-depth-buffer state");
+
 	}
 
 	return true;
 }
 
 // Release DirectX state objects
-void ReleaseStates()
+void CDX11Engine::ReleaseStates()
 {
-	if (gPointSampler)           gPointSampler->Release();			gPointSampler = nullptr;
-	if (gTrilinearSampler)       gTrilinearSampler->Release();		gTrilinearSampler = nullptr;
-	if (gPointSamplerBorder)	 gPointSamplerBorder->Release();	gPointSamplerBorder = nullptr;
-	if (gAnisotropic4xSampler)   gAnisotropic4xSampler->Release();	gAnisotropic4xSampler = nullptr;
+	if (mPointSampler)           mPointSampler->Release();			mPointSampler = nullptr;
+	if (mTrilinearSampler)       mTrilinearSampler->Release();		mTrilinearSampler = nullptr;
+	if (mPointSamplerBorder)	 mPointSamplerBorder->Release();	mPointSamplerBorder = nullptr;
+	if (mAnisotropic4XSampler)   mAnisotropic4XSampler->Release();	mAnisotropic4XSampler = nullptr;
 
-	if (gUseDepthBufferState)    gUseDepthBufferState->Release();	gUseDepthBufferState = nullptr;
-	if (gDepthReadOnlyState)     gDepthReadOnlyState->Release();	gDepthReadOnlyState = nullptr;
-	if (gNoDepthBufferState)     gNoDepthBufferState->Release();	gNoDepthBufferState = nullptr;
+	if (mUseDepthBufferState)    mUseDepthBufferState->Release();	mUseDepthBufferState = nullptr;
+	if (mDepthReadOnlyState)     mDepthReadOnlyState->Release();	mDepthReadOnlyState = nullptr;
+	if (mNoDepthBufferState)     mNoDepthBufferState->Release();	mNoDepthBufferState = nullptr;
 
-	if (gCullNoneState)          gCullNoneState->Release();			gCullNoneState = nullptr;
-	if (gCullBackState)          gCullBackState->Release();			gCullBackState = nullptr;
-	if (gCullFrontState)         gCullFrontState->Release();		gCullFrontState = nullptr;
+	if (mCullNoneState)          mCullNoneState->Release();			mCullNoneState = nullptr;
+	if (mCullBackState)          mCullBackState->Release();			mCullBackState = nullptr;
+	if (mCullFrontState)         mCullFrontState->Release();		mCullFrontState = nullptr;
 
-	if (gNoBlendingState)        gNoBlendingState->Release();		gNoBlendingState = nullptr;
-	if (gAlphaBlendingState)     gAlphaBlendingState->Release();	gAlphaBlendingState = nullptr;
-	if (gAdditiveBlendingState)  gAdditiveBlendingState->Release();	gAdditiveBlendingState = nullptr;
+	if (mNoBlendingState)        mNoBlendingState->Release();		mNoBlendingState = nullptr;
+	if (mAlphaBlendingState)     mAlphaBlendingState->Release();	mAlphaBlendingState = nullptr;
+	if (mAdditiveBlendingState)  mAdditiveBlendingState->Release();	mAdditiveBlendingState = nullptr;
 }

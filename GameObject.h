@@ -33,7 +33,9 @@ public:
 
 	// Simple object contructor
 	// A mesh and a diffuse map are compulsory to render a model
-	CGameObject(std::string mesh, std::string name, std::string& diffuseMap, CVector3 position = { 0,0,0 }, CVector3 rotation = { 0,0,0 }, float scale = 1);
+	CGameObject(CDX11Engine* engine, std::string mesh, std::string name, std::string& diffuseMap, CVector3 position = { 0,0,0 }, CVector3 rotation = { 0,0,0 }, float scale = 1);
+
+	void GetFilesInFolder(std::string& dirPath, std::vector<std::string>& fileNames);
 
 	// "Smart" Constructor
 	// Given an ID (That could be a file or a directory) this constructor will import all the files in that folder or the files that will contain that id
@@ -42,7 +44,7 @@ public:
 	// Folders: NAME_ID_TYPE
 	// Meshes:	NAME_LOD_VARIATION.EXTENTION
 	// Textures: ID_RESOLUTION_TYPE.EXTENTION
-	CGameObject(std::string id, std::string name, CVector3 position = { 0,0,0 }, CVector3 rotation = { 0,0,0 }, float scale = 1);
+	CGameObject(CDX11Engine* engine,std::string id, std::string name, CVector3 position = { 0,0,0 }, CVector3 rotation = { 0,0,0 }, float scale = 1);
 
 	// Render the object
 	// Accepts a boolean value for rendering just the mesh 
@@ -177,6 +179,8 @@ protected:
 	// Private data / members
 	//-------------------------------------
 
+	CDX11Engine* mEngine;
+
 	// The material
 	// It will hold all the textures and send them to the shader with RenderMaterial()
 	CMaterial* mMaterial;
@@ -213,8 +217,11 @@ protected:
 	// Then it will send the cubemap to the shader and display reflexes on the object
 	struct sAmbientMap
 	{
+
+		CDX11Engine* mEngine;
+
 		// Initialize the textures
-		void Init();
+		void Init(CDX11Engine* engine);
 
 		bool enabled;
 		ID3D11Texture2D* map;	// The actual texture stored on the GPU side (cubemap)

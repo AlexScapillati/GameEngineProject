@@ -6,37 +6,15 @@
 #ifndef SHADER_CPP_INCLUDED_
 #define SHADER_CPP_INCLUDED_
 
-#include "Shader.h"
 #include "Common.h"
+#include "DX11Engine.h"
 #include <d3dcompiler.h>
 #include <fstream>
 #include <vector>
 
-//*******************************
-//**** Post-processing shader DirectX objects
-// These are also added to Shader.h
-ComPtr<ID3D11PixelShader>	gSsaoPostProcess = nullptr;
-ComPtr<ID3D11PixelShader>	gCopyPostProcess = nullptr;
-ComPtr<ID3D11PixelShader>	gTintPostProcess = nullptr;
-ComPtr<ID3D11PixelShader>	gBurnPostProcess = nullptr;
-ComPtr<ID3D11PixelShader>	gBloomPostProcess = nullptr;
-ComPtr<ID3D11PixelShader>	gSpiralPostProcess = nullptr;
-ComPtr<ID3D11PixelShader>	gGodRaysPostProcess = nullptr;
-ComPtr<ID3D11PixelShader>	gDistortPostProcess = nullptr;
-ComPtr<ID3D11PixelShader>	gSsaoLastPostProcess = nullptr;
-ComPtr<ID3D11PixelShader>	gHeatHazePostProcess = nullptr;
-ComPtr<ID3D11PixelShader>	gBloomLastPostProcess = nullptr;
-ComPtr<ID3D11PixelShader>	gGreyNoisePostProcess = nullptr;
-ComPtr<ID3D11PixelShader>	gGaussionBlurPostProcess = nullptr;
-ComPtr<ID3D11PixelShader>	gChromaticAberrationPostProcess = nullptr;
-
-ComPtr<ID3D11VertexShader>  g2DPolygonVertexShader = nullptr;
-ComPtr<ID3D11VertexShader>  g2DQuadVertexShader = nullptr;
-
-
 // Load a vertex shader, include the file in the project and pass the name (without the .hlsl extension)
 // to this function. The returned pointer needs to be released before quitting. Returns nullptr on failure.
-ID3D11VertexShader* LoadVertexShader(const std::string& shaderName)
+ID3D11VertexShader* CDX11Engine::LoadVertexShader(const std::string& shaderName)
 {
 	// Open compiled shader object file
 	std::ifstream shaderFile(shaderName + ".cso", std::ios::in | std::ios::binary | std::ios::ate);
@@ -57,7 +35,7 @@ ID3D11VertexShader* LoadVertexShader(const std::string& shaderName)
 
 	// Create shader object from loaded file (we will use the object later when rendering)
 	ID3D11VertexShader* shader;
-	const auto hr = gD3DDevice->CreateVertexShader(byteCode.data(), byteCode.size(), nullptr, &shader);
+	const auto hr = GetDevice()->CreateVertexShader(byteCode.data(), byteCode.size(), nullptr, &shader);
 	if (FAILED(hr))
 	{
 		return nullptr;
@@ -69,7 +47,7 @@ ID3D11VertexShader* LoadVertexShader(const std::string& shaderName)
 // Load a geometry shader, include the file in the project and pass the name (without the .hlsl extension)
 // to this function. The returned pointer needs to be released before quitting. Returns nullptr on failure.
 // Basically the same code as above but for pixel shaders
-ID3D11GeometryShader* LoadGeometryShader(const std::string& shaderName)
+ID3D11GeometryShader* CDX11Engine::LoadGeometryShader(const std::string& shaderName)
 {
 	// Open compiled shader object file
 	std::ifstream shaderFile(shaderName + ".cso", std::ios::in | std::ios::binary | std::ios::ate);
@@ -90,7 +68,7 @@ ID3D11GeometryShader* LoadGeometryShader(const std::string& shaderName)
 
 	// Create shader object from loaded file (we will use the object later when rendering)
 	ID3D11GeometryShader* shader;
-	const auto hr = gD3DDevice->CreateGeometryShader(byteCode.data(), byteCode.size(), nullptr, &shader);
+	const auto hr = GetDevice()->CreateGeometryShader(byteCode.data(), byteCode.size(), nullptr, &shader);
 	if (FAILED(hr))
 	{
 		return nullptr;
@@ -102,7 +80,7 @@ ID3D11GeometryShader* LoadGeometryShader(const std::string& shaderName)
 // Special method to load a geometry shader that can use the stream-out stage, Use like the other functions in this file except
 // also pass the stream out declaration, number of entries in the declaration and the size of each output element.
 // The returned pointer needs to be released before quitting. Returns nullptr on failure.
-ID3D11GeometryShader* LoadStreamOutGeometryShader(const std::string& shaderName, D3D11_SO_DECLARATION_ENTRY* soDecl, unsigned int soNumEntries, unsigned int soStride)
+ID3D11GeometryShader* CDX11Engine::LoadStreamOutGeometryShader(const std::string& shaderName, D3D11_SO_DECLARATION_ENTRY* soDecl, unsigned int soNumEntries, unsigned int soStride)
 {
 	// Open compiled shader object file
 	std::ifstream shaderFile(shaderName + ".cso", std::ios::in | std::ios::binary | std::ios::ate);
@@ -123,7 +101,7 @@ ID3D11GeometryShader* LoadStreamOutGeometryShader(const std::string& shaderName,
 
 	// Create shader object from loaded file (we will use the object later when rendering)
 	ID3D11GeometryShader* shader;
-	const auto hr = gD3DDevice->CreateGeometryShaderWithStreamOutput(byteCode.data(), byteCode.size(),
+	const auto hr = GetDevice()->CreateGeometryShaderWithStreamOutput(byteCode.data(), byteCode.size(),
 		soDecl, soNumEntries, &soStride, 1, D3D11_SO_NO_RASTERIZED_STREAM, nullptr, &shader);
 	if (FAILED(hr))
 	{
@@ -136,7 +114,7 @@ ID3D11GeometryShader* LoadStreamOutGeometryShader(const std::string& shaderName,
 // Load a pixel shader, include the file in the project and pass the name (without the .hlsl extension)
 // to this function. The returned pointer needs to be released before quitting. Returns nullptr on failure.
 // Basically the same code as above but for pixel shaders
-ID3D11PixelShader* LoadPixelShader(const std::string& shaderName)
+ID3D11PixelShader* CDX11Engine::LoadPixelShader(const std::string& shaderName)
 {
 	// Open compiled shader object file
 	std::ifstream shaderFile(shaderName + ".cso", std::ios::in | std::ios::binary | std::ios::ate);
@@ -157,7 +135,7 @@ ID3D11PixelShader* LoadPixelShader(const std::string& shaderName)
 
 	// Create shader object from loaded file (we will use the object later when rendering)
 	ID3D11PixelShader* shader;
-	const auto hr = gD3DDevice->CreatePixelShader(byteCode.data(), byteCode.size(), nullptr, &shader);
+	const auto hr = GetDevice()->CreatePixelShader(byteCode.data(), byteCode.size(), nullptr, &shader);
 	if (FAILED(hr))
 	{
 		return nullptr;
@@ -172,7 +150,7 @@ ID3D11PixelShader* LoadPixelShader(const std::string& shaderName)
 // This is a trick to simplify things - pass a vertex layout to this function and it will write and compile
 // a temporary shader to match. You don't need to know about the actual shaders in use in the app.
 // Release the signature (called a ID3DBlob!) after use. Returns nullptr on failure.
-ID3DBlob* CreateSignatureForVertexLayout(const D3D11_INPUT_ELEMENT_DESC vertexLayout[], int numElements)
+ID3DBlob* CDX11Engine::CreateSignatureForVertexLayout(const D3D11_INPUT_ELEMENT_DESC vertexLayout[], int numElements)
 {
 	std::string shaderSource = "float4 main(";
 	for (auto elt = 0; elt < numElements; ++elt)
@@ -220,102 +198,102 @@ ID3DBlob* CreateSignatureForVertexLayout(const D3D11_INPUT_ELEMENT_DESC vertexLa
 // We typically set up a C++ structure to exactly match the values we need in a shader and then create a constant
 // buffer the same size as the structure. That makes updating values from C++ to shader easy - see the main code.
 
-void LoadDefaultShaders()
+void CDX11Engine::LoadDefaultShaders()
 {
 	//-------------------------------------
 	// Post Processing Shaders
 	//-------------------------------------
 
-	gCopyPostProcess.Attach(LoadPixelShader("PostProcessing/Copy_pp"));
-	gTintPostProcess.Attach(LoadPixelShader("PostProcessing/Tint_pp"));
-	gBurnPostProcess.Attach(LoadPixelShader("PostProcessing/Burn_pp"));
-	gSsaoPostProcess.Attach(LoadPixelShader("PostProcessing/SSAO_pp"));
-	gBloomPostProcess.Attach(LoadPixelShader("PostProcessing/Bloom_pp"));
-	gSpiralPostProcess.Attach(LoadPixelShader("PostProcessing/Spiral_pp"));
-	gGodRaysPostProcess.Attach(LoadPixelShader("PostProcessing/GodRays_pp"));
-	gDistortPostProcess.Attach(LoadPixelShader("PostProcessing/Distort_pp"));
-	g2DQuadVertexShader.Attach(LoadVertexShader("PostProcessing/2DQuad_pp"));
-	gSsaoLastPostProcess.Attach(LoadPixelShader("PostProcessing/SSAOLast_pp"));
-	gHeatHazePostProcess.Attach(LoadPixelShader("PostProcessing/HeatHaze_pp"));
-	gBloomLastPostProcess.Attach(LoadPixelShader("PostProcessing/BloomLast_pp"));
-	gGreyNoisePostProcess.Attach(LoadPixelShader("PostProcessing/GreyNoise_pp"));
-	g2DPolygonVertexShader.Attach(LoadVertexShader("PostProcessing/2DPolygon_pp"));
-	gGaussionBlurPostProcess.Attach(LoadPixelShader("PostProcessing/GaussionBlur_pp"));
-	gChromaticAberrationPostProcess.Attach(LoadPixelShader("PostProcessing/ChromaticAberration_pp"));
+	mCopyPostProcess.Attach(LoadPixelShader("PostProcessing/Copy_pp"));
+	mTintPostProcess.Attach(LoadPixelShader("PostProcessing/Tint_pp"));
+	mBurnPostProcess.Attach(LoadPixelShader("PostProcessing/Burn_pp"));
+	mSsaoPostProcess.Attach(LoadPixelShader("PostProcessing/SSAO_pp"));
+	mBloomPostProcess.Attach(LoadPixelShader("PostProcessing/Bloom_pp"));
+	mSpiralPostProcess.Attach(LoadPixelShader("PostProcessing/Spiral_pp"));
+	mGodRaysPostProcess.Attach(LoadPixelShader("PostProcessing/GodRays_pp"));
+	mDistortPostProcess.Attach(LoadPixelShader("PostProcessing/Distort_pp"));
+	m2DQuadVertexShader.Attach(LoadVertexShader("PostProcessing/2DQuad_pp"));
+	mSsaoLastPostProcess.Attach(LoadPixelShader("PostProcessing/SSAOLast_pp"));
+	mHeatHazePostProcess.Attach(LoadPixelShader("PostProcessing/HeatHaze_pp"));
+	mBloomLastPostProcess.Attach(LoadPixelShader("PostProcessing/BloomLast_pp"));
+	mGreyNoisePostProcess.Attach(LoadPixelShader("PostProcessing/GreyNoise_pp"));
+	m2DPolygonVertexShader.Attach(LoadVertexShader("PostProcessing/2DPolygon_pp"));
+	mGaussionBlurPostProcess.Attach(LoadPixelShader("PostProcessing/GaussionBlur_pp"));
+	mChromaticAberrationPostProcess.Attach(LoadPixelShader("PostProcessing/ChromaticAberration_pp"));
 
 	//-------------------------------------
 	// Default Shaders
 	//-------------------------------------
 
-	gDepthOnlyPixelShader.Attach(LoadPixelShader("Shaders/DepthOnly_ps"));
-	gDepthOnlyNormalPixelShader.Attach(LoadPixelShader("Shaders/DepthOnlyNormal_ps"));
-	gBasicTransformVertexShader.Attach(LoadVertexShader("Shaders/BasicTransform_vs"));
+	mDepthOnlyPixelShader.Attach(LoadPixelShader("Shaders/DepthOnly_ps"));
+	mDepthOnlyNormalPixelShader.Attach(LoadPixelShader("Shaders/DepthOnlyNormal_ps"));
+	mBasicTransformVertexShader.Attach(LoadVertexShader("Shaders/BasicTransform_vs"));
 
-	gPBRVertexShader.Attach(LoadVertexShader("Shaders/PBRNoNormals_vs"));
-	gPBRNormalVertexShader.Attach(LoadVertexShader("Shaders/PBR_vs"));
+	mPbrVertexShader.Attach(LoadVertexShader("Shaders/PBRNoNormals_vs"));
+	mPbrNormalVertexShader.Attach(LoadVertexShader("Shaders/PBR_vs"));
 
-	gPBRPixelShader.Attach(LoadPixelShader("Shaders/PBRNoNormals_ps"));
-	gPBRNormalPixelShader.Attach(LoadPixelShader("Shaders/PBR_ps"));
+	mPbrPixelShader.Attach(LoadPixelShader("Shaders/PBRNoNormals_ps"));
+	mPbrNormalPixelShader.Attach(LoadPixelShader("Shaders/PBR_ps"));
 
-	gTintedTexturePixelShader.Attach(LoadPixelShader("Shaders/TintedTexture_ps"));
-	gSkyPixelShader.Attach(LoadPixelShader("Shaders/Sky_ps"));
-	gSkyVertexShader.Attach(LoadVertexShader("Shaders/Sky_vs"));
+	mTintedTexturePixelShader.Attach(LoadPixelShader("Shaders/TintedTexture_ps"));
+	mSkyPixelShader.Attach(LoadPixelShader("Shaders/Sky_ps"));
+	mSkyVertexShader.Attach(LoadVertexShader("Shaders/Sky_vs"));
 
 	// Check for all the shaders if they are being loaded
-	if (gDepthOnlyPixelShader == nullptr || gBasicTransformVertexShader == nullptr ||
-		g2DQuadVertexShader == nullptr || gCopyPostProcess == nullptr ||
-		gTintPostProcess == nullptr || gHeatHazePostProcess == nullptr ||
-		gGreyNoisePostProcess == nullptr || gBurnPostProcess == nullptr ||
-		gDistortPostProcess == nullptr || gSpiralPostProcess == nullptr ||
-		g2DPolygonVertexShader == nullptr || gChromaticAberrationPostProcess == nullptr ||
-		gGaussionBlurPostProcess == nullptr || gSsaoPostProcess == nullptr ||
-		gBloomPostProcess == nullptr || gBloomLastPostProcess == nullptr ||
-		gSsaoLastPostProcess == nullptr || gGodRaysPostProcess == nullptr ||
-		gPBRVertexShader == nullptr || gPBRNormalVertexShader == nullptr ||
-		gPBRPixelShader == nullptr || gPBRNormalPixelShader == nullptr ||
-		gTintedTexturePixelShader == nullptr || gSkyPixelShader == nullptr ||
-		gSkyVertexShader == nullptr)
+	if (mDepthOnlyPixelShader == nullptr || mBasicTransformVertexShader == nullptr ||
+		m2DQuadVertexShader == nullptr || mCopyPostProcess == nullptr ||
+		mTintPostProcess == nullptr || mHeatHazePostProcess == nullptr ||
+		mGreyNoisePostProcess == nullptr || mBurnPostProcess == nullptr ||
+		mDistortPostProcess == nullptr || mSpiralPostProcess == nullptr ||
+		m2DPolygonVertexShader == nullptr || mChromaticAberrationPostProcess == nullptr ||
+		mGaussionBlurPostProcess == nullptr || mSsaoPostProcess == nullptr ||
+		mBloomPostProcess == nullptr || mBloomLastPostProcess == nullptr ||
+		mSsaoLastPostProcess == nullptr || mGodRaysPostProcess == nullptr ||
+		mPbrVertexShader == nullptr || mPbrNormalVertexShader == nullptr ||
+		mPbrPixelShader == nullptr || mPbrNormalPixelShader == nullptr ||
+		mTintedTexturePixelShader == nullptr || mSkyPixelShader == nullptr ||
+		mSkyVertexShader == nullptr)
 	{
 		throw std::runtime_error("Error loading default shaders");
 	}
 }
 
-void ReleaseDefaultShaders()
+void CDX11Engine::ReleaseDefaultShaders()
 {
-	if (gDepthOnlyPixelShader)			  gDepthOnlyPixelShader = nullptr;
-	if (gBasicTransformVertexShader)	  gBasicTransformVertexShader = nullptr;
-	if (gHeatHazePostProcess)			  gHeatHazePostProcess = nullptr;
-	if (gSpiralPostProcess)				  gSpiralPostProcess = nullptr;
-	if (gDistortPostProcess)			  gDistortPostProcess = nullptr;
-	if (gBurnPostProcess)				  gBurnPostProcess = nullptr;
-	if (gGreyNoisePostProcess)			  gGreyNoisePostProcess = nullptr;
-	if (gTintPostProcess)				  gTintPostProcess = nullptr;
-	if (gCopyPostProcess)				  gCopyPostProcess = nullptr;
-	if (g2DPolygonVertexShader)			  g2DPolygonVertexShader = nullptr;
-	if (g2DQuadVertexShader)			  g2DQuadVertexShader = nullptr;
-	if (gChromaticAberrationPostProcess)  gChromaticAberrationPostProcess = nullptr;
-	if (gGaussionBlurPostProcess)		  gGaussionBlurPostProcess = nullptr;
-	if (gBloomPostProcess)				  gBloomPostProcess = nullptr;
-	if (gBloomLastPostProcess)			  gBloomLastPostProcess = nullptr;
-	if (gSsaoLastPostProcess)			  gSsaoLastPostProcess = nullptr;
-	if (gSsaoPostProcess)				  gSsaoPostProcess = nullptr;
-	if (gGodRaysPostProcess)			  gGodRaysPostProcess = nullptr;
-	if (gDepthOnlyNormalPixelShader)	  gDepthOnlyNormalPixelShader = nullptr;
+	if (mDepthOnlyPixelShader)			  mDepthOnlyPixelShader = nullptr;
+	if (mBasicTransformVertexShader)	  mBasicTransformVertexShader = nullptr;
+	if (mHeatHazePostProcess)			  mHeatHazePostProcess = nullptr;
+	if (mSpiralPostProcess)				  mSpiralPostProcess = nullptr;
+	if (mDistortPostProcess)			  mDistortPostProcess = nullptr;
+	if (mBurnPostProcess)				  mBurnPostProcess = nullptr;
+	if (mGreyNoisePostProcess)			  mGreyNoisePostProcess = nullptr;
+	if (mTintPostProcess)				  mTintPostProcess = nullptr;
+	if (mCopyPostProcess)				  mCopyPostProcess = nullptr;
+	if (m2DPolygonVertexShader)			  m2DPolygonVertexShader = nullptr;
+	if (m2DQuadVertexShader)			  m2DQuadVertexShader = nullptr;
+	if (mChromaticAberrationPostProcess)  mChromaticAberrationPostProcess = nullptr;
+	if (mGaussionBlurPostProcess)		  mGaussionBlurPostProcess = nullptr;
+	if (mBloomPostProcess)				  mBloomPostProcess = nullptr;
+	if (mBloomLastPostProcess)			  mBloomLastPostProcess = nullptr;
+	if (mSsaoLastPostProcess)			  mSsaoLastPostProcess = nullptr;
+	if (mSsaoPostProcess)				  mSsaoPostProcess = nullptr;
+	if (mGodRaysPostProcess)			  mGodRaysPostProcess = nullptr;
+	if (mDepthOnlyNormalPixelShader)	  mDepthOnlyNormalPixelShader = nullptr;
 
-	if (gPBRVertexShader)				  gPBRVertexShader = nullptr;
-	if (gPBRNormalVertexShader)			  gPBRNormalVertexShader = nullptr;
-	if (gPBRPixelShader)				  gPBRPixelShader = nullptr;
-	if (gPBRNormalPixelShader)			  gPBRNormalPixelShader = nullptr;
+	if (mPbrVertexShader)				  mPbrVertexShader = nullptr;
+	if (mPbrNormalVertexShader)			  mPbrNormalVertexShader = nullptr;
+	if (mPbrPixelShader)				  mPbrPixelShader = nullptr;
+	if (mPbrNormalPixelShader)			  mPbrNormalPixelShader = nullptr;
 
-	if (gTintedTexturePixelShader)		  gTintedTexturePixelShader = nullptr;
-	if (gSkyPixelShader)				  gSkyPixelShader = nullptr;
-	if (gSkyVertexShader)				  gSkyVertexShader = nullptr;
+	if (mTintedTexturePixelShader)		  mTintedTexturePixelShader = nullptr;
+	if (mSkyPixelShader)				  mSkyPixelShader = nullptr;
+	if (mSkyVertexShader)				  mSkyVertexShader = nullptr;
 
 }
 
 // Create and return a constant buffer of the given size
 // The returned pointer needs to be released before quitting. Returns nullptr on failure.
-ID3D11Buffer* CreateConstantBuffer(int size)
+ID3D11Buffer* CDX11Engine::CreateConstantBuffer(int size)
 {
 	D3D11_BUFFER_DESC cbDesc;
 	cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
@@ -324,7 +302,7 @@ ID3D11Buffer* CreateConstantBuffer(int size)
 	cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE; // CPU is only going to write to the constants (not read them)
 	cbDesc.MiscFlags = 0;
 	ID3D11Buffer* constantBuffer;
-	const auto hr = gD3DDevice->CreateBuffer(&cbDesc, nullptr, &constantBuffer);
+	const auto hr = GetDevice()->CreateBuffer(&cbDesc, nullptr, &constantBuffer);
 	if (FAILED(hr))
 	{
 		return nullptr;

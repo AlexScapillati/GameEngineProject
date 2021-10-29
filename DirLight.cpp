@@ -1,7 +1,8 @@
 #include "DirLight.h"
 #include "GraphicsHelpers.h"
+#include "Scene.h"
 
-CDirLight::CDirLight(std::string mesh, 
+CDirLight::CDirLight(CDX11Engine* engine, std::string mesh, 
 	std::string name, 
 	std::string& diffuse, 
 	CVector3 colour, 
@@ -9,7 +10,21 @@ CDirLight::CDirLight(std::string mesh,
 	CVector3 position, 
 	CVector3 rotation, 
 	float scale)
-	: CLight(mesh, name, diffuse, colour, strength, position, rotation, scale)
+	: CLight(engine, mesh, name, diffuse, colour, strength, position, rotation, scale)
+{
+	mShadowMap = nullptr;
+	mShadowMapDepthStencil = nullptr;
+	mShadowMapSRV = nullptr;
+	mShadowMapSize = 2048;
+	mNearClip = 0.001f;
+	mWidth = 1000.0f;
+	mHeight = 1000.0f;
+	mFarClip = 1000.0f;
+
+	InitTextures();
+}
+
+CDirLight::CDirLight(CDirLight& l) : CLight(l)
 {
 	mShadowMap = nullptr;
 	mShadowMapDepthStencil = nullptr;
@@ -27,10 +42,10 @@ ID3D11ShaderResourceView* CDirLight::RenderFromThis()
 {
 	// Get Previous RSState 
 	ID3D11RasterizerState* prevRS = nullptr;
-	gD3DContext->RSGetState(&prevRS);
+	mEngine->GetContext()->RSGetState(&prevRS);
 
 	// Set Cull None State
-	gD3DContext->RSSetState(gCullNoneState);
+	mEngine->GetContext()->RSSetState(mEngine->mCullNoneState);
 
 	// Setup the viewport to the size of the shadow map texture
 	D3D11_VIEWPORT vp;
@@ -40,23 +55,23 @@ ID3D11ShaderResourceView* CDirLight::RenderFromThis()
 	vp.MaxDepth = 1.0f;
 	vp.TopLeftX = 0;
 	vp.TopLeftY = 0;
-	gD3DContext->RSSetViewports(1, &vp);
+	mEngine->GetContext()->RSSetViewports(1, &vp);
 
 	// Select the shadow map texture as the current depth buffer. We will not be rendering any pixel colours
 	// Also clear the the shadow map depth buffer to the far distance
-	gD3DContext->OMSetRenderTargets(0, nullptr, mShadowMapDepthStencil);
-	gD3DContext->ClearDepthStencilView(mShadowMapDepthStencil, D3D11_CLEAR_DEPTH, 1.0f, 0);
+	mEngine->GetContext()->OMSetRenderTargets(0, nullptr, mShadowMapDepthStencil);
+	mEngine->GetContext()->ClearDepthStencilView(mShadowMapDepthStencil, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 	gPerFrameConstants.viewMatrix = InverseAffine(WorldMatrix());
 	gPerFrameConstants.projectionMatrix = MakeOrthogonalMatrix(mWidth, mHeight, mNearClip, mFarClip);
 	gPerFrameConstants.viewProjectionMatrix = gPerFrameConstants.viewMatrix * gPerFrameConstants.projectionMatrix;
 
-	UpdateFrameConstantBuffer(gPerFrameConstantBuffer.Get(), gPerFrameConstants);
+	mEngine->UpdateFrameConstantBuffer(gPerFrameConstantBuffer.Get(), gPerFrameConstants);
 
-	gD3DContext->VSSetConstantBuffers(1, 1, &gPerFrameConstantBuffer);
+	mEngine->GetContext()->VSSetConstantBuffers(1, 1, &gPerFrameConstantBuffer);
 
 	//render just the objects that can cast shadows
-	for (auto it : GOM->mObjects)
+	for (auto it : mEngine->GetScene()->GetObjectManager()->mObjects)
 	{
 		//basic geometry rendered, that means just render the model's geometry, leaving all the fancy shaders
 		it->Render(true);
@@ -64,9 +79,9 @@ ID3D11ShaderResourceView* CDirLight::RenderFromThis()
 	
 	// unbind the render target
 	ID3D11DepthStencilView* nullD = nullptr;
-	gD3DContext->OMSetRenderTargets(0, nullptr, nullD);
+	mEngine->GetContext()->OMSetRenderTargets(0, nullptr, nullD);
 
-	gD3DContext->RSSetState(prevRS);
+	mEngine->GetContext()->RSSetState(prevRS);
 	
 	// Since we called GetRSState we need to release it
 	if(prevRS) prevRS->Release();
@@ -113,7 +128,7 @@ void CDirLight::InitTextures()
 	textureDesc.BindFlags = D3D10_BIND_DEPTH_STENCIL | D3D10_BIND_SHADER_RESOURCE; // Indicate we will use texture as a depth buffer and also pass it to shaders
 	textureDesc.CPUAccessFlags = 0;
 	textureDesc.MiscFlags = 0;
-	if (FAILED(gD3DDevice->CreateTexture2D(&textureDesc, NULL, &mShadowMap)))
+	if (FAILED(mEngine->GetDevice()->CreateTexture2D(&textureDesc, NULL, &mShadowMap)))
 	{
 		throw std::runtime_error("Error creating shadow map texture");
 	}
@@ -124,7 +139,7 @@ void CDirLight::InitTextures()
 	dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	dsvDesc.Texture2D.MipSlice = 0;
 	dsvDesc.Flags = 0;
-	if (FAILED(gD3DDevice->CreateDepthStencilView(mShadowMap, &dsvDesc, &mShadowMapDepthStencil)))
+	if (FAILED(mEngine->GetDevice()->CreateDepthStencilView(mShadowMap, &dsvDesc, &mShadowMapDepthStencil)))
 	{
 		throw std::runtime_error("Error creating shadow map depth stencil view");
 	}
@@ -136,7 +151,7 @@ void CDirLight::InitTextures()
 	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MostDetailedMip = 0;
 	srvDesc.Texture2D.MipLevels = 1;
-	if (FAILED(gD3DDevice->CreateShaderResourceView(mShadowMap, &srvDesc, &mShadowMapSRV)))
+	if (FAILED(mEngine->GetDevice()->CreateShaderResourceView(mShadowMap, &srvDesc, &mShadowMapSRV)))
 	{
 		throw std::runtime_error("Error creating shadow map shader resource view");
 	}

@@ -1,7 +1,8 @@
 #include "PointLight.h"
+#include "Scene.h"
 
-CPointLight::CPointLight(std::string mesh, std::string name, std::string& diffuse, CVector3 colour, float strength, CVector3 position, CVector3 rotation, float scale) :
-	CLight(std::move(mesh), std::move(name), diffuse, colour, strength, position,
+CPointLight::CPointLight(CDX11Engine* engine, std::string mesh, std::string name, std::string& diffuse, CVector3 colour, float strength, CVector3 position, CVector3 rotation, float scale) :
+	CLight(engine, std::move(mesh), std::move(name), diffuse, colour, strength, position,
 		rotation, scale)
 {
 	mShadowMapSize = 2048;
@@ -31,10 +32,10 @@ void CPointLight::Render(bool basicGeometry)
 ID3D11ShaderResourceView** CPointLight::RenderFromThis()
 {
 	// Store original rotation
-	auto originalOrientation = Rotation();
+	const auto originalOrientation = Rotation();
 
 	// Cull none state, if the light is inside an object, the object needs to obstruct the light in every direction
-	gD3DContext->RSSetState(gCullNoneState);
+	mEngine->GetContext()->RSSetState(mEngine->mCullNoneState);
 
 	// For every face
 	for (int i = 0; i < 6; ++i)
@@ -52,12 +53,13 @@ ID3D11ShaderResourceView** CPointLight::RenderFromThis()
 		vp.MaxDepth = 1.0f;
 		vp.TopLeftX = 0;
 		vp.TopLeftY = 0;
-		gD3DContext->RSSetViewports(1, &vp);
+		mEngine->GetContext()->RSSetViewports(1, &vp);
+		
 
 		// Select the shadow map texture as the current depth buffer. We will not be rendering any pixel colours
 		// Also clear the the shadow map depth buffer to the far distance
-		gD3DContext->OMSetRenderTargets(0, nullptr, mShadowMapDepthStencils[i]);
-		gD3DContext->ClearDepthStencilView(mShadowMapDepthStencils[i], D3D11_CLEAR_DEPTH, 1.0f, 0);
+		mEngine->GetContext()->OMSetRenderTargets(0, nullptr, mShadowMapDepthStencils[i]);
+		mEngine->GetContext()->ClearDepthStencilView(mShadowMapDepthStencils[i], D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 		// Update the frame buffer with the correct "camera" matrix
 		gPerFrameConstants.viewMatrix = InverseAffine(WorldMatrix());
@@ -65,14 +67,14 @@ ID3D11ShaderResourceView** CPointLight::RenderFromThis()
 		gPerFrameConstants.viewProjectionMatrix = gPerFrameConstants.viewMatrix * gPerFrameConstants.projectionMatrix;
 
 		// Update the constant buffer
-		UpdateFrameConstantBuffer(gPerFrameConstantBuffer.Get(), gPerFrameConstants);
+		mEngine->UpdateFrameConstantBuffer(gPerFrameConstantBuffer.Get(), gPerFrameConstants);
 
 		// Set it to the GPU
-		gD3DContext->VSSetConstantBuffers(1, 1, &gPerFrameConstantBuffer);
-		gD3DContext->PSSetConstantBuffers(1, 1, &gPerFrameConstantBuffer);
+		mEngine->GetContext()->VSSetConstantBuffers(1, 1, &gPerFrameConstantBuffer);
+		mEngine->GetContext()->PSSetConstantBuffers(1, 1, &gPerFrameConstantBuffer);
 
 		//render just the objects that can cast shadows
-		for (auto it : GOM->mObjects)
+		for (const auto it : mEngine->GetScene()->GetObjectManager()->mObjects)
 		{
 			//basic geometry rendered, that means just render the model's geometry, leaving all the fancy shaders
 			it->Render(true);
@@ -80,11 +82,11 @@ ID3D11ShaderResourceView** CPointLight::RenderFromThis()
 
 		// Unbind the shadow map from the render target
 		ID3D11DepthStencilView* nullD = nullptr;
-		gD3DContext->OMSetRenderTargets(0, nullptr, nullD);
+		mEngine->GetContext()->OMSetRenderTargets(0, nullptr, nullD);
 	}
 
 	// Restore cull back state
-	gD3DContext->RSSetState(gCullBackState);
+	mEngine->GetContext()->RSSetState(mEngine->mCullBackState);
 
 	// Restore original orentation //kind of useless i think
 	SetRotation(originalOrientation);
@@ -94,7 +96,7 @@ ID3D11ShaderResourceView** CPointLight::RenderFromThis()
 
 CPointLight::~CPointLight()
 {
-	Release();
+	CPointLight::Release();
 }
 
 void CPointLight::Release()
@@ -126,9 +128,9 @@ void CPointLight::InitTextures()
 	textureDesc.CPUAccessFlags = 0;
 	textureDesc.MiscFlags = 0;
 
-	for (int i = 0; i < 6; ++i)
+	for (auto& i : mShadowMap)
 	{
-		if (FAILED(gD3DDevice->CreateTexture2D(&textureDesc, NULL, &mShadowMap[i])))
+		if (FAILED(mEngine->GetDevice()->CreateTexture2D(&textureDesc, NULL, &i)))
 		{
 			throw std::runtime_error("Error creating shadow map texture");
 		}
@@ -143,7 +145,7 @@ void CPointLight::InitTextures()
 
 	for (int i = 0; i < 6; ++i)
 	{
-		if (FAILED(gD3DDevice->CreateDepthStencilView(mShadowMap[i], &dsvDesc, &mShadowMapDepthStencils[i])))
+		if (FAILED(mEngine->GetDevice()->CreateDepthStencilView(mShadowMap[i], &dsvDesc, &mShadowMapDepthStencils[i])))
 		{
 			throw std::runtime_error("Error creating shadow map depth stencil view");
 		}
@@ -159,7 +161,7 @@ void CPointLight::InitTextures()
 
 	for (int i = 0; i < 6; ++i)
 	{
-		if (FAILED(gD3DDevice->CreateShaderResourceView(mShadowMap[i], &srvDesc, &mShadowMapSRV[i])))
+		if (FAILED(mEngine->GetDevice()->CreateShaderResourceView(mShadowMap[i], &srvDesc, &mShadowMapSRV[i])))
 		{
 			throw std::runtime_error("Error creating shadow map shader resource view");
 		}

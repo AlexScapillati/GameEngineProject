@@ -7,8 +7,6 @@
 #define _CVECTOR4_H_DEFINED_
 
 #include "CVector3.h"
-#include "MathHelpers.h"
-#include <cmath>
 
 class CVector4
 {

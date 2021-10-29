@@ -144,8 +144,8 @@ void ImGui_ImplDX11_RenderDrawData(ImDrawData* draw_data)
         return;
     if (ctx->Map(g_pIB, 0, D3D11_MAP_WRITE_DISCARD, 0, &idx_resource) != S_OK)
         return;
-    ImDrawVert* vtx_dst = (ImDrawVert*)vtx_resource.pData;
-    ImDrawIdx* idx_dst = (ImDrawIdx*)idx_resource.pData;
+    ImDrawVert* vtx_dst = static_cast<ImDrawVert*>(vtx_resource.pData);
+    ImDrawIdx* idx_dst = static_cast<ImDrawIdx*>(idx_resource.pData);
     for (int n = 0; n < draw_data->CmdListsCount; n++)
     {
         const ImDrawList* cmd_list = draw_data->CmdLists[n];
@@ -163,7 +163,7 @@ void ImGui_ImplDX11_RenderDrawData(ImDrawData* draw_data)
         D3D11_MAPPED_SUBRESOURCE mapped_resource;
         if (ctx->Map(g_pVertexConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource) != S_OK)
             return;
-        VERTEX_CONSTANT_BUFFER* constant_buffer = (VERTEX_CONSTANT_BUFFER*)mapped_resource.pData;
+        VERTEX_CONSTANT_BUFFER* constant_buffer = static_cast<VERTEX_CONSTANT_BUFFER*>(mapped_resource.pData);
         float L = draw_data->DisplayPos.x;
         float R = draw_data->DisplayPos.x + draw_data->DisplaySize.x;
         float T = draw_data->DisplayPos.y;
@@ -250,13 +250,14 @@ void ImGui_ImplDX11_RenderDrawData(ImDrawData* draw_data)
             else
             {
                 // Apply scissor/clipping rectangle
-                const D3D11_RECT r = { (LONG)(pcmd->ClipRect.x - clip_off.x), (LONG)(pcmd->ClipRect.y - clip_off.y), (LONG)(pcmd->ClipRect.z - clip_off.x), (LONG)(pcmd->ClipRect.w - clip_off.y) };
+                const D3D11_RECT r = { static_cast<LONG>(pcmd->ClipRect.x - clip_off.x), static_cast<LONG>(pcmd->ClipRect.y - clip_off.y), static_cast<LONG>(pcmd->ClipRect.z - clip_off.x), static_cast<LONG>(pcmd->ClipRect.w - clip_off.y) };
                 ctx->RSSetScissorRects(1, &r);
 
                 // Bind texture, Draw
-                ID3D11ShaderResourceView* texture_srv = (ID3D11ShaderResourceView*)pcmd->TextureId;
+                ID3D11ShaderResourceView* texture_srv = static_cast<ID3D11ShaderResourceView*>(pcmd->TextureId);
                 ctx->PSSetShaderResources(0, 1, &texture_srv);
-                ctx->DrawIndexed(pcmd->ElemCount, pcmd->IdxOffset + global_idx_offset, pcmd->VtxOffset + global_vtx_offset);
+                ctx->DrawIndexed(pcmd->ElemCount, pcmd->IdxOffset + global_idx_offset,
+                                 pcmd->VtxOffset + global_vtx_offset);
             }
         }
         global_idx_offset += cmd_list->IdxBuffer.Size;
@@ -324,7 +325,7 @@ static void ImGui_ImplDX11_CreateFontsTexture()
     }
 
     // Store our identifier
-    io.Fonts->SetTexID((ImTextureID)g_pFontTextureView);
+    io.Fonts->SetTexID(static_cast<ImTextureID>(g_pFontTextureView));
 
     // Create texture sampler
     {
@@ -397,9 +398,9 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
         // Create the input layout
         D3D11_INPUT_ELEMENT_DESC local_layout[] =
         {
-            { "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT,   0, (UINT)IM_OFFSETOF(ImDrawVert, pos), D3D11_INPUT_PER_VERTEX_DATA, 0 },
-            { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,   0, (UINT)IM_OFFSETOF(ImDrawVert, uv),  D3D11_INPUT_PER_VERTEX_DATA, 0 },
-            { "COLOR",    0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, (UINT)IM_OFFSETOF(ImDrawVert, col), D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT,   0, static_cast<UINT>(IM_OFFSETOF(ImDrawVert, pos)), D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,   0, static_cast<UINT>(IM_OFFSETOF(ImDrawVert, uv)),  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "COLOR",    0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, static_cast<UINT>(IM_OFFSETOF(ImDrawVert, col)), D3D11_INPUT_PER_VERTEX_DATA, 0 },
         };
         if (g_pd3dDevice->CreateInputLayout(local_layout, 3, vertexShaderBlob->GetBufferPointer(), vertexShaderBlob->GetBufferSize(), &g_pInputLayout) != S_OK)
         {
@@ -584,14 +585,14 @@ static void ImGui_ImplDX11_CreateWindow(ImGuiViewport* viewport)
 
     // PlatformHandleRaw should always be a HWND, whereas PlatformHandle might be a higher-level handle (e.g. GLFWWindow*, SDL_Window*).
     // Some backend will leave PlatformHandleRaw NULL, in which case we assume PlatformHandle will contain the HWND.
-    HWND hwnd = viewport->PlatformHandleRaw ? (HWND)viewport->PlatformHandleRaw : (HWND)viewport->PlatformHandle;
+    HWND hwnd = viewport->PlatformHandleRaw ? static_cast<HWND>(viewport->PlatformHandleRaw) : static_cast<HWND>(viewport->PlatformHandle);
     IM_ASSERT(hwnd != 0);
 
     // Create swap chain
     DXGI_SWAP_CHAIN_DESC sd;
     ZeroMemory(&sd, sizeof(sd));
-    sd.BufferDesc.Width = (UINT)viewport->Size.x;
-    sd.BufferDesc.Height = (UINT)viewport->Size.y;
+    sd.BufferDesc.Width = static_cast<UINT>(viewport->Size.x);
+    sd.BufferDesc.Height = static_cast<UINT>(viewport->Size.y);
     sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     sd.SampleDesc.Count = 1;
     sd.SampleDesc.Quality = 0;
@@ -618,7 +619,7 @@ static void ImGui_ImplDX11_CreateWindow(ImGuiViewport* viewport)
 static void ImGui_ImplDX11_DestroyWindow(ImGuiViewport* viewport)
 {
     // The main viewport (owned by the application) will always have RendererUserData == NULL since we didn't create the data for it.
-    if (ImGuiViewportDataDx11* data = (ImGuiViewportDataDx11*)viewport->RendererUserData)
+    if (ImGuiViewportDataDx11* data = static_cast<ImGuiViewportDataDx11*>(viewport->RendererUserData))
     {
         if (data->SwapChain)
             data->SwapChain->Release();
@@ -633,7 +634,7 @@ static void ImGui_ImplDX11_DestroyWindow(ImGuiViewport* viewport)
 
 static void ImGui_ImplDX11_SetWindowSize(ImGuiViewport* viewport, ImVec2 size)
 {
-    ImGuiViewportDataDx11* data = (ImGuiViewportDataDx11*)viewport->RendererUserData;
+    ImGuiViewportDataDx11* data = static_cast<ImGuiViewportDataDx11*>(viewport->RendererUserData);
     if (data->RTView)
     {
         data->RTView->Release();
@@ -642,7 +643,7 @@ static void ImGui_ImplDX11_SetWindowSize(ImGuiViewport* viewport, ImVec2 size)
     if (data->SwapChain)
     {
         ID3D11Texture2D* pBackBuffer = NULL;
-        data->SwapChain->ResizeBuffers(0, (UINT)size.x, (UINT)size.y, DXGI_FORMAT_UNKNOWN, 0);
+        data->SwapChain->ResizeBuffers(0, static_cast<UINT>(size.x), static_cast<UINT>(size.y), DXGI_FORMAT_UNKNOWN, 0);
         data->SwapChain->GetBuffer(0, IID_PPV_ARGS(&pBackBuffer));
         if (pBackBuffer == NULL) { fprintf(stderr, "ImGui_ImplDX11_SetWindowSize() failed creating buffers.\n"); return; }
         g_pd3dDevice->CreateRenderTargetView(pBackBuffer, NULL, &data->RTView);
@@ -652,7 +653,7 @@ static void ImGui_ImplDX11_SetWindowSize(ImGuiViewport* viewport, ImVec2 size)
 
 static void ImGui_ImplDX11_RenderWindow(ImGuiViewport* viewport, void*)
 {
-    ImGuiViewportDataDx11* data = (ImGuiViewportDataDx11*)viewport->RendererUserData;
+    ImGuiViewportDataDx11* data = static_cast<ImGuiViewportDataDx11*>(viewport->RendererUserData);
     ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
     g_pd3dDeviceContext->OMSetRenderTargets(1, &data->RTView, NULL);
     if (!(viewport->Flags & ImGuiViewportFlags_NoRendererClear))
@@ -662,7 +663,7 @@ static void ImGui_ImplDX11_RenderWindow(ImGuiViewport* viewport, void*)
 
 static void ImGui_ImplDX11_SwapBuffers(ImGuiViewport* viewport, void*)
 {
-    ImGuiViewportDataDx11* data = (ImGuiViewportDataDx11*)viewport->RendererUserData;
+    ImGuiViewportDataDx11* data = static_cast<ImGuiViewportDataDx11*>(viewport->RendererUserData);
     data->SwapChain->Present(0, 0); // Present without vsync
 }
 

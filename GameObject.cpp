@@ -7,21 +7,19 @@
 #include "GameObject.h"
 #include <codecvt>
 #include "GraphicsHelpers.h"
-#include "Shader.h"
 #include <locale>
 #include <utility>
-#include "ColourRGBA.h"
-#include "GameObjectManager.h"
-#include "State.h"
 #include "Sky.h"
+#include "Scene.h"
 
 //copy constructor
 CGameObject::CGameObject(CGameObject& obj)
 {
+	mEngine = obj.mEngine;
 	mEnabled = true;
 	mMaterial = new CMaterial(*obj.mMaterial);
 	mMeshFiles = obj.mMeshFiles;
-	mMesh = new CMesh(obj.mMesh->MeshFileName(), mMaterial->HasNormals());
+	mMesh = new CMesh(mEngine, obj.mMesh->MeshFileName(), mMaterial->HasNormals());
 	mName = "new" + obj.mName;
 
 	mLODs = obj.mLODs;
@@ -35,7 +33,7 @@ CGameObject::CGameObject(CGameObject& obj)
 	//initialize ambient map variables
 	mAmbientMap.size = obj.AmbientMap()->size;
 	mAmbientMap.enabled = obj.AmbientMap()->enabled;
-	mAmbientMap.Init();
+	mAmbientMap.Init(mEngine);
 
 	// Set default matrices from mesh
 	mWorldMatrices.resize(mMesh->NumberNodes());
@@ -47,11 +45,12 @@ CGameObject::CGameObject(CGameObject& obj)
 	SetScale(obj.Scale());
 }
 
-CGameObject::CGameObject(std::string mesh, std::string name, std::string& diffuseMap, CVector3 position /*= { 0,0,0 }*/, CVector3 rotation /*= { 0,0,0 }*/, float scale /*= 1*/)
+CGameObject::CGameObject(CDX11Engine* engine, std::string mesh, std::string name, std::string& diffuseMap, CVector3 position /*= { 0,0,0 }*/, CVector3 rotation /*= { 0,0,0 }*/, float scale /*= 1*/)
 {
+	mEngine = engine;
 	mAmbientMap.enabled = false;
 	mAmbientMap.size = 4;
-	mAmbientMap.Init();
+	mAmbientMap.Init(mEngine);
 
 	mParallaxDepth = 0.f;
 	mRoughness = 0.5f;
@@ -67,7 +66,7 @@ CGameObject::CGameObject(std::string mesh, std::string name, std::string& diffus
 	try
 	{
 		std::vector<std::string> maps = { diffuseMap };
-		mMaterial = new CMaterial(maps);
+		mMaterial = new CMaterial(maps,mEngine);
 	}
 	catch (std::exception e)
 	{
@@ -79,7 +78,7 @@ CGameObject::CGameObject(std::string mesh, std::string name, std::string& diffus
 	//that could be light models or cube maps
 	try
 	{
-		mMesh = new CMesh(mesh, mMaterial->HasNormals());
+		mMesh = new CMesh(mEngine,mesh, mMaterial->HasNormals());
 		mMeshFiles.push_back(mesh);
 
 		// Set default matrices from mesh
@@ -129,12 +128,12 @@ void GetFilesWithID(std::string& dirPath, std::vector<std::string>& fileNames, s
 
 
 
-void GetFilesInFolder(std::string& dirPath, std::vector<std::string>& fileNames)
+void CGameObject::GetFilesInFolder(std::string& dirPath, std::vector<std::string>& fileNames)
 {
 	//iterate through the directory
 	std::filesystem::recursive_directory_iterator iter(dirPath);
 
-	dirPath.replace(0, gMediaFolder.size(), "");
+	dirPath.replace(0, mEngine->GetMediaFolder().size(), "");
 
 	if (dirPath[dirPath.size() - 1] != '/') dirPath.push_back('/');
 
@@ -156,15 +155,18 @@ void GetFilesInFolder(std::string& dirPath, std::vector<std::string>& fileNames)
 	}
 }
 
-CGameObject::CGameObject(std::string dirPath, std::string name, CVector3 position /*= { 0,0,0 }*/, CVector3 rotation /*= { 0,0,0 }*/, float scale /*= 1*/)
+CGameObject::CGameObject(CDX11Engine* engine, std::string dirPath, std::string name, CVector3 position /*= { 0,0,0 }*/, CVector3 rotation /*= { 0,0,0 }*/, float scale /*= 1*/)
 {
+
+	mEngine = engine;
+
 	//initialize member variables
 	mName = std::move(name);
 
 	//initialize ambient map variables
 	mAmbientMap.size = 4;
 	mAmbientMap.enabled = false;
-	mAmbientMap.Init();
+	mAmbientMap.Init(mEngine);
 
 	mEnabled = true;
 
@@ -177,7 +179,7 @@ CGameObject::CGameObject(std::string dirPath, std::string name, CVector3 positio
 
 	std::string id = dirPath;
 
-	auto folder = gMediaFolder + dirPath;
+	auto folder = engine->GetMediaFolder() + dirPath;
 
 	//	If the id has a dot, this means it has an extention, so we are dealing with a file
 	if (id.find_last_of('.') == std::string::npos)
@@ -200,7 +202,7 @@ CGameObject::CGameObject(std::string dirPath, std::string name, CVector3 positio
 			auto subFolder = id.substr(0, slashPos);
 
 
-			folder = gMediaFolder + subFolder + '/';
+			folder = engine->GetMediaFolder() + subFolder + '/';
 
 			//get every file that is beginning with that id
 			GetFilesInFolder(folder, files);
@@ -210,12 +212,12 @@ CGameObject::CGameObject(std::string dirPath, std::string name, CVector3 positio
 			// Get the ID
 			id = id.substr(0, id.find_first_of('_'));
 
-			GetFilesWithID(gMediaFolder, files, id);
+			GetFilesWithID(engine->GetMediaFolder(), files, id);
 		}
 	}
 
 	//create the material
-	mMaterial = new CMaterial(files);
+	mMaterial = new CMaterial(files,mEngine);
 
 	//find meshes trough the files
 	for (auto st : files)
@@ -280,7 +282,7 @@ CGameObject::CGameObject(std::string dirPath, std::string name, CVector3 positio
 	try
 	{
 		//load the most detailed mesh with tangents required if the model has normals
-		mMesh = new CMesh(mMeshFiles.front(), mMaterial->HasNormals());
+		mMesh = new CMesh(mEngine,mMeshFiles.front(), mMaterial->HasNormals());
 
 		// Set default matrices from mesh
 		mWorldMatrices.resize(mMesh->NumberNodes());
@@ -316,7 +318,7 @@ void CGameObject::Render(bool basicGeometry)
 	{
 		if (mAmbientMap.enabled)
 		{
-			gD3DContext->PSSetShaderResources(6, 1, &mAmbientMap.mapSRV);
+			mEngine->GetContext()->PSSetShaderResources(6, 1, &mAmbientMap.mapSRV);
 		}
 		/*else if (dynamic_cast<CSky*>(GOM->GetSky())->HasCubeMap());
 		{
@@ -333,7 +335,7 @@ void CGameObject::Render(bool basicGeometry)
 
 	// Unbind the ambient map from the shader
 	ID3D11ShaderResourceView* nullView = nullptr;
-	gD3DContext->PSSetShaderResources(6, 1, &nullView);
+	mEngine->GetContext()->PSSetShaderResources(6, 1, &nullView);
 }
 
 bool CGameObject::Update(float updateTime)
@@ -348,16 +350,16 @@ void CGameObject::RenderToAmbientMap()
 
 	// Store current RS state
 	ID3D11RasterizerState* prevRS = nullptr;
-	gD3DContext->RSGetState(&prevRS);
+	mEngine->GetContext()->RSGetState(&prevRS);
 
 	// Set the cullback state
-	gD3DContext->RSSetState(gCullBackState);
+	mEngine->GetContext()->RSSetState(mEngine->mCullBackState);
 
 	// Store current RTV(render target) and DSV(depth stencil)
 	ID3D11RenderTargetView* prevRTV = nullptr;
 	ID3D11DepthStencilView* prevDSV = nullptr;
 
-	gD3DContext->OMGetRenderTargets(1, &prevRTV, &prevDSV);
+	mEngine->GetContext()->OMGetRenderTargets(1, &prevRTV, &prevDSV);
 
 	//create the viewport
 	D3D11_VIEWPORT vp;
@@ -367,7 +369,7 @@ void CGameObject::RenderToAmbientMap()
 	vp.MaxDepth = 1.0f;
 	vp.TopLeftX = 0;
 	vp.TopLeftY = 0;
-	gD3DContext->RSSetViewports(1, &vp);
+	mEngine->GetContext()->RSSetViewports(1, &vp);
 
 	float mSides[6][3] = {          // Starting from facing down the +ve Z direction, left handed rotations
 			{ 0.0f,	 0.5f,	0.0f},  // +ve X direction (values multiplied by PI)
@@ -387,8 +389,8 @@ void CGameObject::RenderToAmbientMap()
 		// change rotation
 		SetRotation(CVector3(mSides[i]) * PI);
 
-		gD3DContext->ClearDepthStencilView(mAmbientMap.depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-		gD3DContext->OMSetRenderTargets(1, &mAmbientMap.RTV[i], mAmbientMap.depthStencilView);
+		mEngine->GetContext()->ClearDepthStencilView(mAmbientMap.depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+		mEngine->GetContext()->OMSetRenderTargets(1, &mAmbientMap.RTV[i], mAmbientMap.depthStencilView);
 
 		// Update Frame buffer
 		gPerFrameConstants.viewMatrix = InverseAffine(WorldMatrix());
@@ -396,14 +398,14 @@ void CGameObject::RenderToAmbientMap()
 		gPerFrameConstants.viewProjectionMatrix = gPerFrameConstants.viewMatrix * gPerFrameConstants.projectionMatrix;
 
 		// Update Constant buffer
-		UpdateFrameConstantBuffer(gPerFrameConstantBuffer.Get(), gPerFrameConstants);
+		mEngine->UpdateFrameConstantBuffer(gPerFrameConstantBuffer.Get(), gPerFrameConstants);
 
 		// Set it to the GPU
-		gD3DContext->PSSetConstantBuffers(1, 1, gPerFrameConstantBuffer.GetAddressOf());
-		gD3DContext->VSSetConstantBuffers(1, 1, gPerFrameConstantBuffer.GetAddressOf());
+		mEngine->GetContext()->PSSetConstantBuffers(1, 1, gPerFrameConstantBuffer.GetAddressOf());
+		mEngine->GetContext()->VSSetConstantBuffers(1, 1, gPerFrameConstantBuffer.GetAddressOf());
 
 		//render just the objects that can cast shadows
-		for (auto& it : GOM->mObjects)
+		for (auto& it : mEngine->GetScene()->GetObjectManager()->mObjects)
 		{
 			// Do not render this object
 			if (it != this)
@@ -415,13 +417,13 @@ void CGameObject::RenderToAmbientMap()
 	}
 
 	//restore render target, otherwise the ambient map will not be sent to the shader because it is still bound as a render target
-	gD3DContext->OMSetRenderTargets(1, &prevRTV, prevDSV);
+	mEngine->GetContext()->OMSetRenderTargets(1, &prevRTV, prevDSV);
 
 	if (prevRTV) prevRTV->Release();
 	if (prevDSV) prevDSV->Release();
 
 	// Restore previous RS state
-	gD3DContext->RSSetState(prevRS);
+	mEngine->GetContext()->RSSetState(prevRS);
 
 	// Release that
 	if (prevRS) prevRS->Release();
@@ -430,9 +432,7 @@ void CGameObject::RenderToAmbientMap()
 	SetRotation(originalRotation);
 
 	//generate mipMaps for the cube map
-	gD3DContext->GenerateMips(mAmbientMap.mapSRV);
-
-	//mChangedPos = false;
+	mEngine->GetContext()->GenerateMips(mAmbientMap.mapSRV);
 }
 
 std::vector<std::string>& CGameObject::GetMeshes()
@@ -444,7 +444,7 @@ void CGameObject::LoadNewMesh(std::string newMesh)
 {
 	try
 	{
-		auto newCMesh = new CMesh(newMesh, mMaterial->HasNormals());
+		auto newCMesh = new CMesh(mEngine,newMesh, mMaterial->HasNormals());
 
 		delete mMesh;
 
@@ -482,8 +482,9 @@ void CGameObject::SetVariation(int variation)
 		LoadNewMesh(mLODs[mCurrentLOD][variation]);
 }
 
-void CGameObject::sAmbientMap::Init()
+void CGameObject::sAmbientMap::Init(CDX11Engine* engine)
 {
+	mEngine = engine;
 
 	//http://richardssoftware.net/Home/Post/26
 
@@ -502,7 +503,8 @@ void CGameObject::sAmbientMap::Init()
 	textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS | D3D11_RESOURCE_MISC_TEXTURECUBE;
 
 	//create it
-	if (FAILED(gD3DDevice->CreateTexture2D(&textureDesc, NULL, &map)))
+	auto hr = mEngine->GetDevice()->CreateTexture2D(&textureDesc, NULL, &map);
+	if (FAILED(hr))
 	{
 		throw std::runtime_error("Error creating cube texture");
 	}
@@ -519,8 +521,8 @@ void CGameObject::sAmbientMap::Init()
 	for (int i = 0; i < 6; ++i)
 	{
 		viewDesc.Texture2DArray.FirstArraySlice = i;
-
-		if (FAILED(gD3DDevice->CreateRenderTargetView(map, &viewDesc, &RTV[i])))
+		hr = mEngine->GetDevice()->CreateRenderTargetView(map, &viewDesc, &RTV[i]);
+		if (FAILED(hr))
 		{
 			throw std::runtime_error("Error creating render target view");
 		}
@@ -532,7 +534,8 @@ void CGameObject::sAmbientMap::Init()
 	srvDesc.TextureCube.MostDetailedMip = 0;
 	srvDesc.TextureCube.MipLevels = -1;
 
-	if (FAILED(gD3DDevice->CreateShaderResourceView(map, &srvDesc, &mapSRV)))
+	hr = mEngine->GetDevice()->CreateShaderResourceView(map, &srvDesc, &mapSRV);
+	if (FAILED(hr))
 	{
 		throw std::runtime_error("Error creating cube map SRV");
 	}
@@ -555,7 +558,7 @@ void CGameObject::sAmbientMap::Init()
 	dsDesc.MiscFlags = 0;
 
 	//create it
-	if (FAILED(gD3DDevice->CreateTexture2D(&dsDesc, NULL, &depthStencilMap)))
+	if (FAILED(mEngine->GetDevice()->CreateTexture2D(&dsDesc, NULL, &depthStencilMap)))
 	{
 		throw std::runtime_error("Error creating depth stencil");
 	}
@@ -567,7 +570,7 @@ void CGameObject::sAmbientMap::Init()
 	dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	dsvDesc.Texture2D.MipSlice = 0;
 
-	if (FAILED(gD3DDevice->CreateDepthStencilView(depthStencilMap, &dsvDesc, &depthStencilView)))
+	if (FAILED(mEngine->GetDevice()->CreateDepthStencilView(depthStencilMap, &dsvDesc, &depthStencilView)))
 	{
 		throw std::runtime_error("Error creating depth stencil view ");
 	}
@@ -704,7 +707,7 @@ void CGameObject::sAmbientMap::SetSize(UINT s)
 	size = s;
 
 	// Re initialize all the maps to the new size
-	Init();
+	Init(mEngine);
 
 }
 

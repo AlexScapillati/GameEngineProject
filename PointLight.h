@@ -1,13 +1,12 @@
 #pragma once
 #include "Light.h"
-#include "GameObjectManager.h"
 
 class CPointLight :
 	public CLight
 {
 public:
 
-	CPointLight(std::string mesh, std::string name, std::string& diffuse,  CVector3 colour, float strength, CVector3 position = { 0.0f,0.0f,0.0f }, CVector3 rotation = { 0.0f,0.0f,0.0f },
+	CPointLight(CDX11Engine* engine, std::string mesh, std::string name, std::string& diffuse,  CVector3 colour, float strength, CVector3 position = { 0.0f,0.0f,0.0f }, CVector3 rotation = { 0.0f,0.0f,0.0f },
 		float scale = 1.0f);
 
 	CPointLight(CPointLight& p);

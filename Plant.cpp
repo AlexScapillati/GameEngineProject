@@ -1,7 +1,6 @@
 #include "Plant.h"
 
 #include "Common.h"
-#include "State.h"
 
 CPlant::CPlant(CPlant& p) : CGameObject(p)
 {
@@ -24,16 +23,16 @@ void CPlant::Render(bool basicGeometry)
 		FLOAT* prevBlendFactor = nullptr;
 
 		// additive blending, read-only depth buffer and no culling (standard set-up for blending)
-		gD3DContext->OMSetBlendState(gNoBlendingState, NULL, 0xffffff);
-		gD3DContext->OMSetDepthStencilState(gUseDepthBufferState, 0);
-		gD3DContext->RSSetState(gCullNoneState);
+		mEngine->GetContext()->OMSetBlendState(mEngine->mNoBlendingState, NULL, 0xffffff);
+		mEngine->GetContext()->OMSetDepthStencilState(mEngine->mUseDepthBufferState, 0);
+		mEngine->GetContext()->RSSetState(mEngine->mCullNoneState);
 
 		CGameObject::Render(basicGeometry);
 		
 		// Set back the prev states
-		gD3DContext->RSSetState(prevRS);
-		gD3DContext->OMSetBlendState(prevBS, prevBlendFactor, prevSampleMask);
-		gD3DContext->OMSetDepthStencilState(prevDSS, prevStencilRef);
+		mEngine->GetContext()->RSSetState(prevRS);
+		mEngine->GetContext()->OMSetBlendState(prevBS, prevBlendFactor, prevSampleMask);
+		mEngine->GetContext()->OMSetDepthStencilState(prevDSS, prevStencilRef);
 
 		if (prevRS) prevRS->Release();
 		if (prevBS) prevBS->Release();

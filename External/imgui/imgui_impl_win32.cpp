@@ -95,9 +95,9 @@ bool    ImGui_ImplWin32_Init(void* hwnd)
     io.BackendPlatformName = "imgui_impl_win32";
 
     // Our mouse update function expect PlatformHandle to be filled for the main viewport
-    g_hWnd = (HWND)hwnd;
+    g_hWnd = static_cast<HWND>(hwnd);
     ImGuiViewport* main_viewport = ImGui::GetMainViewport();
-    main_viewport->PlatformHandle = main_viewport->PlatformHandleRaw = (void*)g_hWnd;
+    main_viewport->PlatformHandle = main_viewport->PlatformHandleRaw = static_cast<void*>(g_hWnd);
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
         ImGui_ImplWin32_InitPlatformInterface();
 
@@ -212,7 +212,7 @@ static void ImGui_ImplWin32_UpdateMousePos()
     // (When multi-viewports are enabled, all imgui positions are same as OS positions)
     if (io.WantSetMousePos)
     {
-        POINT pos = { (int)io.MousePos.x, (int)io.MousePos.y };
+        POINT pos = { static_cast<int>(io.MousePos.x), static_cast<int>(io.MousePos.y) };
         if ((io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) != 0 || ::ClientToScreen(g_hWnd, &pos))
             ::ClientToScreen(g_hWnd, &pos);
         ::SetCursorPos(pos.x, pos.y);
@@ -233,8 +233,8 @@ static void ImGui_ImplWin32_UpdateMousePos()
         {
             // Multi-viewport mode: mouse position in OS absolute coordinates (io.MousePos is (0,0) when the mouse is on the upper-left of the primary monitor)
             // This is the position you can get with GetCursorPos(). In theory adding viewport->Pos is also the reverse operation of doing ScreenToClient().
-            if (ImGui::FindViewportByPlatformHandle((void*)focused_hwnd) != NULL)
-                io.MousePos = ImVec2((float)mouse_screen_pos.x, (float)mouse_screen_pos.y);
+            if (ImGui::FindViewportByPlatformHandle(static_cast<void*>(focused_hwnd)) != NULL)
+                io.MousePos = ImVec2(static_cast<float>(mouse_screen_pos.x), static_cast<float>(mouse_screen_pos.y));
         }
         else
         {
@@ -244,7 +244,7 @@ static void ImGui_ImplWin32_UpdateMousePos()
             {
                 POINT mouse_client_pos = mouse_screen_pos;
                 ::ScreenToClient(focused_hwnd, &mouse_client_pos);
-                io.MousePos = ImVec2((float)mouse_client_pos.x, (float)mouse_client_pos.y);
+                io.MousePos = ImVec2(static_cast<float>(mouse_client_pos.x), static_cast<float>(mouse_client_pos.y));
             }
         }
     }
@@ -256,7 +256,7 @@ static void ImGui_ImplWin32_UpdateMousePos()
     // If ImGuiBackendFlags_HasMouseHoveredViewport is not set by the backend, imgui will ignore this field and infer the information by relying on the
     // rectangles and last focused time of every viewports it knows about. It will be unaware of foreign windows that may be sitting between or over your windows.
     if (HWND hovered_hwnd = ::WindowFromPoint(mouse_screen_pos))
-        if (ImGuiViewport* viewport = ImGui::FindViewportByPlatformHandle((void*)hovered_hwnd))
+        if (ImGuiViewport* viewport = ImGui::FindViewportByPlatformHandle(static_cast<void*>(hovered_hwnd)))
             if ((viewport->Flags & ImGuiViewportFlags_NoInputs) == 0) // FIXME: We still get our NoInputs window with WM_NCHITTEST/HTTRANSPARENT code when decorated?
                 io.MouseHoveredViewport = viewport->ID;
 }
@@ -317,10 +317,10 @@ static BOOL CALLBACK ImGui_ImplWin32_UpdateMonitors_EnumFunc(HMONITOR monitor, H
     if (!::GetMonitorInfo(monitor, &info))
         return TRUE;
     ImGuiPlatformMonitor imgui_monitor;
-    imgui_monitor.MainPos = ImVec2((float)info.rcMonitor.left, (float)info.rcMonitor.top);
-    imgui_monitor.MainSize = ImVec2((float)(info.rcMonitor.right - info.rcMonitor.left), (float)(info.rcMonitor.bottom - info.rcMonitor.top));
-    imgui_monitor.WorkPos = ImVec2((float)info.rcWork.left, (float)info.rcWork.top);
-    imgui_monitor.WorkSize = ImVec2((float)(info.rcWork.right - info.rcWork.left), (float)(info.rcWork.bottom - info.rcWork.top));
+    imgui_monitor.MainPos = ImVec2(static_cast<float>(info.rcMonitor.left), static_cast<float>(info.rcMonitor.top));
+    imgui_monitor.MainSize = ImVec2(static_cast<float>(info.rcMonitor.right - info.rcMonitor.left), static_cast<float>(info.rcMonitor.bottom - info.rcMonitor.top));
+    imgui_monitor.WorkPos = ImVec2(static_cast<float>(info.rcWork.left), static_cast<float>(info.rcWork.top));
+    imgui_monitor.WorkSize = ImVec2(static_cast<float>(info.rcWork.right - info.rcWork.left), static_cast<float>(info.rcWork.bottom - info.rcWork.top));
     imgui_monitor.DpiScale = ImGui_ImplWin32_GetDpiScaleForMonitor(monitor);
     ImGuiPlatformIO& io = ImGui::GetPlatformIO();
     if (info.dwFlags & MONITORINFOF_PRIMARY)
@@ -345,14 +345,14 @@ void    ImGui_ImplWin32_NewFrame()
     // Setup display size (every frame to accommodate for window resizing)
     RECT rect = { 0, 0, 0, 0 };
     ::GetClientRect(g_hWnd, &rect);
-    io.DisplaySize = ImVec2((float)(rect.right - rect.left), (float)(rect.bottom - rect.top));
+    io.DisplaySize = ImVec2(static_cast<float>(rect.right - rect.left), static_cast<float>(rect.bottom - rect.top));
     if (g_WantUpdateMonitors)
         ImGui_ImplWin32_UpdateMonitors();
 
     // Setup time step
     INT64 current_time = 0;
     ::QueryPerformanceCounter((LARGE_INTEGER*)&current_time);
-    io.DeltaTime = (float)(current_time - g_Time) / g_TicksPerSecond;
+    io.DeltaTime = static_cast<float>(current_time - g_Time) / g_TicksPerSecond;
     g_Time = current_time;
 
     // Read keyboard modifiers inputs
@@ -436,10 +436,10 @@ IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARA
         return 0;
     }
     case WM_MOUSEWHEEL:
-        io.MouseWheel += (float)GET_WHEEL_DELTA_WPARAM(wParam) / (float)WHEEL_DELTA;
+        io.MouseWheel += static_cast<float>(GET_WHEEL_DELTA_WPARAM(wParam)) / static_cast<float>(WHEEL_DELTA);
         return 0;
     case WM_MOUSEHWHEEL:
-        io.MouseWheelH += (float)GET_WHEEL_DELTA_WPARAM(wParam) / (float)WHEEL_DELTA;
+        io.MouseWheelH += static_cast<float>(GET_WHEEL_DELTA_WPARAM(wParam)) / static_cast<float>(WHEEL_DELTA);
         return 0;
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN:
@@ -454,14 +454,14 @@ IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARA
     case WM_CHAR:
         // You can also use ToAscii()+GetKeyboardState() to retrieve characters.
         if (wParam > 0 && wParam < 0x10000)
-            io.AddInputCharacterUTF16((unsigned short)wParam);
+            io.AddInputCharacterUTF16(static_cast<unsigned short>(wParam));
         return 0;
     case WM_SETCURSOR:
         if (LOWORD(lParam) == HTCLIENT && ImGui_ImplWin32_UpdateMouseCursor())
             return 1;
         return 0;
     case WM_DEVICECHANGE:
-        if ((UINT)wParam == DBT_DEVNODES_CHANGED)
+        if (static_cast<UINT>(wParam) == DBT_DEVNODES_CHANGED)
             g_WantUpdateHasGamepad = true;
         return 0;
     case WM_DISPLAYCHANGE:
@@ -558,7 +558,7 @@ float ImGui_ImplWin32_GetDpiScaleForMonitor(void* monitor)
     {
         static HINSTANCE shcore_dll = ::LoadLibraryA("shcore.dll"); // Reference counted per-process
         if (PFN_GetDpiForMonitor GetDpiForMonitorFn = (PFN_GetDpiForMonitor)::GetProcAddress(shcore_dll, "GetDpiForMonitor"))
-            GetDpiForMonitorFn((HMONITOR)monitor, MDT_EFFECTIVE_DPI, &xdpi, &ydpi);
+            GetDpiForMonitorFn(static_cast<HMONITOR>(monitor), MDT_EFFECTIVE_DPI, &xdpi, &ydpi);
     }
 #ifndef NOGDI
     else
@@ -575,7 +575,7 @@ float ImGui_ImplWin32_GetDpiScaleForMonitor(void* monitor)
 
 float ImGui_ImplWin32_GetDpiScaleForHwnd(void* hwnd)
 {
-    HMONITOR monitor = ::MonitorFromWindow((HWND)hwnd, MONITOR_DEFAULTTONEAREST);
+    HMONITOR monitor = ::MonitorFromWindow(static_cast<HWND>(hwnd), MONITOR_DEFAULTTONEAREST);
     return ImGui_ImplWin32_GetDpiScaleForMonitor(monitor);
 }
 
@@ -596,8 +596,8 @@ float ImGui_ImplWin32_GetDpiScaleForHwnd(void* hwnd)
 #endif
 static void ImGui_ImplWin32_SetImeInputPos(ImGuiViewport* viewport, ImVec2 pos)
 {
-    COMPOSITIONFORM cf = { CFS_FORCE_POSITION,{ (LONG)(pos.x - viewport->Pos.x), (LONG)(pos.y - viewport->Pos.y) },{ 0, 0, 0, 0 } };
-    if (HWND hwnd = (HWND)viewport->PlatformHandle)
+    COMPOSITIONFORM cf = { CFS_FORCE_POSITION,{ static_cast<LONG>(pos.x - viewport->Pos.x), static_cast<LONG>(pos.y - viewport->Pos.y) },{ 0, 0, 0, 0 } };
+    if (HWND hwnd = static_cast<HWND>(viewport->PlatformHandle))
         if (HIMC himc = ::ImmGetContext(hwnd))
         {
             ::ImmSetCompositionWindow(himc, &cf);
@@ -652,10 +652,10 @@ static void ImGui_ImplWin32_CreateWindow(ImGuiViewport* viewport)
     HWND parent_window = NULL;
     if (viewport->ParentViewportId != 0)
         if (ImGuiViewport* parent_viewport = ImGui::FindViewportByID(viewport->ParentViewportId))
-            parent_window = (HWND)parent_viewport->PlatformHandle;
+            parent_window = static_cast<HWND>(parent_viewport->PlatformHandle);
 
     // Create window
-    RECT rect = { (LONG)viewport->Pos.x, (LONG)viewport->Pos.y, (LONG)(viewport->Pos.x + viewport->Size.x), (LONG)(viewport->Pos.y + viewport->Size.y) };
+    RECT rect = { static_cast<LONG>(viewport->Pos.x), static_cast<LONG>(viewport->Pos.y), static_cast<LONG>(viewport->Pos.x + viewport->Size.x), static_cast<LONG>(viewport->Pos.y + viewport->Size.y) };
     ::AdjustWindowRectEx(&rect, data->DwStyle, FALSE, data->DwExStyle);
     data->Hwnd = ::CreateWindowEx(
         data->DwExStyle, _T("ImGui Platform"), _T("Untitled"), data->DwStyle,   // Style, class name, window name
@@ -668,7 +668,7 @@ static void ImGui_ImplWin32_CreateWindow(ImGuiViewport* viewport)
 
 static void ImGui_ImplWin32_DestroyWindow(ImGuiViewport* viewport)
 {
-    if (ImGuiViewportDataWin32* data = (ImGuiViewportDataWin32*)viewport->PlatformUserData)
+    if (ImGuiViewportDataWin32* data = static_cast<ImGuiViewportDataWin32*>(viewport->PlatformUserData))
     {
         if (::GetCapture() == data->Hwnd)
         {
@@ -686,7 +686,7 @@ static void ImGui_ImplWin32_DestroyWindow(ImGuiViewport* viewport)
 
 static void ImGui_ImplWin32_ShowWindow(ImGuiViewport* viewport)
 {
-    ImGuiViewportDataWin32* data = (ImGuiViewportDataWin32*)viewport->PlatformUserData;
+    ImGuiViewportDataWin32* data = static_cast<ImGuiViewportDataWin32*>(viewport->PlatformUserData);
     IM_ASSERT(data->Hwnd != 0);
     if (viewport->Flags & ImGuiViewportFlags_NoFocusOnAppearing)
         ::ShowWindow(data->Hwnd, SW_SHOWNA);
@@ -698,7 +698,7 @@ static void ImGui_ImplWin32_UpdateWindow(ImGuiViewport* viewport)
 {
     // (Optional) Update Win32 style if it changed _after_ creation.
     // Generally they won't change unless configuration flags are changed, but advanced uses (such as manually rewriting viewport flags) make this useful.
-    ImGuiViewportDataWin32* data = (ImGuiViewportDataWin32*)viewport->PlatformUserData;
+    ImGuiViewportDataWin32* data = static_cast<ImGuiViewportDataWin32*>(viewport->PlatformUserData);
     IM_ASSERT(data->Hwnd != 0);
     DWORD new_style;
     DWORD new_ex_style;
@@ -717,7 +717,7 @@ static void ImGui_ImplWin32_UpdateWindow(ImGuiViewport* viewport)
         data->DwExStyle = new_ex_style;
         ::SetWindowLong(data->Hwnd, GWL_STYLE, data->DwStyle);
         ::SetWindowLong(data->Hwnd, GWL_EXSTYLE, data->DwExStyle);
-        RECT rect = { (LONG)viewport->Pos.x, (LONG)viewport->Pos.y, (LONG)(viewport->Pos.x + viewport->Size.x), (LONG)(viewport->Pos.y + viewport->Size.y) };
+        RECT rect = { static_cast<LONG>(viewport->Pos.x), static_cast<LONG>(viewport->Pos.y), static_cast<LONG>(viewport->Pos.x + viewport->Size.x), static_cast<LONG>(viewport->Pos.y + viewport->Size.y) };
         ::AdjustWindowRectEx(&rect, data->DwStyle, FALSE, data->DwExStyle); // Client to Screen
         ::SetWindowPos(data->Hwnd, insert_after, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, swp_flag | SWP_NOACTIVATE | SWP_FRAMECHANGED);
         ::ShowWindow(data->Hwnd, SW_SHOWNA); // This is necessary when we alter the style
@@ -727,43 +727,43 @@ static void ImGui_ImplWin32_UpdateWindow(ImGuiViewport* viewport)
 
 static ImVec2 ImGui_ImplWin32_GetWindowPos(ImGuiViewport* viewport)
 {
-    ImGuiViewportDataWin32* data = (ImGuiViewportDataWin32*)viewport->PlatformUserData;
+    ImGuiViewportDataWin32* data = static_cast<ImGuiViewportDataWin32*>(viewport->PlatformUserData);
     IM_ASSERT(data->Hwnd != 0);
     POINT pos = { 0, 0 };
     ::ClientToScreen(data->Hwnd, &pos);
-    return ImVec2((float)pos.x, (float)pos.y);
+    return ImVec2(static_cast<float>(pos.x), static_cast<float>(pos.y));
 }
 
 static void ImGui_ImplWin32_SetWindowPos(ImGuiViewport* viewport, ImVec2 pos)
 {
-    ImGuiViewportDataWin32* data = (ImGuiViewportDataWin32*)viewport->PlatformUserData;
+    ImGuiViewportDataWin32* data = static_cast<ImGuiViewportDataWin32*>(viewport->PlatformUserData);
     IM_ASSERT(data->Hwnd != 0);
-    RECT rect = { (LONG)pos.x, (LONG)pos.y, (LONG)pos.x, (LONG)pos.y };
+    RECT rect = { static_cast<LONG>(pos.x), static_cast<LONG>(pos.y), static_cast<LONG>(pos.x), static_cast<LONG>(pos.y) };
     ::AdjustWindowRectEx(&rect, data->DwStyle, FALSE, data->DwExStyle);
     ::SetWindowPos(data->Hwnd, NULL, rect.left, rect.top, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 }
 
 static ImVec2 ImGui_ImplWin32_GetWindowSize(ImGuiViewport* viewport)
 {
-    ImGuiViewportDataWin32* data = (ImGuiViewportDataWin32*)viewport->PlatformUserData;
+    ImGuiViewportDataWin32* data = static_cast<ImGuiViewportDataWin32*>(viewport->PlatformUserData);
     IM_ASSERT(data->Hwnd != 0);
     RECT rect;
     ::GetClientRect(data->Hwnd, &rect);
-    return ImVec2(float(rect.right - rect.left), float(rect.bottom - rect.top));
+    return ImVec2(static_cast<float>(rect.right - rect.left), static_cast<float>(rect.bottom - rect.top));
 }
 
 static void ImGui_ImplWin32_SetWindowSize(ImGuiViewport* viewport, ImVec2 size)
 {
-    ImGuiViewportDataWin32* data = (ImGuiViewportDataWin32*)viewport->PlatformUserData;
+    ImGuiViewportDataWin32* data = static_cast<ImGuiViewportDataWin32*>(viewport->PlatformUserData);
     IM_ASSERT(data->Hwnd != 0);
-    RECT rect = { 0, 0, (LONG)size.x, (LONG)size.y };
+    RECT rect = { 0, 0, static_cast<LONG>(size.x), static_cast<LONG>(size.y) };
     ::AdjustWindowRectEx(&rect, data->DwStyle, FALSE, data->DwExStyle); // Client to Screen
     ::SetWindowPos(data->Hwnd, NULL, 0, 0, rect.right - rect.left, rect.bottom - rect.top, SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
 }
 
 static void ImGui_ImplWin32_SetWindowFocus(ImGuiViewport* viewport)
 {
-    ImGuiViewportDataWin32* data = (ImGuiViewportDataWin32*)viewport->PlatformUserData;
+    ImGuiViewportDataWin32* data = static_cast<ImGuiViewportDataWin32*>(viewport->PlatformUserData);
     IM_ASSERT(data->Hwnd != 0);
     ::BringWindowToTop(data->Hwnd);
     ::SetForegroundWindow(data->Hwnd);
@@ -772,14 +772,14 @@ static void ImGui_ImplWin32_SetWindowFocus(ImGuiViewport* viewport)
 
 static bool ImGui_ImplWin32_GetWindowFocus(ImGuiViewport* viewport)
 {
-    ImGuiViewportDataWin32* data = (ImGuiViewportDataWin32*)viewport->PlatformUserData;
+    ImGuiViewportDataWin32* data = static_cast<ImGuiViewportDataWin32*>(viewport->PlatformUserData);
     IM_ASSERT(data->Hwnd != 0);
     return ::GetForegroundWindow() == data->Hwnd;
 }
 
 static bool ImGui_ImplWin32_GetWindowMinimized(ImGuiViewport* viewport)
 {
-    ImGuiViewportDataWin32* data = (ImGuiViewportDataWin32*)viewport->PlatformUserData;
+    ImGuiViewportDataWin32* data = static_cast<ImGuiViewportDataWin32*>(viewport->PlatformUserData);
     IM_ASSERT(data->Hwnd != 0);
     return ::IsIconic(data->Hwnd) != 0;
 }
@@ -787,7 +787,7 @@ static bool ImGui_ImplWin32_GetWindowMinimized(ImGuiViewport* viewport)
 static void ImGui_ImplWin32_SetWindowTitle(ImGuiViewport* viewport, const char* title)
 {
     // ::SetWindowTextA() doesn't properly handle UTF-8 so we explicitely convert our string.
-    ImGuiViewportDataWin32* data = (ImGuiViewportDataWin32*)viewport->PlatformUserData;
+    ImGuiViewportDataWin32* data = static_cast<ImGuiViewportDataWin32*>(viewport->PlatformUserData);
     IM_ASSERT(data->Hwnd != 0);
     int n = ::MultiByteToWideChar(CP_UTF8, 0, title, -1, NULL, 0);
     ImVector<wchar_t> title_w;
@@ -798,14 +798,14 @@ static void ImGui_ImplWin32_SetWindowTitle(ImGuiViewport* viewport, const char* 
 
 static void ImGui_ImplWin32_SetWindowAlpha(ImGuiViewport* viewport, float alpha)
 {
-    ImGuiViewportDataWin32* data = (ImGuiViewportDataWin32*)viewport->PlatformUserData;
+    ImGuiViewportDataWin32* data = static_cast<ImGuiViewportDataWin32*>(viewport->PlatformUserData);
     IM_ASSERT(data->Hwnd != 0);
     IM_ASSERT(alpha >= 0.0f && alpha <= 1.0f);
     if (alpha < 1.0f)
     {
         DWORD style = ::GetWindowLongW(data->Hwnd, GWL_EXSTYLE) | WS_EX_LAYERED;
         ::SetWindowLongW(data->Hwnd, GWL_EXSTYLE, style);
-        ::SetLayeredWindowAttributes(data->Hwnd, 0, (BYTE)(255 * alpha), LWA_ALPHA);
+        ::SetLayeredWindowAttributes(data->Hwnd, 0, static_cast<BYTE>(255 * alpha), LWA_ALPHA);
     }
     else
     {
@@ -816,7 +816,7 @@ static void ImGui_ImplWin32_SetWindowAlpha(ImGuiViewport* viewport, float alpha)
 
 static float ImGui_ImplWin32_GetWindowDpiScale(ImGuiViewport* viewport)
 {
-    ImGuiViewportDataWin32* data = (ImGuiViewportDataWin32*)viewport->PlatformUserData;
+    ImGuiViewportDataWin32* data = static_cast<ImGuiViewportDataWin32*>(viewport->PlatformUserData);
     IM_ASSERT(data->Hwnd != 0);
     return ImGui_ImplWin32_GetDpiScaleForHwnd(data->Hwnd);
 }
@@ -842,7 +842,7 @@ static LRESULT CALLBACK ImGui_ImplWin32_WndProcHandler_PlatformWindow(HWND hWnd,
     if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
         return true;
 
-    if (ImGuiViewport* viewport = ImGui::FindViewportByPlatformHandle((void*)hWnd))
+    if (ImGuiViewport* viewport = ImGui::FindViewportByPlatformHandle(static_cast<void*>(hWnd)))
     {
         switch (msg)
         {
@@ -920,7 +920,7 @@ static void ImGui_ImplWin32_InitPlatformInterface()
     data->Hwnd = g_hWnd;
     data->HwndOwned = false;
     main_viewport->PlatformUserData = data;
-    main_viewport->PlatformHandle = (void*)g_hWnd;
+    main_viewport->PlatformHandle = static_cast<void*>(g_hWnd);
 }
 
 static void ImGui_ImplWin32_ShutdownPlatformInterface()

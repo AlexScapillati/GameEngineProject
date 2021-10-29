@@ -11,9 +11,7 @@
 #include "CVector3.h"
 #include "GraphicsHelpers.h" // Helper functions to unclutter the code here
 #include "ColourRGBA.h"
-#include "tinyxml2/tinyxml2.h"
 
-#include <sstream>
 #include <array>
 #include <list>
 #include <stdexcept>
@@ -22,13 +20,14 @@
 
 using namespace Microsoft::WRL;
 
-class CScene
+class IScene
 {
 public:
-
-	CScene(std::string fileName);
+	
 
 	void InitTextures();
+
+	IScene(CDX11Engine* engine, std::string fileName);
 
 	void RenderSceneFromCamera(CCamera* camera);
 
@@ -36,22 +35,11 @@ public:
 	// Scene Render and Update
 	//--------------------------------------------------------------------------------------
 
-	ComPtr<ID3D11ShaderResourceView> RenderScene(float frameTime);
+	// Returns the generated scene texture
+	void RenderScene(float& frameTime);
 
 	// frameTime is the time passed since the last frame
-	void UpdateScene(float frameTime);
-
-	//--------------------------------------------------------------------------------------
-	// GUI functions
-	//--------------------------------------------------------------------------------------
-
-	void AddObjectsMenu();
-
-	void DisplayPropertiesWindow();
-
-	void DisplayObjects();
-
-	void DisplaySceneSettings(bool& b);
+	void UpdateScene(float& frameTime);
 
 	//--------------------------------------------------------------------------------------
 	// Public Variables TODO REMOVE BIG NONO
@@ -60,9 +48,9 @@ public:
 	std::string mDefaultVs;
 	std::string mDefaultPs;
 
-	CGameObjectManager* mObjManager;
+	std::unique_ptr<CGameObjectManager> mObjManager;
 
-	CCamera* mCamera;
+	std::unique_ptr<CCamera> mCamera;
 
 	// Lock FPS to monitor refresh rate, which will typically set it to 60fps. Press 'p' to toggle to full fps
 	bool mLockFPS = true;
@@ -74,17 +62,56 @@ public:
 
 	int mPcfSamples;
 
+	//--------------------------------------------------------------------------------------
+	// Public Functions
+	//--------------------------------------------------------------------------------------
+
 	void Save(std::string fileName = "");
-
-	~CScene();
-
 	void Resize(UINT newX, UINT newY);
-
 	void PostProcessingPass();
-
 	void RenderToDepthMap();
+	void DisplayPostProcessingEffects(); // TODO: Remove
+	
 
-	void DisplayPostProcessingEffects();
+	//--------------------------------------------------------------------------------------
+	// Getters 
+	//--------------------------------------------------------------------------------------
+
+
+	auto GetObjectManager() const
+	{
+		return mObjManager.get();
+	}
+
+	auto GetViewportSize() const
+	{
+		return CVector2((float)mViewportX, (float)mViewportY);
+	}
+
+	auto GetViewportX() const
+	{
+		return mViewportX;
+	}
+
+	auto GetViewportY() const
+	{
+		return mViewportY;
+	}
+
+	auto GetCamera() const
+	{
+		return mCamera.get();
+	}
+
+	auto& GetLockFps()
+	{
+		return mLockFPS;
+	}
+
+	auto GetTextureSRV()
+	{
+		return mSceneSRV.Get();
+	}
 
 	//********************
 	// Available post-processes
@@ -144,7 +171,7 @@ public:
 		PostProcess type = PostProcess::None;
 		PostProcessMode mode = PostProcessMode::Fullscreen;
 
-		std::string shaderFileName = "";		//not used
+		std::string mShaderFileName;		//not used
 		ComPtr < ID3D11PixelShader> shader = nullptr;	//not used
 
 		ComPtr < ID3D11Texture2D> tex = nullptr;			//not used
@@ -159,6 +186,9 @@ private:
 	// Scene Data
 	//--------------------------------------------------------------------------------------
 
+	CDX11Engine* mEngine = nullptr;
+	CWindow* mWindow = nullptr;
+
 	std::string mFileName;
 
 	// Variables controlling light1's orbiting of the particle emitter
@@ -169,9 +199,6 @@ private:
 	CVector3 gAmbientColour; // Background level of light (slightly bluish to match the far background, which is dark blue)
 	float    gSpecularPower; // Specular power controls shininess - same for all models in this app
 
-	// Variables controlling light1's orbiting of the cube
-	float gLightOrbitRadius;
-	float gLightOrbitSpeed;
 
 	CGameObject* mSelectedObj;
 
@@ -225,7 +252,7 @@ private:
 
 	// Select the appropriate shader plus any additional textures required for a given post-process
 	// Helper function shared by full-screen, area and polygon post-processing functions below
-	void SelectPostProcessShaderAndTextures(CScene::PostProcess postProcess);
+	void SelectPostProcessShaderAndTextures(IScene::PostProcess postProcess);
 
 	// Perform a full-screen post process from "scene texture" to back buffer
 	void FullScreenPostProcess(PostProcess postProcess);
@@ -240,7 +267,4 @@ private:
 	void LoadPostProcessingImages();
 
 	void ReleasePostProcessingShaders();
-
-	template<class T>
-	void DisplayDeque(std::deque<T*>& deque);
 };

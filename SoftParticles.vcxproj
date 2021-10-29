@@ -202,13 +202,18 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="DX11Gui.cpp" />
+    <ClCompile Include="DX12Gui.cpp" />
+    <ClCompile Include="State.cpp" />
+    <ClCompile Include="Window.cpp" />
+    <ClCompile Include="DX11Engine.cpp" />
+    <ClCompile Include="DX12Engine.cpp" />
     <ClCompile Include="External\imgui\FileBrowser\ImGuiFileBrowser.cpp" />
     <ClCompile Include="External\imgui\ImGuizmo.cpp" />
-    <ClCompile Include="External\imgui\imgui_demo.cpp" />
+    <ClCompile Include="GUI.cpp" />
     <ClCompile Include="GUI.h" />
     <ClCompile Include="Math\CVector4.cpp" />
     <ClCompile Include="PointLight.cpp" />
-    <ClCompile Include="Direct3DSetup.cpp" />
     <ClCompile Include="DirLight.cpp" />
     <ClCompile Include="External\imgui\imgui.cpp" />
     <ClCompile Include="External\imgui\imgui_draw.cpp" />
@@ -221,7 +226,6 @@
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="PostProcessing.cpp" />
     <ClCompile Include="SpotLight.cpp" />
-    <ClCompile Include="Engine.cpp" />
     <ClCompile Include="GameObjectManager.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Math\CMatrix4x4.cpp" />
@@ -232,7 +236,6 @@
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Mesh.cpp" />
-    <ClCompile Include="State.cpp" />
     <ClCompile Include="tinyxml2\tinyxml2.cpp" />
     <ClCompile Include="Utility\Input.cpp" />
     <ClCompile Include="Utility\GraphicsHelpers.cpp" />
@@ -241,11 +244,17 @@
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Common.h" />
+    <ClInclude Include="DX11Gui.h" />
+    <ClInclude Include="DX12Gui.h" />
+    <ClInclude Include="FactoryGui.h" />
+    <ClInclude Include="Window.h" />
+    <ClInclude Include="DX11Engine.h" />
+    <ClInclude Include="DX12Engine.h" />
     <ClInclude Include="External\imgui\FileBrowser\ImGuiFileBrowser.h" />
     <ClInclude Include="External\imgui\ImGuizmo.h" />
+    <ClInclude Include="FactoryEngine.h" />
     <ClInclude Include="Math\CVector4.h" />
     <ClInclude Include="PointLight.h" />
-    <ClInclude Include="Direct3DSetup.h" />
     <ClInclude Include="DirLight.h" />
     <ClInclude Include="External\imgui\imconfig.h" />
     <ClInclude Include="External\imgui\imgui.h" />
@@ -270,9 +279,7 @@
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="Plant.h" />
     <ClInclude Include="Scene.h" />
-    <ClInclude Include="Shader.h" />
     <ClInclude Include="Sky.h" />
-    <ClInclude Include="State.h" />
     <ClInclude Include="tinyxml2\tinyxml2.h" />
     <ClInclude Include="Utility\ColourRGBA.h" />
     <ClInclude Include="Utility\Input.h" />

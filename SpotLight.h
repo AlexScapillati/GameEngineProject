@@ -6,7 +6,7 @@ class CSpotLight :
 	public CLight
 {
 public:
-	CSpotLight(std::string mesh,
+	CSpotLight(CDX11Engine* engine, std::string mesh,
 		std::string name,
 		std::string& diffuse,
 		CVector3 colour = { 0.0f, 0.0f, 0.0f },

@@ -6,46 +6,28 @@
 #pragma once
 #include "Scene.h"
 #include "Common.h"
-#include "State.h"
 #include "GameObject.h"
 #include "DirLight.h"
 #include "PointLight.h"
 #include "SpotLight.h"
 #include "External\imgui\imgui.h"
-#include "Plant.h"
 
 //*******************************
 //**** Post-processing shader DirectX objects
 // These are also added to Shader.h
-extern ComPtr<ID3D11PixelShader>gBurnPostProcess;
-extern ComPtr<ID3D11PixelShader>gCopyPostProcess;
-extern ComPtr<ID3D11PixelShader>gTintPostProcess;
-extern ComPtr<ID3D11PixelShader>gSsaoPostProcess;
-extern ComPtr<ID3D11PixelShader>gBloomPostProcess;
-extern ComPtr<ID3D11PixelShader>gSpiralPostProcess;
-extern ComPtr<ID3D11VertexShader> g2DQuadVertexShader;
-extern ComPtr<ID3D11PixelShader >gDistortPostProcess;
-extern ComPtr<ID3D11PixelShader >gGodRaysPostProcess;
-extern ComPtr<ID3D11PixelShader >gSsaoLastPostProcess;
-extern ComPtr<ID3D11PixelShader >gHeatHazePostProcess;
-extern ComPtr<ID3D11PixelShader >gGreyNoisePostProcess;
-extern ComPtr<ID3D11PixelShader >gBloomLastPostProcess;
-extern ComPtr<ID3D11VertexShader> g2DPolygonVertexShader;
-extern ComPtr<ID3D11PixelShader >gGaussionBlurPostProcess;
-extern ComPtr<ID3D11PixelShader >gChromaticAberrationPostProcess;
 
-void CScene::LoadPostProcessingImages()
+void IScene::LoadPostProcessingImages()
 {
-	if (!LoadTexture("Noise.png", &mNoiseMap, &mNoiseMapSRV) ||
-		!LoadTexture("Burn.png", &mBurnMap, &mBurnMapSRV) ||
-		!LoadTexture("Distort.png", &mDistortMap, &mDistortMapSRV) ||
-		!LoadTexture("randomNoise.jpg", &mRandomMap, &mRandomMapSRV))
+	if (!mEngine->LoadTexture("Noise.png", &mNoiseMap, &mNoiseMapSRV) ||
+		!mEngine->LoadTexture("Burn.png", &mBurnMap, &mBurnMapSRV) ||
+		!mEngine->LoadTexture("Distort.png", &mDistortMap, &mDistortMapSRV) ||
+		!mEngine->LoadTexture("randomNoise.jpg", &mRandomMap, &mRandomMapSRV))
 	{
 		throw std::runtime_error("Error loading post processing images");
 	}
 }
 
-void CScene::ReleasePostProcessingShaders()
+void IScene::ReleasePostProcessingShaders()
 {
 	if (mBurnMap)				mBurnMap->Release();		mBurnMap = nullptr;
 	if (mNoiseMap)				mNoiseMap->Release();		mNoiseMap = nullptr;
@@ -60,83 +42,83 @@ void CScene::ReleasePostProcessingShaders()
 
 // Select the appropriate shader plus any additional textures required for a given post-process
 // Helper function shared by full-screen, area and polygon post-processing functions below
-void CScene::SelectPostProcessShaderAndTextures(PostProcess postProcess)
+void IScene::SelectPostProcessShaderAndTextures(PostProcess postProcess)
 {
 	switch (postProcess)
 	{
-	case CScene::PostProcess::None:
+	case IScene::PostProcess::None:
 		break;
 
-	case CScene::PostProcess::Copy:
+	case IScene::PostProcess::Copy:
 
-		gD3DContext->PSSetShader(gCopyPostProcess.Get(), nullptr, 0);
-
-		break;
-
-	case CScene::PostProcess::Tint:
-
-		gD3DContext->PSSetShader(gTintPostProcess.Get(), nullptr, 0);
+		mEngine->GetContext()->PSSetShader(mEngine->mCopyPostProcess.Get(), nullptr, 0);
 
 		break;
 
-	case CScene::PostProcess::GreyNoise:
+	case IScene::PostProcess::Tint:
 
-		gD3DContext->PSSetShader(gGreyNoisePostProcess.Get(), nullptr, 0);
+		mEngine->GetContext()->PSSetShader(mEngine->mTintPostProcess.Get(), nullptr, 0);
+
+		break;
+
+	case IScene::PostProcess::GreyNoise:
+
+		mEngine->GetContext()->PSSetShader(mEngine->mGreyNoisePostProcess.Get(), nullptr, 0);
 
 		// The noise offset is randomised to give a constantly changing noise effect (like tv static)
 		gPostProcessingConstants.noiseOffset = { Random(0.0f, 1.0f), Random(0.0f, 1.0f) };
 
 		// Give pixel shader access to the noise texture
-		gD3DContext->PSSetShaderResources(1, 1, mNoiseMapSRV.GetAddressOf());
-		gD3DContext->PSSetSamplers(1, 1, &gTrilinearSampler);
+		mEngine->GetContext()->PSSetShaderResources(1, 1, mNoiseMapSRV.GetAddressOf());
+		mEngine->GetContext()->PSSetSamplers(1, 1, &mEngine->mTrilinearSampler);
 
 		break;
 
-	case CScene::PostProcess::Burn:
+	case IScene::PostProcess::Burn:
 
-		gD3DContext->PSSetShader(gBurnPostProcess.Get(), nullptr, 0);
+		mEngine->GetContext()->PSSetShader(mEngine->mBurnPostProcess.Get(), nullptr, 0);
 
 		// Give pixel shader access to the burn texture (basically a height map that the burn level ascends)
-		gD3DContext->PSSetShaderResources(1, 1, mBurnMapSRV.GetAddressOf());
-		gD3DContext->PSSetSamplers(1, 1, &gTrilinearSampler);
+		mEngine->GetContext()->PSSetShaderResources(1, 1, mBurnMapSRV.GetAddressOf());
+		mEngine->GetContext()->PSSetSamplers(1, 1, &mEngine->mTrilinearSampler);
 
 		break;
 
-	case CScene::PostProcess::Distort:
+	case IScene::PostProcess::Distort:
 
-		gD3DContext->PSSetShader(gDistortPostProcess.Get(), nullptr, 0);
+		mEngine->GetContext()->PSSetShader(mEngine->mDistortPostProcess.Get(), nullptr, 0);
 
 		// Give pixel shader access to the distortion texture (containts 2D vectors (in R & G) to shift the texture UVs to give a cut-glass impression)
-		gD3DContext->PSSetShaderResources(1, 1, &mDistortMapSRV);
-		gD3DContext->PSSetSamplers(1, 1, &gTrilinearSampler);
+		mEngine->GetContext()->PSSetShaderResources(1, 1, &mDistortMapSRV);
+		mEngine->GetContext()->PSSetSamplers(1, 1, &mEngine->mTrilinearSampler);
 
 		break;
 
-	case CScene::PostProcess::Spiral:
+	case IScene::PostProcess::Spiral:
 
-		gD3DContext->PSSetShader(gSpiralPostProcess.Get(), nullptr, 0);
-
-		break;
-
-	case CScene::PostProcess::HeatHaze:
-
-		gD3DContext->PSSetShader(gHeatHazePostProcess.Get(), nullptr, 0);
+		mEngine->GetContext()->PSSetShader(mEngine->mSpiralPostProcess.Get(), nullptr, 0);
 
 		break;
 
-	case CScene::PostProcess::ChromaticAberration:
+	case IScene::PostProcess::HeatHaze:
 
-		gD3DContext->PSSetShader(gChromaticAberrationPostProcess.Get(), nullptr, 0);
-
-		break;
-
-	case CScene::PostProcess::GaussionBlur:
-
-		gD3DContext->PSSetShader(gGaussionBlurPostProcess.Get(), nullptr, 0);
+		mEngine->GetContext()->PSSetShader(mEngine->mHeatHazePostProcess.Get(), nullptr, 0);
 
 		break;
 
-	case CScene::PostProcess::SSAO:
+	case IScene::PostProcess::ChromaticAberration:
+
+		mEngine->GetContext()->PSSetShader(mEngine->mChromaticAberrationPostProcess.Get(), nullptr, 0);
+
+		break;
+
+	case IScene::PostProcess::GaussionBlur:
+
+		mEngine->GetContext()->PSSetShader(mEngine->mGaussionBlurPostProcess.Get(), nullptr, 0);
+
+		break;
+
+	case IScene::PostProcess::SSAO:
 
 		//****| INFO |*******************************************************************************************//
 		//	SSAO Pass
@@ -149,17 +131,17 @@ void CScene::SelectPostProcessShaderAndTextures(PostProcess postProcess)
 
 		// 1st pass - Calculate the ssao amount
 
-		gD3DContext->PSSetSamplers(1, 1, &gPointSampler);
+		mEngine->GetContext()->PSSetSamplers(1, 1, &mEngine->mPointSampler);
 
-		gD3DContext->OMSetRenderTargets(1, mSsaoMapRTV.GetAddressOf(), nullptr);
+		mEngine->GetContext()->OMSetRenderTargets(1, mSsaoMapRTV.GetAddressOf(), nullptr);
 
-		gD3DContext->PSSetShader(gSsaoPostProcess.Get(), nullptr, 0);
+		mEngine->GetContext()->PSSetShader(mEngine->mSsaoPostProcess.Get(), nullptr, 0);
 
-		gD3DContext->PSSetShaderResources(1, 1, mFinalDepthStencilSRV.GetAddressOf());
+		mEngine->GetContext()->PSSetShaderResources(1, 1, mFinalDepthStencilSRV.GetAddressOf());
 
-		gD3DContext->PSSetShaderResources(2, 1, mRandomMapSRV.GetAddressOf());
+		mEngine->GetContext()->PSSetShaderResources(2, 1, mRandomMapSRV.GetAddressOf());
 
-		gD3DContext->Draw(4, 0);
+		mEngine->GetContext()->Draw(4, 0);
 
 		// 2nd pass / Optional pass - Blur the occlusion map
 
@@ -167,46 +149,46 @@ void CScene::SelectPostProcessShaderAndTextures(PostProcess postProcess)
 		{
 			// Unbind the ssao map from the shader
 			ID3D11ShaderResourceView* nullSRV = nullptr;
-			gD3DContext->PSSetShaderResources(1, 1, &nullSRV);
+			mEngine->GetContext()->PSSetShaderResources(1, 1, &nullSRV);
 
-			gD3DContext->OMSetRenderTargets(1, mFinalRTV.GetAddressOf(), mDepthStencilRTV.Get());
+			mEngine->GetContext()->OMSetRenderTargets(1, mFinalRTV.GetAddressOf(), mDepthStencilRTV.Get());
 
-			gD3DContext->PSSetShaderResources(0, 1, mSsaoMapSRV.GetAddressOf());
+			mEngine->GetContext()->PSSetShaderResources(0, 1, mSsaoMapSRV.GetAddressOf());
 
-			gD3DContext->PSSetShader(gGaussionBlurPostProcess.Get(), nullptr, 0);
+			mEngine->GetContext()->PSSetShader(mEngine->mGaussionBlurPostProcess.Get(), nullptr, 0);
 
-			gD3DContext->Draw(4, 0);
+			mEngine->GetContext()->Draw(4, 0);
 
 			// Unbind the ssao map from the shader
-			gD3DContext->PSSetShaderResources(0, 1, &nullSRV);
+			mEngine->GetContext()->PSSetShaderResources(0, 1, &nullSRV);
 
 			// 3nd pass - The ssao Map gets copied from the FinalRenderTarget
 
-			gD3DContext->OMSetRenderTargets(1, mSsaoMapRTV.GetAddressOf(), mDepthStencilRTV.Get());
+			mEngine->GetContext()->OMSetRenderTargets(1, mSsaoMapRTV.GetAddressOf(), mDepthStencilRTV.Get());
 
-			gD3DContext->PSSetShaderResources(0, 1, mFinalTextureSRV.GetAddressOf());
+			mEngine->GetContext()->PSSetShaderResources(0, 1, mFinalTextureSRV.GetAddressOf());
 
-			gD3DContext->PSSetShader(gCopyPostProcess.Get(), nullptr, 0);
+			mEngine->GetContext()->PSSetShader(mEngine->mCopyPostProcess.Get(), nullptr, 0);
 
-			gD3DContext->Draw(4, 0);
+			mEngine->GetContext()->Draw(4, 0);
 
 			// Unbind the final texture map from the shader
-			gD3DContext->PSSetShaderResources(0, 1, &nullSRV);
+			mEngine->GetContext()->PSSetShaderResources(0, 1, &nullSRV);
 		}
 
 		// 4th pass - the scene texture and the ssao map are blended toghether
 
-		gD3DContext->OMSetRenderTargets(1, mFinalRTV.GetAddressOf(), nullptr);
+		mEngine->GetContext()->OMSetRenderTargets(1, mFinalRTV.GetAddressOf(), nullptr);
 
-		gD3DContext->PSSetShaderResources(0, 1, mSceneSRV.GetAddressOf());
+		mEngine->GetContext()->PSSetShaderResources(0, 1, mSceneSRV.GetAddressOf());
 
-		gD3DContext->PSSetShaderResources(1, 1, mSsaoMapSRV.GetAddressOf());
+		mEngine->GetContext()->PSSetShaderResources(1, 1, mSsaoMapSRV.GetAddressOf());
 
-		gD3DContext->PSSetShader(gSsaoLastPostProcess.Get(), nullptr, 0);
+		mEngine->GetContext()->PSSetShader(mEngine->mSsaoLastPostProcess.Get(), nullptr, 0);
 
 		break;
 
-	case CScene::PostProcess::Bloom:
+	case IScene::PostProcess::Bloom:
 	{
 		//****| INFO |*******************************************************************************************//
 		//	For the bloom post processing effect there are multiple passes, exactly 4.
@@ -218,53 +200,55 @@ void CScene::SelectPostProcessShaderAndTextures(PostProcess postProcess)
 		//*******************************************************************************************************//
 
 		// 1st pass - The luminance map gets extracted
-		gD3DContext->OMSetRenderTargets(1, mLuminanceRTV.GetAddressOf(), nullptr);
+		mEngine->GetContext()->OMSetRenderTargets(1, mLuminanceRTV.GetAddressOf(), nullptr);
 
-		gD3DContext->PSSetShader(gBloomPostProcess.Get(), nullptr, 0);
+		mEngine->GetContext()->PSSetShader(mEngine->mBloomPostProcess.Get(), nullptr, 0);
 
-		gD3DContext->Draw(4, 0);
+		mEngine->GetContext()->Draw(4, 0);
 
 		// 2nd pass - The luminance map gets blurried (rendered in the mFinalMap)
-		gD3DContext->OMSetRenderTargets(1, mFinalRTV.GetAddressOf(), mDepthStencilRTV.Get());
+		mEngine->GetContext()->OMSetRenderTargets(1, mFinalRTV.GetAddressOf(), mDepthStencilRTV.Get());
 
-		gD3DContext->PSSetShaderResources(0, 1, mLuminanceMapSRV.GetAddressOf());
+		mEngine->GetContext()->PSSetShaderResources(0, 1, mLuminanceMapSRV.GetAddressOf());
 
-		gD3DContext->PSSetShader(gGaussionBlurPostProcess.Get(), nullptr, 0);
+		mEngine->GetContext()->PSSetShader(mEngine->mGaussionBlurPostProcess.Get(), nullptr, 0);
 
-		gD3DContext->Draw(4, 0);
+		mEngine->GetContext()->Draw(4, 0);
 
 		// Unbind the luminance map from the shader input so we can bind it to the render target
 		ID3D11ShaderResourceView* nullSRV = nullptr;
-		gD3DContext->PSSetShaderResources(0, 1, &nullSRV);
+		mEngine->GetContext()->PSSetShaderResources(0, 1, &nullSRV);
 
 		// 3rd pass - the luminance pass gets copied from the FinalTexture in the mLuminanceMap
-		gD3DContext->OMSetRenderTargets(1, mLuminanceRTV.GetAddressOf(), mDepthStencilRTV.Get());
+		mEngine->GetContext()->OMSetRenderTargets(1, mLuminanceRTV.GetAddressOf(), mDepthStencilRTV.Get());
 
-		gD3DContext->PSSetShaderResources(0, 1, mFinalTextureSRV.GetAddressOf());
+		mEngine->GetContext()->PSSetShaderResources(0, 1, mFinalTextureSRV.GetAddressOf());
 
-		gD3DContext->PSSetShader(gCopyPostProcess.Get(), nullptr, 0);
+		mEngine->GetContext()->PSSetShader(mEngine->mCopyPostProcess.Get(), nullptr, 0);
 
-		gD3DContext->Draw(4, 0);
+		mEngine->GetContext()->Draw(4, 0);
 
-		gD3DContext->PSSetShaderResources(0, 1, &nullSRV);
+		mEngine->GetContext()->PSSetShaderResources(0, 1, &nullSRV);
 
 		// 4th pass - the scene texture and the luminance map are added toghether
 
-		gD3DContext->OMSetRenderTargets(1, mFinalRTV.GetAddressOf(), nullptr);
+		mEngine->GetContext()->OMSetRenderTargets(1, mFinalRTV.GetAddressOf(), nullptr);
 
-		gD3DContext->PSSetShaderResources(0, 1, mSceneSRV.GetAddressOf());
+		mEngine->GetContext()->PSSetShaderResources(0, 1, mSceneSRV.GetAddressOf());
 
-		gD3DContext->PSSetShaderResources(1, 1, mLuminanceMapSRV.GetAddressOf());
+		mEngine->GetContext()->PSSetShaderResources(1, 1, mLuminanceMapSRV.GetAddressOf());
 
-		gD3DContext->PSSetShader(gBloomLastPostProcess.Get(), nullptr, 0);
+		mEngine->GetContext()->PSSetShader(mEngine->mBloomLastPostProcess.Get(), nullptr, 0);
 	}
 	break;
 
-	case CScene::PostProcess::GodRays:
+	case IScene::PostProcess::GodRays:
 
 		// Here the light screen position must be calculated
 		CVector3 lightPos;
 		CVector3 lightScreenPos;
+
+		const auto GOM = mEngine->GetScene()->GetObjectManager();
 
 		// TODO REMOVE
 		// TODO IMPLEMENT SUPPORT FOR MULTIPLE LIGHTS
@@ -275,15 +259,15 @@ void CScene::SelectPostProcessShaderAndTextures(PostProcess postProcess)
 		else
 		{
 			// If there are no lights just set the copy post process shader
-			gD3DContext->PSSetShader(gCopyPostProcess.Get(), nullptr, 0);
+			mEngine->GetContext()->PSSetShader(mEngine->mCopyPostProcess.Get(), nullptr, 0);
 			break;
-		};
+		}
 
 		// Convert the world point to screen space
 		lightScreenPos = mCamera->PixelFromWorldPt(lightPos, mViewportX, mViewportY);
 
 		// Add the gui padding
-		auto windowPos = ImGui::GetWindowPos();
+		const auto windowPos = ImGui::GetWindowPos();
 
 		lightScreenPos.x += windowPos.x;
 		lightScreenPos.y += windowPos.y;
@@ -296,39 +280,39 @@ void CScene::SelectPostProcessShaderAndTextures(PostProcess postProcess)
 
 		// Set the depth map to the shader
 		// Needed for corrections
-		gD3DContext->PSGetShaderResources(1, 0, gDepthShaderView.GetAddressOf());
+		mEngine->GetContext()->PSGetShaderResources(1, 0, mEngine->mDepthShaderView.GetAddressOf());
 
 		//Set the shader
-		gD3DContext->PSSetShader(gGodRaysPostProcess.Get(), nullptr, 0);
+		mEngine->GetContext()->PSSetShader(mEngine->mGodRaysPostProcess.Get(), nullptr, 0);
 
 		break;
 
 	}
 }
 
-void CScene::FullScreenPostProcess(PostProcess postProcess)
+void IScene::FullScreenPostProcess(PostProcess postProcess)
 {
 	// Select the back buffer to use for rendering. Not going to clear the back-buffer because we're going to overwrite it all
-	gD3DContext->OMSetRenderTargets(1, mFinalRTV.GetAddressOf(), mDepthStencilRTV.Get());
+	mEngine->GetContext()->OMSetRenderTargets(1, mFinalRTV.GetAddressOf(), mDepthStencilRTV.Get());
 
 	// Give the pixel shader (post-processing shader) access to the scene texture
-	gD3DContext->PSSetShaderResources(0, 1, mSceneSRV.GetAddressOf());
+	mEngine->GetContext()->PSSetShaderResources(0, 1, mSceneSRV.GetAddressOf());
 
 	// Use point sampling (no bilinear, trilinear, mip-mapping etc. for most post-processes)
-	gD3DContext->PSSetSamplers(0, 1, &gPointSampler);
+	mEngine->GetContext()->PSSetSamplers(0, 1, &mEngine->mPointSampler);
 
 	// Using special vertex shader that creates its own data for a 2D screen quad
-	gD3DContext->VSSetShader(g2DQuadVertexShader.Get(), nullptr, 0);
-	gD3DContext->GSSetShader(nullptr, nullptr, 0);  // Switch off geometry shader when not using it (pass nullptr for first parameter)
+	mEngine->GetContext()->VSSetShader(mEngine->m2DQuadVertexShader.Get(), nullptr, 0);
+	mEngine->GetContext()->GSSetShader(nullptr, nullptr, 0);  // Switch off geometry shader when not using it (pass nullptr for first parameter)
 
 	// States - no blending, write to depth buffer and ignore back-face culling
-	gD3DContext->OMSetBlendState(gNoBlendingState, nullptr, 0xffffff);
-	gD3DContext->OMSetDepthStencilState(gDepthReadOnlyState, 0);
-	gD3DContext->RSSetState(gCullNoneState);
+	mEngine->GetContext()->OMSetBlendState(mEngine->mNoBlendingState, nullptr, 0xffffff);
+	mEngine->GetContext()->OMSetDepthStencilState(mEngine->mDepthReadOnlyState, 0);
+	mEngine->GetContext()->RSSetState(mEngine->mCullNoneState);
 
 	// No need to set vertex/index buffer (see 2D quad vertex shader), just indicate that the quad will be created as a triangle strip
-	gD3DContext->IASetInputLayout(NULL); // No vertex data
-	gD3DContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	mEngine->GetContext()->IASetInputLayout(NULL); // No vertex data
+	mEngine->GetContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
 	// Set 2D area for full-screen post-processing (coordinates in 0->1 range)
 	gPostProcessingConstants.area2DTopLeft = { 0, 0 }; // Top-left of entire screen
@@ -336,47 +320,47 @@ void CScene::FullScreenPostProcess(PostProcess postProcess)
 	gPostProcessingConstants.area2DDepth = 0;        // Depth buffer value for full screen is as close as possible
 
 													 // Pass over the above post-processing settings (also the per-process settings prepared in UpdateScene function below)
-	UpdatePostProcessingConstBuffer(gPostProcessingConstBuffer.Get(), gPostProcessingConstants);
-	gD3DContext->VSSetConstantBuffers(1, 1, gPostProcessingConstBuffer.GetAddressOf());
-	gD3DContext->PSSetConstantBuffers(1, 1, gPostProcessingConstBuffer.GetAddressOf());
+	mEngine->UpdatePostProcessingConstBuffer(gPostProcessingConstBuffer.Get(), gPostProcessingConstants);
+	mEngine->GetContext()->VSSetConstantBuffers(1, 1, gPostProcessingConstBuffer.GetAddressOf());
+	mEngine->GetContext()->PSSetConstantBuffers(1, 1, gPostProcessingConstBuffer.GetAddressOf());
 
 	// Select shader and textures needed for the required post-processes (helper function above)
 	SelectPostProcessShaderAndTextures(postProcess);
 
 	// Draw a quad
-	gD3DContext->Draw(4, 0);
+	mEngine->GetContext()->Draw(4, 0);
 
 	//These lines unbind the scene texture from the pixel shader to stop DirectX issuing a warning when we try to render to it again next frame
 	ID3D11ShaderResourceView* nullSRV = nullptr;
-	gD3DContext->PSSetShaderResources(0, 1, &nullSRV);
+	mEngine->GetContext()->PSSetShaderResources(0, 1, &nullSRV);
 
 	//now that the post processing is applied
 	//set back the main target view
 
 	// Select the back buffer to use for rendering. Not going to clear the back-buffer because we're going to overwrite it all
-	gD3DContext->OMSetRenderTargets(1, mSceneRTV.GetAddressOf(), mDepthStencilRTV.Get());
+	mEngine->GetContext()->OMSetRenderTargets(1, mSceneRTV.GetAddressOf(), mDepthStencilRTV.Get());
 
 	//set the copy shader
-	gD3DContext->PSSetShader(gCopyPostProcess.Get(), nullptr, 0);
+	mEngine->GetContext()->PSSetShader(mEngine->mCopyPostProcess.Get(), nullptr, 0);
 
 	//set the final texture as a shader resource
-	gD3DContext->PSSetShaderResources(0, 1, mFinalTextureSRV.GetAddressOf());
+	mEngine->GetContext()->PSSetShaderResources(0, 1, mFinalTextureSRV.GetAddressOf());
 
 	//draw a quad
-	gD3DContext->Draw(4, 0);
+	mEngine->GetContext()->Draw(4, 0);
 
 	//unbind the texture from the pixel shader
-	gD3DContext->PSSetShaderResources(0, 1, &nullSRV);
+	mEngine->GetContext()->PSSetShaderResources(0, 1, &nullSRV);
 }
 
 // Perform an area post process from "scene texture" to back buffer at a given point in the world, with a given size (world units)
-void CScene::AreaPostProcess(PostProcess postProcess, CVector3 worldPoint, CVector2 areaSize)
+void IScene::AreaPostProcess(PostProcess postProcess, CVector3 worldPoint, CVector2 areaSize)
 {
 	// Select the back buffer to use for rendering. Not going to clear the back-buffer because we're going to overwrite it all
-	gD3DContext->OMSetRenderTargets(1, mFinalRTV.GetAddressOf(), mDepthStencilRTV.Get());
+	mEngine->GetContext()->OMSetRenderTargets(1, mFinalRTV.GetAddressOf(), mDepthStencilRTV.Get());
 
 	// Give the pixel shader (post-processing shader) access to the scene texture
-	gD3DContext->PSSetShaderResources(0, 1, mSceneSRV.GetAddressOf());
+	mEngine->GetContext()->PSSetShaderResources(0, 1, mSceneSRV.GetAddressOf());
 
 	// First perform a full-screen copy of the scene to back-buffer
 	FullScreenPostProcess(PostProcess::Copy);
@@ -392,12 +376,12 @@ void CScene::AreaPostProcess(PostProcess postProcess, CVector3 worldPoint, CVect
 	// Enable alpha blending - area effects need to fade out at the edges or the hard edge of the area is visible
 	// A couple of the shaders have been updated to put the effect into a soft circle
 	// Alpha blending isn't enabled for fullscreen and polygon effects so it doesn't affect those (except heat-haze, which works a bit differently)
-	gD3DContext->OMSetBlendState(gAlphaBlendingState, nullptr, 0xffffff);
+	mEngine->GetContext()->OMSetBlendState(mEngine->mAlphaBlendingState, nullptr, 0xffffff);
 
 	// Use picking methods to find the 2D position of the 3D point at the centre of the area effect
-	auto worldPointTo2D = mCamera->PixelFromWorldPt(worldPoint, mViewportX, mViewportY);
+	const auto worldPointTo2D = mCamera->PixelFromWorldPt(worldPoint, mViewportX, mViewportY);
 	CVector2 area2DCentre = { worldPointTo2D.x, worldPointTo2D.y };
-	float areaDistance = worldPointTo2D.z;
+	const float areaDistance = worldPointTo2D.z;
 
 	// Nothing to do if given 3D point is behind the camera
 	if (areaDistance < mCamera->NearClip())  return;
@@ -408,7 +392,7 @@ void CScene::AreaPostProcess(PostProcess postProcess, CVector3 worldPoint, CVect
 
 	// Using new helper function here - it calculates the world space units covered by a pixel at a certain distance from the camera.
 	// Use this to find the size of the 2D area we need to cover the world space size requested
-	CVector2 pixelSizeAtPoint = mCamera->PixelSizeInWorldSpace(areaDistance, mViewportX, mViewportY);
+	const CVector2 pixelSizeAtPoint = mCamera->PixelSizeInWorldSpace(areaDistance, mViewportX, mViewportY);
 	CVector2 area2DSize = { areaSize.x / pixelSizeAtPoint.x, areaSize.y / pixelSizeAtPoint.y };
 
 	// Again convert the result in pixels to a result to 0->1 coordinates
@@ -426,44 +410,44 @@ void CScene::AreaPostProcess(PostProcess postProcess, CVector3 worldPoint, CVect
 	gPostProcessingConstants.area2DDepth /= areaDistance;
 
 	// Pass over this post-processing area to shaders (also sends the per-process settings prepared in UpdateScene function below)
-	UpdatePostProcessingConstBuffer(gPostProcessingConstBuffer.Get(), gPostProcessingConstants);
-	gD3DContext->VSSetConstantBuffers(1, 1, gPostProcessingConstBuffer.GetAddressOf());
-	gD3DContext->PSSetConstantBuffers(1, 1, gPostProcessingConstBuffer.GetAddressOf());
+	mEngine->UpdatePostProcessingConstBuffer(gPostProcessingConstBuffer.Get(), gPostProcessingConstants);
+	mEngine->GetContext()->VSSetConstantBuffers(1, 1, gPostProcessingConstBuffer.GetAddressOf());
+	mEngine->GetContext()->PSSetConstantBuffers(1, 1, gPostProcessingConstBuffer.GetAddressOf());
 
 	// Draw a quad
-	gD3DContext->Draw(4, 0);
+	mEngine->GetContext()->Draw(4, 0);
 
 	//These lines unbind the scene texture from the pixel shader to stop DirectX issuing a warning when we try to render to it again next frame
 	ID3D11ShaderResourceView* nullSRV = nullptr;
-	gD3DContext->PSSetShaderResources(0, 1, &nullSRV);
+	mEngine->GetContext()->PSSetShaderResources(0, 1, &nullSRV);
 
 	//now that the post processing is applied
 	//set back the main target view
 
 	// Select the back buffer to use for rendering. Not going to clear the back-buffer because we're going to overwrite it all
-	gD3DContext->OMSetRenderTargets(1, mSceneRTV.GetAddressOf(), mDepthStencilRTV.Get());
+	mEngine->GetContext()->OMSetRenderTargets(1, mSceneRTV.GetAddressOf(), mDepthStencilRTV.Get());
 
 	//set the copy shader
-	gD3DContext->PSSetShader(gCopyPostProcess.Get(), nullptr, 0);
+	mEngine->GetContext()->PSSetShader(mEngine->mCopyPostProcess.Get(), nullptr, 0);
 
 	//set the final texture as a shader resource
-	gD3DContext->PSSetShaderResources(0, 1, mFinalTextureSRV.GetAddressOf());
+	mEngine->GetContext()->PSSetShaderResources(0, 1, mFinalTextureSRV.GetAddressOf());
 
 	//draw a quad
-	gD3DContext->Draw(4, 0);
+	mEngine->GetContext()->Draw(4, 0);
 
 	//unbind the texture from the pixel shader
-	gD3DContext->PSSetShaderResources(0, 1, &nullSRV);
+	mEngine->GetContext()->PSSetShaderResources(0, 1, &nullSRV);
 }
 
 // Perform an post process from "scene texture" to back buffer within the given four-point polygon and a world matrix to position/rotate/scale the polygon
-void CScene::PolygonPostProcess(PostProcess postProcess, const std::array<CVector3, 4>& points, const CMatrix4x4& worldMatrix)
+void IScene::PolygonPostProcess(PostProcess postProcess, const std::array<CVector3, 4>& points, const CMatrix4x4& worldMatrix)
 {
 	// Select the back buffer to use for rendering. Not going to clear the back-buffer because we're going to overwrite it all
-	gD3DContext->OMSetRenderTargets(1, mFinalRTV.GetAddressOf(), mDepthStencilRTV.Get());
+	mEngine->GetContext()->OMSetRenderTargets(1, mFinalRTV.GetAddressOf(), mDepthStencilRTV.Get());
 
 	// Give the pixel shader (post-processing shader) access to the scene texture
-	gD3DContext->PSSetShaderResources(0, 1, &mSceneSRV);
+	mEngine->GetContext()->PSSetShaderResources(0, 1, &mSceneSRV);
 
 	// First perform a full-screen copy of the scene to back-buffer
 	FullScreenPostProcess(PostProcess::Copy);
@@ -481,48 +465,49 @@ void CScene::PolygonPostProcess(PostProcess postProcess, const std::array<CVecto
 	{
 		CVector4 modelPosition = CVector4(points[i], 1);
 		CVector4 worldPosition = modelPosition * worldMatrix;
-		CVector4 viewportPosition = worldPosition * mCamera->ViewProjectionMatrix();
+		const CVector4 viewportPosition = worldPosition * mCamera->ViewProjectionMatrix();
 
 		gPostProcessingConstants.polygon2DPoints[i] = viewportPosition;
 	}
 
 	// Pass over the polygon points to the shaders (also sends the per-process settings prepared in UpdateScene function below)
-	UpdatePostProcessingConstBuffer(gPostProcessingConstBuffer.Get(), gPostProcessingConstants);
-	gD3DContext->VSSetConstantBuffers(1, 1, gPostProcessingConstBuffer.GetAddressOf());
-	gD3DContext->PSSetConstantBuffers(1, 1, gPostProcessingConstBuffer.GetAddressOf());
+	mEngine->UpdatePostProcessingConstBuffer(gPostProcessingConstBuffer.Get(), gPostProcessingConstants);
+	mEngine->GetContext()->VSSetConstantBuffers(1, 1, gPostProcessingConstBuffer.GetAddressOf());
+	mEngine->GetContext()->PSSetConstantBuffers(1, 1, gPostProcessingConstBuffer.GetAddressOf());
 
 	// Select the special 2D polygon post-processing vertex shader and draw the polygon
-	gD3DContext->VSSetShader(g2DPolygonVertexShader.Get(), nullptr, 0);
+	mEngine->GetContext()->VSSetShader(mEngine->m2DPolygonVertexShader.Get(), nullptr, 0);
 
-	gD3DContext->Draw(4, 0);
+	mEngine->GetContext()->Draw(4, 0);
 
 	//These lines unbind the scene texture from the pixel shader to stop DirectX issuing a warning when we try to render to it again next frame
 	ID3D11ShaderResourceView* nullSRV = nullptr;
-	gD3DContext->PSSetShaderResources(0, 1, &nullSRV);
+	mEngine->GetContext()->PSSetShaderResources(0, 1, &nullSRV);
 
 	//now that the post processing is applied
 	//set back the main target view
 
 	// Select the back buffer to use for rendering. Not going to clear the back-buffer because we're going to overwrite it all
-	gD3DContext->OMSetRenderTargets(1, mSceneRTV.GetAddressOf(), mDepthStencilRTV.Get());
+	mEngine->GetContext()->OMSetRenderTargets(1, mSceneRTV.GetAddressOf(), mDepthStencilRTV.Get());
 
 	//set the copy shader
-	gD3DContext->PSSetShader(gCopyPostProcess.Get(), nullptr, 0);
+	mEngine->GetContext()->PSSetShader(mEngine->mCopyPostProcess.Get(), nullptr, 0);
 
 	//set the final texture as a shader resource
-	gD3DContext->PSSetShaderResources(0, 1, mFinalTextureSRV.GetAddressOf());
+	mEngine->GetContext()->PSSetShaderResources(0, 1, mFinalTextureSRV.GetAddressOf());
 
 	//draw a quad
-	gD3DContext->Draw(4, 0);
+	mEngine->GetContext()->Draw(4, 0);
 
 	//unbind the texture from the pixel shader
-	gD3DContext->PSSetShaderResources(0, 1, &nullSRV);
+	mEngine->GetContext()->PSSetShaderResources(0, 1, &nullSRV);
 }
 
-void CScene::PostProcessingPass()
+void IScene::PostProcessingPass()
 {
 	//display the post processing effects in a window
-	DisplayPostProcessingEffects();
+	
+	// TODO ////// if(scenevewportfullscreen) DisplayPostProcessingEffects();
 
 	//iterate through the effects array
 	auto filter = mPostProcessingFilters.begin();
@@ -546,7 +531,7 @@ void CScene::PostProcessingPass()
 				{
 					if (ImGui::Begin("Select Object"))
 					{
-						for (auto obj : GOM->mObjects)
+						for (const auto obj : mEngine->GetScene()->GetObjectManager()->mObjects)
 						{
 							if (ImGui::Button(obj->Name().c_str()))
 							{
@@ -586,7 +571,7 @@ void CScene::PostProcessingPass()
 				{
 					if (ImGui::Begin("Select Object"))
 					{
-						for (auto obj : GOM->mObjects)
+						for (const auto obj : mEngine->GetScene()->GetObjectManager()->mObjects)
 						{
 							if (ImGui::Button(obj->Name().c_str()))
 							{
@@ -632,7 +617,7 @@ void CScene::PostProcessingPass()
 
 			//These lines unbind the scene texture from the pixel shader to stop DirectX issuing a warning when we try to render to it again next frame
 			ID3D11ShaderResourceView* nullSRV = nullptr;
-			gD3DContext->PSSetShaderResources(0, 1, &nullSRV);
+			mEngine->GetContext()->PSSetShaderResources(0, 1, &nullSRV);
 
 			if (filter->type == PostProcess::SSAO ||
 				filter->type == PostProcess::Bloom ||
@@ -642,35 +627,34 @@ void CScene::PostProcessingPass()
 				filter->type == PostProcess::GreyNoise ||
 				filter->type == PostProcess::Spiral ||
 				filter->type == PostProcess::GodRays)
-				gD3DContext->PSSetShaderResources(1, 1, &nullSRV);
+				mEngine->GetContext()->PSSetShaderResources(1, 1, &nullSRV);
 
 			filter++;
 		}
 	}
 }
 
-void CScene::RenderToDepthMap()
+void IScene::RenderToDepthMap()
 {
 	// Select the shadow map texture as the current depth buffer. We will not be rendering any pixel colours
 	// Also clear the the shadow map depth buffer to the far distance
-	gD3DContext->OMSetRenderTargets(0, nullptr, mFinalDepthStencilRTV.Get());
-	gD3DContext->ClearDepthStencilView(mFinalDepthStencilRTV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	mEngine->GetContext()->OMSetRenderTargets(0, nullptr, mFinalDepthStencilRTV.Get());
+	mEngine->GetContext()->ClearDepthStencilView(mFinalDepthStencilRTV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 	// Set cull none
-	gD3DContext->RSSetState(gCullNoneState);
+	mEngine->GetContext()->RSSetState(mEngine->mCullNoneState);
 
 	//render just the objects that can cast shadows
-	for (auto it : GOM->mObjects)
+	for (const auto it : mEngine->GetScene()->GetObjectManager()->mObjects)
 	{
 		//basic geometry rendered, that means just render the model's geometry, leaving all the fancy shaders
 		it->Render(true);
 	}
 }
 
-void CScene::DisplayPostProcessingEffects()
+void IScene::DisplayPostProcessingEffects()
 {
 
-	if (gViewportFullscreen) return;
 
 	//-------------------------------------------------------
 	// Post Processing Effects Window
@@ -702,7 +686,7 @@ void CScene::DisplayPostProcessingEffects()
 			//	than the id of the button(lable) would be the same.
 			//*******************************************************************************************************//
 
-			char buttonId = std::distance(mPostProcessingFilters.begin(), filter);
+			const char buttonId = std::distance(mPostProcessingFilters.begin(), filter);
 
 			if (ImGui::Button(mPostProcessStrings[(int)filter->type].c_str()))
 			{
@@ -769,7 +753,7 @@ void CScene::DisplayPostProcessingEffects()
 		{
 			static PostProcessFilter newPostProcess;
 
-			std::string items = "";
+			std::string items;
 
 			//populate the string with post processing items separated by \0
 			for (auto s : mPostProcessStrings)
@@ -845,19 +829,19 @@ void CScene::DisplayPostProcessingEffects()
 				//go through the type and display the properties
 				switch (postProcess.type)
 				{
-				case CScene::PostProcess::None:
+				case IScene::PostProcess::None:
 					break;
 
-				case CScene::PostProcess::Copy:
+				case IScene::PostProcess::Copy:
 					break;
 
-				case CScene::PostProcess::Tint:
+				case IScene::PostProcess::Tint:
 
 					ImGui::ColorEdit3("Pick colour", gPostProcessingConstants.tintColour.GetValuesArray());
 
 					break;
 
-				case CScene::PostProcess::GreyNoise:
+				case IScene::PostProcess::GreyNoise:
 
 					ImGui::DragFloat("Grain size", &grainSize, 1.0f, 0.0f);
 
@@ -872,19 +856,19 @@ void CScene::DisplayPostProcessingEffects()
 
 					break;
 
-				case CScene::PostProcess::Burn:
+				case IScene::PostProcess::Burn:
 					break;
 
-				case CScene::PostProcess::Distort:
+				case IScene::PostProcess::Distort:
 
 					ImGui::DragFloat("Distorsion Level", &gPostProcessingConstants.distortLevel, 0.001f);
 
 					break;
 
-				case CScene::PostProcess::Spiral:
+				case IScene::PostProcess::Spiral:
 					break;
 
-				case CScene::PostProcess::HeatHaze:
+				case IScene::PostProcess::HeatHaze:
 
 					ImGui::DragFloat("Strength", &gPostProcessingConstants.heatEffectStrength, 0.0001f);
 
@@ -892,7 +876,7 @@ void CScene::DisplayPostProcessingEffects()
 
 					break;
 
-				case CScene::PostProcess::ChromaticAberration:
+				case IScene::PostProcess::ChromaticAberration:
 
 					ImGui::DragFloat("Amount", &gPostProcessingConstants.caAmount, 0.001f);
 					ImGui::DragFloat("Soft Edge", &gPostProcessingConstants.caEdge, 0.001f);
@@ -900,7 +884,7 @@ void CScene::DisplayPostProcessingEffects()
 
 					break;
 
-				case CScene::PostProcess::GaussionBlur:
+				case IScene::PostProcess::GaussionBlur:
 
 					ImGui::DragInt("Directions", &gPostProcessingConstants.blurDirections, 0.1f, 0.01f, 64.0f);
 					ImGui::DragFloat("Quality", &gPostProcessingConstants.blurQuality, 0.1, 1.0f, 64.0f);
@@ -908,7 +892,7 @@ void CScene::DisplayPostProcessingEffects()
 
 					break;
 
-				case CScene::PostProcess::SSAO:
+				case IScene::PostProcess::SSAO:
 
 					//enable blur
 
@@ -937,7 +921,7 @@ void CScene::DisplayPostProcessingEffects()
 
 					break;
 
-				case CScene::PostProcess::Bloom:
+				case IScene::PostProcess::Bloom:
 
 					ImGui::DragFloat("Threshold", &gPostProcessingConstants.bloomThreshold, 0.001f, 0.f, 3.0f);
 
@@ -961,7 +945,7 @@ void CScene::DisplayPostProcessingEffects()
 
 					break;
 
-				case CScene::PostProcess::GodRays:
+				case IScene::PostProcess::GodRays:
 
 
 					ImGui::DragFloat2("debug", gPostProcessingConstants.lightScreenPos.GetValuesArray());

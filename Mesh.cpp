@@ -6,7 +6,6 @@
 // expected to select these things. A later lab will introduce a more robust loader.
 
 #include "Mesh.h"
-#include "Shader.h" // Needed for helper function CreateSignatureForVertexLayout
 #include "GraphicsHelpers.h" // Helper functions to unclutter the code here
 #include "CVector2.h"
 #include "CVector3.h"
@@ -21,12 +20,15 @@
 // Pass the name of the mesh file to load. Uses assimp (http://www.assimp.org/) to support many file types
 // Optionally request tangents to be calculated (for normal and parallax mapping - see later lab)
 // Will throw a std::runtime_error exception on failure (since constructors can't return errors).
-CMesh::CMesh(const std::string& fileNameN, bool requireTangents /*= false*/)
+CMesh::CMesh(CDX11Engine* engine, const std::string& fileNameN, bool requireTangents /*= false*/)
 {
+
+	mEngine = engine;
+
 	mFileName = fileNameN;
 	hasTangents = requireTangents;
 
-	auto fileName = gMediaFolder + fileNameN;
+	auto fileName = engine->GetMediaFolder() + fileNameN;
 
 	Assimp::Importer importer;
 
@@ -158,8 +160,8 @@ CMesh::CMesh(const std::string& fileNameN, bool requireTangents /*= false*/)
 		subMesh.vertexSize = offset;
 
 		// Create a "vertex layout" to describe to DirectX what is data in each vertex of this mesh
-		auto shaderSignature = CreateSignatureForVertexLayout(vertexElements.data(), static_cast<int>(vertexElements.size()));
-		auto hr = gD3DDevice->CreateInputLayout(vertexElements.data(), static_cast<UINT>(vertexElements.size()),
+		auto shaderSignature = mEngine->CreateSignatureForVertexLayout(vertexElements.data(), static_cast<int>(vertexElements.size()));
+		auto hr = mEngine->GetDevice()->CreateInputLayout(vertexElements.data(), static_cast<UINT>(vertexElements.size()),
 			shaderSignature->GetBufferPointer(), shaderSignature->GetBufferSize(),
 			&subMesh.vertexLayout);
 		if (shaderSignature)  shaderSignature->Release();
@@ -333,7 +335,7 @@ CMesh::CMesh(const std::string& fileNameN, bool requireTangents /*= false*/)
 		bufferDesc.MiscFlags = 0;
 		initData.pSysMem = vertices.get(); // Fill the new vertex buffer with data loaded by assimp
 
-		hr = gD3DDevice->CreateBuffer(&bufferDesc, &initData, &subMesh.vertexBuffer);
+		hr = mEngine->GetDevice()->CreateBuffer(&bufferDesc, &initData, &subMesh.vertexBuffer);
 		if (FAILED(hr))  throw std::runtime_error("Failure creating vertex buffer for " + fileName);
 
 		// Create GPU-side index buffer and copy the vertices imported by assimp into it
@@ -344,7 +346,7 @@ CMesh::CMesh(const std::string& fileNameN, bool requireTangents /*= false*/)
 		bufferDesc.MiscFlags = 0;
 		initData.pSysMem = indices.get(); // Fill the new index buffer with data loaded by assimp
 
-		hr = gD3DDevice->CreateBuffer(&bufferDesc, &initData, &subMesh.indexBuffer);
+		hr = mEngine->GetDevice()->CreateBuffer(&bufferDesc, &initData, &subMesh.indexBuffer);
 		if (FAILED(hr))  throw std::runtime_error("Failure creating index buffer for " + fileName);
 	}
 }
@@ -361,7 +363,9 @@ CMesh::~CMesh()
 
 CMesh::CMesh(const CMesh& mesh)
 {
-	auto fileName = gMediaFolder + mesh.mFileName;
+	mEngine = mesh.mEngine;
+
+	auto fileName = mEngine->GetMediaFolder() + mesh.mFileName;
 
 	mHasBones = mesh.mHasBones;
 	hasTangents = mesh.hasTangents;
@@ -495,8 +499,8 @@ CMesh::CMesh(const CMesh& mesh)
 		subMesh.vertexSize = offset;
 
 		// Create a "vertex layout" to describe to DirectX what is data in each vertex of this mesh
-		auto shaderSignature = CreateSignatureForVertexLayout(vertexElements.data(), static_cast<int>(vertexElements.size()));
-		auto hr = gD3DDevice->CreateInputLayout(vertexElements.data(), static_cast<UINT>(vertexElements.size()),
+		auto shaderSignature = mEngine->CreateSignatureForVertexLayout(vertexElements.data(), static_cast<int>(vertexElements.size()));
+		auto hr = mEngine->GetDevice()->CreateInputLayout(vertexElements.data(), static_cast<UINT>(vertexElements.size()),
 			shaderSignature->GetBufferPointer(), shaderSignature->GetBufferSize(),
 			&subMesh.vertexLayout);
 		if (shaderSignature)  shaderSignature->Release();
@@ -670,7 +674,7 @@ CMesh::CMesh(const CMesh& mesh)
 		bufferDesc.MiscFlags = 0;
 		initData.pSysMem = vertices.get(); // Fill the new vertex buffer with data loaded by assimp
 
-		hr = gD3DDevice->CreateBuffer(&bufferDesc, &initData, &subMesh.vertexBuffer);
+		hr = mEngine->GetDevice()->CreateBuffer(&bufferDesc, &initData, &subMesh.vertexBuffer);
 		if (FAILED(hr))  throw std::runtime_error("Failure creating vertex buffer for " + fileName);
 
 		// Create GPU-side index buffer and copy the vertices imported by assimp into it
@@ -681,7 +685,7 @@ CMesh::CMesh(const CMesh& mesh)
 		bufferDesc.MiscFlags = 0;
 		initData.pSysMem = indices.get(); // Fill the new index buffer with data loaded by assimp
 
-		hr = gD3DDevice->CreateBuffer(&bufferDesc, &initData, &subMesh.indexBuffer);
+		hr = mEngine->GetDevice()->CreateBuffer(&bufferDesc, &initData, &subMesh.indexBuffer);
 		if (FAILED(hr))  throw std::runtime_error("Failure creating index buffer for " + fileName);
 	}
 }
@@ -694,19 +698,19 @@ void CMesh::RenderSubMesh(const SubMesh& subMesh)
 	// Set vertex buffer as next data source for GPU
 	auto stride = subMesh.vertexSize;
 	UINT offset = 0;
-	gD3DContext->IASetVertexBuffers(0, 1, &subMesh.vertexBuffer, &stride, &offset);
+	mEngine->GetContext()->IASetVertexBuffers(0, 1, &subMesh.vertexBuffer, &stride, &offset);
 
 	// Indicate the layout of vertex buffer
-	gD3DContext->IASetInputLayout(subMesh.vertexLayout);
+	mEngine->GetContext()->IASetInputLayout(subMesh.vertexLayout);
 
 	// Set index buffer as next data source for GPU, indicate it uses 32-bit integers
-	gD3DContext->IASetIndexBuffer(subMesh.indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+	mEngine->GetContext()->IASetIndexBuffer(subMesh.indexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 	// Using triangle lists only in this class
-	gD3DContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	mEngine->GetContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	// Render mesh
-	gD3DContext->DrawIndexed(subMesh.numIndices, 0, 0);
+	mEngine->GetContext()->DrawIndexed(subMesh.numIndices, 0, 0);
 }
 
 // Render the mesh with the given matrices
@@ -744,12 +748,12 @@ void CMesh::Render(std::vector<CMatrix4x4>& modelMatrices)
 			gPerModelConstants.boneMatrices[nodeIndex] = absoluteMatrices[nodeIndex];
 		}
 
-		UpdateModelConstantBuffer(gPerModelConstantBuffer.Get(), gPerModelConstants); // Send to GPU
+		mEngine->UpdateModelConstantBuffer(gPerModelConstantBuffer.Get(), gPerModelConstants); // Send to GPU
 
 		// Indicate that the constant buffer we just updated is for use in the vertex shader (VS), geometry shader (GS) and pixel shader (PS)
-		gD3DContext->VSSetConstantBuffers(0, 1, gPerModelConstantBuffer.GetAddressOf()); // First parameter must match constant buffer number in the shader
-		gD3DContext->GSSetConstantBuffers(0, 1, gPerModelConstantBuffer.GetAddressOf()); // First parameter must match constant buffer number in the shader
-		gD3DContext->PSSetConstantBuffers(0, 1, gPerModelConstantBuffer.GetAddressOf());
+		mEngine->GetContext()->VSSetConstantBuffers(0, 1, gPerModelConstantBuffer.GetAddressOf()); // First parameter must match constant buffer number in the shader
+		mEngine->GetContext()->GSSetConstantBuffers(0, 1, gPerModelConstantBuffer.GetAddressOf()); // First parameter must match constant buffer number in the shader
+		mEngine->GetContext()->PSSetConstantBuffers(0, 1, gPerModelConstantBuffer.GetAddressOf());
 
 		// Already sent over all the absolute matrices for the entire mesh so we can render sub-meshes directly
 		// rather than iterating through the nodes.
@@ -767,12 +771,12 @@ void CMesh::Render(std::vector<CMatrix4x4>& modelMatrices)
 		{
 			// Send this node's matrix to the GPU via a constant buffer
 			gPerModelConstants.worldMatrix = absoluteMatrices[nodeIndex];
-			UpdateModelConstantBuffer(gPerModelConstantBuffer.Get(), gPerModelConstants); // Send to GPU
+			mEngine->UpdateModelConstantBuffer(gPerModelConstantBuffer.Get(), gPerModelConstants); // Send to GPU
 
 			// Indicate that the constant buffer we just updated is for use in the vertex shader (VS) and pixel shader (PS)
-			gD3DContext->VSSetConstantBuffers(0, 1, gPerModelConstantBuffer.GetAddressOf()); // First parameter must match constant buffer number in the shader
-			gD3DContext->GSSetConstantBuffers(0, 1, gPerModelConstantBuffer.GetAddressOf());
-			gD3DContext->PSSetConstantBuffers(0, 1, gPerModelConstantBuffer.GetAddressOf());
+			mEngine->GetContext()->VSSetConstantBuffers(0, 1, gPerModelConstantBuffer.GetAddressOf()); // First parameter must match constant buffer number in the shader
+			mEngine->GetContext()->GSSetConstantBuffers(0, 1, gPerModelConstantBuffer.GetAddressOf());
+			mEngine->GetContext()->PSSetConstantBuffers(0, 1, gPerModelConstantBuffer.GetAddressOf());
 
 			// Render the sub-meshes attached to this node (no bones - rigid movement)
 			for (auto& subMeshIndex : mNodes[nodeIndex].subMeshes)

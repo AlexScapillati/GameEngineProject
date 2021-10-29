@@ -6,12 +6,11 @@
 #pragma once
 
 #include "CMatrix4x4.h"
-#include "../Common.h"
-#include "../Shader.h"
 #include <d3d11.h>
 #include <atlbase.h> // C-string to unicode conversion function CA2CT
 
 #include "MathHelpers.h"
+#include "..\DX11Engine.h"
 
 //--------------------------------------------------------------------------------------
 // Constant buffers
@@ -21,35 +20,35 @@
 // you want to update it with. The structure will be copied in full over to the GPU constant buffer, where it will
 // be available to shaders. This is used to update model and camera positions, lighting data etc.
 
-inline void UpdateModelConstantBuffer(ID3D11Buffer* buffer, PerModelConstants& bufferData)
+inline void CDX11Engine::UpdateModelConstantBuffer(ID3D11Buffer* buffer, PerModelConstants& bufferData) const
 {
 	D3D11_MAPPED_SUBRESOURCE cb;
-	gD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
+	mD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
 	memcpy(cb.pData, &bufferData, sizeof(PerModelConstants));
-	gD3DContext->Unmap(buffer, 0);
+	mD3DContext->Unmap(buffer, 0);
 }
 
-inline void UpdatePostProcessingConstBuffer(ID3D11Buffer* buffer, PostProcessingConstants& bufferData)
+inline void CDX11Engine::UpdatePostProcessingConstBuffer(ID3D11Buffer* buffer, PostProcessingConstants& bufferData) const
 {
 	D3D11_MAPPED_SUBRESOURCE cb;
-	gD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
+	mD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
 	memcpy(cb.pData, &bufferData, sizeof(PostProcessingConstants));
-	gD3DContext->Unmap(buffer, 0);
+	mD3DContext->Unmap(buffer, 0);
 }
 
-inline void UpdateFrameConstantBuffer(ID3D11Buffer* buffer, PerFrameConstants& bufferData)
+inline void CDX11Engine::UpdateFrameConstantBuffer(ID3D11Buffer* buffer, PerFrameConstants& bufferData) const
 {
 	D3D11_MAPPED_SUBRESOURCE cb;
-	gD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
+	mD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
 
 	memcpy(cb.pData, &bufferData, sizeof(PerFrameConstants));
-	gD3DContext->Unmap(buffer, 0);
+	mD3DContext->Unmap(buffer, 0);
 }
 
-inline void UpdateLightContantBuffer(ID3D11Buffer* buffer, PerFrameLights& bufferData, int numLights)
+inline void CDX11Engine::UpdateLightConstantBuffer(ID3D11Buffer* buffer, PerFrameLights& bufferData, int numLights) const
 {
 	D3D11_MAPPED_SUBRESOURCE cb;
-	gD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
+	mD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
 
 	//calculate the size of the frame constant buffer
 
@@ -62,13 +61,13 @@ inline void UpdateLightContantBuffer(ID3D11Buffer* buffer, PerFrameLights& buffe
 	size += sizeOfLightStruct * numLights;
 
 	memcpy(cb.pData, &bufferData, size);
-	gD3DContext->Unmap(buffer, 0);
+	mD3DContext->Unmap(buffer, 0);
 }
 
-inline void UpdateSpotLightsContantBuffer(ID3D11Buffer* buffer, PerFrameSpotLights& bufferData, int numLights)
+inline void CDX11Engine::UpdateSpotLightsConstantBuffer(ID3D11Buffer* buffer, PerFrameSpotLights& bufferData, int numLights) const
 {
 	D3D11_MAPPED_SUBRESOURCE cb;
-	gD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
+	mD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
 
 	//calculate the size of the frame constant buffer
 
@@ -81,13 +80,13 @@ inline void UpdateSpotLightsContantBuffer(ID3D11Buffer* buffer, PerFrameSpotLigh
 	size += sizeOfLightStruct * numLights;
 
 	memcpy(cb.pData, &bufferData, size);
-	gD3DContext->Unmap(buffer, 0);
+	mD3DContext->Unmap(buffer, 0);
 }
 
-inline void UpdateDirLightsContantBuffer(ID3D11Buffer* buffer, PerFrameDirLights& bufferData, int numLights)
+inline void CDX11Engine::UpdateDirLightsConstantBuffer(ID3D11Buffer* buffer, PerFrameDirLights& bufferData, int numLights) const
 {
 	D3D11_MAPPED_SUBRESOURCE cb;
-	gD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
+	mD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
 
 	//calculate the size of the frame constant buffer
 
@@ -100,13 +99,13 @@ inline void UpdateDirLightsContantBuffer(ID3D11Buffer* buffer, PerFrameDirLights
 	size += sizeOfLightStruct * numLights;
 
 	memcpy(cb.pData, &bufferData, size);
-	gD3DContext->Unmap(buffer, 0);
+	mD3DContext->Unmap(buffer, 0);
 }
 
-inline void UpdatePointLightsContantBuffer(ID3D11Buffer* buffer, PerFramePointLights& bufferData, int numLights)
+inline void CDX11Engine::UpdatePointLightsConstantBuffer(ID3D11Buffer* buffer, PerFramePointLights& bufferData, int numLights) const
 {
 	D3D11_MAPPED_SUBRESOURCE cb;
-	gD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
+	mD3DContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cb);
 
 	//calculate the size of the frame constant buffer
 
@@ -119,23 +118,8 @@ inline void UpdatePointLightsContantBuffer(ID3D11Buffer* buffer, PerFramePointLi
 	size += sizeOfLightStruct * numLights;
 
 	memcpy(cb.pData, &bufferData, size);
-	gD3DContext->Unmap(buffer, 0);
+	mD3DContext->Unmap(buffer, 0);
 }
-
-//--------------------------------------------------------------------------------------
-// Texture Loading
-//--------------------------------------------------------------------------------------
-
-// Using Microsoft's open source DirectX Tool Kit (DirectXTK) to simplify file loading
-// This function requires you to pass a ID3D11Resource* (e.g. &gTilesDiffuseMap), which manages the GPU memory for the
-// texture and also a ID3D11ShaderResourceView* (e.g. &gTilesDiffuseMapSRV), which allows us to use the texture in shaders
-// The function will fill in these pointers with usable data. Returns false on failure
-bool LoadTexture(std::string filename, ID3D11Resource** texture, ID3D11ShaderResourceView** textureSRV);
-
-//gets the texture dimentions
-CVector3 GetTextureDimentions(ID3D11Resource* texture);
-
-bool SaveTextureToFile(ID3D11Resource* tex, std::string& fileName);
 
 //--------------------------------------------------------------------------------------
 // Camera helpers

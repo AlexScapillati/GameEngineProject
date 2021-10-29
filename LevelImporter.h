@@ -12,41 +12,43 @@ public:
 	// Scene Parser
 	//--------------------------------------------------------------------------------------
 
-	bool LoadScene(const std::string& level, CScene* scene);
+	bool LoadScene(const std::string& level, IScene* scene);
 
-	void SaveScene(std::string& fileName, CScene* ptrScene);
+	void SaveScene(std::string& fileName, IScene* ptrScene);
 
-
+	CLevelImporter(CDX11Engine* engine);
 
 private:
 	
-	void ParsePostProcessingEffects(tinyxml2::XMLElement* curr, CScene* scene);
+	CDX11Engine* mEngine;
+
+	void ParsePostProcessingEffects(tinyxml2::XMLElement* curr, IScene* scene);
 	
-	void SavePostProcessingEffect(tinyxml2::XMLElement* curr, CScene* scene);
+	void SavePostProcessingEffect(tinyxml2::XMLElement* curr, IScene* scene);
 
-	void SavePostitionRotationScale(tinyxml2::XMLElement* obj, CGameObject* it);
+	void SavePositionRotationScale(tinyxml2::XMLElement* obj, CGameObject* it);
 
-	void SaveObjects(tinyxml2::XMLElement* el, CScene* ptrScene);
+	void SaveObjects(tinyxml2::XMLElement* el, IScene* ptrScene);
 
 	void SaveVector3(CVector3 v, tinyxml2::XMLElement* el);
 
-	bool ParseScene(tinyxml2::XMLElement* sceneEl, CScene* scene);
+	bool ParseScene(tinyxml2::XMLElement* sceneEl, IScene* scene);
 
-	void LoadObject(tinyxml2::XMLElement* currEntity, CScene* scene);
+	void LoadObject(tinyxml2::XMLElement* currEntity, IScene* scene);
 
-	void LoadPointLight(tinyxml2::XMLElement* currEntity, CScene* scene);
+	void LoadPointLight(tinyxml2::XMLElement* currEntity, IScene* scene);
 
-	void LoadLight(tinyxml2::XMLElement* currEntity, CScene* scene);
+	void LoadLight(tinyxml2::XMLElement* currEntity, IScene* scene);
 
-	void LoadSpotLight(tinyxml2::XMLElement* currEntity, CScene* scene);
+	void LoadSpotLight(tinyxml2::XMLElement* currEntity, IScene* scene);
 
-	void LoadDirLight(tinyxml2::XMLElement* currEntity, CScene* scene);
+	void LoadDirLight(tinyxml2::XMLElement* currEntity, IScene* scene);
 
-	void LoadSky(tinyxml2::XMLElement* currEntity, CScene* scene);
+	void LoadSky(tinyxml2::XMLElement* currEntity, IScene* scene);
 
-	void LoadCamera(tinyxml2::XMLElement* currEntity, CScene* scene);
+	void LoadCamera(tinyxml2::XMLElement* currEntity, IScene* scene);
 
-	void LoadPlant(tinyxml2::XMLElement* currEntity, CScene* scene);
+	void LoadPlant(tinyxml2::XMLElement* currEntity, IScene* scene);
 
-	bool ParseEntities(tinyxml2::XMLElement* entitiesEl, CScene* scene);
+	bool ParseEntities(tinyxml2::XMLElement* entitiesEl, IScene* scene);
 };

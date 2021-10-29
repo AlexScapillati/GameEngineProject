@@ -5,111 +5,9 @@
     <Entities>
         <Entity Type="Sky" Name="Stars">
             <Geometry Mesh="Stars.x" Diffuse="lauter_waterfall.jpg"/>
-            <Position X="-32.247852" Y="39.802818" Z="-76.005013"/>
+            <Position X="-327.85596" Y="44.744167" Z="-319.09293"/>
             <Rotation X="-0" Y="0" Z="0"/>
             <Scale X="1" Y="1" Z="1"/>
-        </Entity>
-        <Entity Type="GameObject" Name="Mossy Embarkment">
-            <Geometry ID="Mossy Embankment_tlnvecpfa_3D Assembly/Mossy Embankment_LOD0_.fbx"/>
-            <Position X="0" Y="0" Z="0"/>
-            <Rotation X="-0" Y="0" Z="0"/>
-            <Scale X="1" Y="1" Z="1"/>
-        </Entity>
-        <Entity Type="GameObject" Name="newMossy Embarkment">
-            <Geometry ID="Mossy Embankment_tlnvecpfa_3D Assembly/Mossy Embankment_LOD0_.fbx"/>
-            <Position X="0" Y="0" Z="-84.111099"/>
-            <Rotation X="-0" Y="173.14731" Z="0"/>
-            <Scale X="0.99999863" Y="0.99999863" Z="0.99999863"/>
-        </Entity>
-        <Entity Type="GameObject" Name="Mossy Rock Assembly_plFhY_3D Assembly">
-            <Geometry ID="Mossy Rock Assembly_plFhY_3D Assembly/Mossy Rock Assembly_LOD0_.fbx"/>
-            <Position X="22.079552" Y="26.645414" Z="36.050785"/>
-            <Rotation X="-0" Y="0" Z="0"/>
-            <Scale X="0.21620002" Y="0.21620002" Z="0.21620002"/>
-        </Entity>
-        <Entity Type="Plant" Name="Common Fern_rhDso_3D Plant">
-            <Geometry ID="Common Fern_rhDso_3D Plant/Common Fern_LOD0_Var1.fbx"/>
-            <Position X="-2.6896081" Y="32.525711" Z="18.781748"/>
-            <Rotation X="-0" Y="0" Z="0"/>
-            <Scale X="1.3299999" Y="1.3299999" Z="1.3299999"/>
-        </Entity>
-        <Entity Type="GameObject" Name="Broken Castle Stone Wall_scuhi_3D Asset">
-            <Geometry ID="Broken Castle Stone Wall_scuhi_3D Asset/Broken Castle Stone Wall_LOD0_.fbx"/>
-            <Position X="-12.345439" Y="33.208881" Z="-130.63629"/>
-            <Rotation X="-0" Y="0" Z="0"/>
-            <Scale X="0.69" Y="0.69" Z="0.69"/>
-        </Entity>
-        <Entity Type="GameObject" Name="newBroken Castle Stone Wall_scuhi_3D Asset">
-            <Geometry ID="Broken Castle Stone Wall_scuhi_3D Asset/Broken Castle Stone Wall_LOD0_.fbx"/>
-            <Position X="-126.00143" Y="37.203075" Z="-132.80167"/>
-            <Rotation X="-0" Y="0" Z="0"/>
-            <Scale X="0.69" Y="0.69" Z="0.69"/>
-        </Entity>
-        <Entity Type="GameObject" Name="Mossy Castle Wall Piece_scAtJ_3D Asset">
-            <Geometry ID="Mossy Castle Wall Piece_scAtJ_3D Asset/Mossy Castle Wall Piece_LOD0_.fbx"/>
-            <Position X="191.80229" Y="64.791519" Z="-33.930996"/>
-            <Rotation X="-0" Y="0" Z="0"/>
-            <Scale X="1" Y="1" Z="1"/>
-        </Entity>
-        <Entity Type="GameObject" Name="newnewMossy Embarkment">
-            <Geometry ID="Mossy Embankment_tlnvecpfa_3D Assembly/Mossy Embankment_LOD0_.fbx"/>
-            <Position X="-110.61697" Y="0" Z="13.618871"/>
-            <Rotation X="42.297844" Y="170.71681" Z="-6.2774396"/>
-            <Scale X="0.99999905" Y="0.99999905" Z="0.99999905"/>
-        </Entity>
-        <Entity Type="GameObject" Name="newnewnewMossy Embarkment">
-            <Geometry ID="Mossy Embankment_tlnvecpfa_3D Assembly/Mossy Embankment_LOD0_.fbx"/>
-            <Position X="-110.61697" Y="0" Z="-84.111099"/>
-            <Rotation X="-0" Y="173.14731" Z="0"/>
-            <Scale X="0.99999881" Y="0.99999881" Z="0.99999881"/>
-        </Entity>
-        <Entity Type="GameObject" Name="newMossy Castle Wall Piece_scAtJ_3D Asset">
-            <Geometry ID="Mossy Castle Wall Piece_scAtJ_3D Asset/Mossy Castle Wall Piece_LOD0_.fbx"/>
-            <Position X="-20.430677" Y="18.641527" Z="-39.283813"/>
-            <Rotation X="-0" Y="0" Z="0"/>
-            <Scale X="1" Y="1" Z="1"/>
-        </Entity>
-        <Entity Type="GameObject" Name="newnewBroken Castle Stone Wall_scuhi_3D Asset">
-            <Geometry ID="Broken Castle Stone Wall_scuhi_3D Asset/Broken Castle Stone Wall_LOD0_.fbx"/>
-            <Position X="-126.00143" Y="37.203075" Z="57.388245"/>
-            <Rotation X="-0" Y="0" Z="0"/>
-            <Scale X="0.69" Y="0.69" Z="0.69"/>
-        </Entity>
-        <Entity Type="GameObject" Name="Stone Wall L">
-            <Geometry ID="Broken Castle Stone Wall_scuhi_3D Asset/Broken Castle Stone Wall_LOD0_.fbx"/>
-            <Position X="204.28015" Y="67.52771" Z="51.077755"/>
-            <Rotation X="-0" Y="0" Z="0"/>
-            <Scale X="0.68999982" Y="0.68999982" Z="0.68999982"/>
-        </Entity>
-        <Entity Type="GameObject" Name="Concrete Castle Stairs_scfdy_3D Asset">
-            <Geometry ID="Concrete Castle Stairs_scfdy_3D Asset/Concrete Castle Stairs_LOD0_.fbx"/>
-            <Position X="71.347473" Y="24.474098" Z="-37.49659"/>
-            <Rotation X="-0" Y="90" Z="0"/>
-            <Scale X="0.32923782" Y="0.32923782" Z="0.32923782"/>
-        </Entity>
-        <Entity Type="GameObject" Name="newnewnewnewBroken Castle Stone Wall_scuhi_3D Asset">
-            <Geometry ID="Broken Castle Stone Wall_scuhi_3D Asset/Broken Castle Stone Wall_LOD0_.fbx"/>
-            <Position X="72.060059" Y="40.86898" Z="-131.7659"/>
-            <Rotation X="-0" Y="0" Z="23.124165"/>
-            <Scale X="0.68999982" Y="0.68999982" Z="0.68999982"/>
-        </Entity>
-        <Entity Type="GameObject" Name="newnewnewnewnewBroken Castle Stone Wall_scuhi_3D Asset">
-            <Geometry ID="Broken Castle Stone Wall_scuhi_3D Asset/Broken Castle Stone Wall_LOD0_.fbx"/>
-            <Position X="0" Y="37.203075" Z="57.388245"/>
-            <Rotation X="-0" Y="0" Z="0"/>
-            <Scale X="0.69" Y="0.69" Z="0.69"/>
-        </Entity>
-        <Entity Type="Plant" Name="newCommon Fern_rhDso_3D Plant">
-            <Geometry ID="Common Fern_rhDso_3D Plant/Common Fern_LOD0_Var1.fbx"/>
-            <Position X="0" Y="32.525711" Z="-90.021713"/>
-            <Rotation X="-0" Y="0" Z="0"/>
-            <Scale X="1" Y="1" Z="1"/>
-        </Entity>
-        <Entity Type="GameObject" Name="Mossy EmbarkmentR">
-            <Geometry ID="Mossy Embankment_tlnvecpfa_3D Assembly/Mossy Embankment_LOD0_.fbx"/>
-            <Position X="206.31004" Y="38.939545" Z="-81.313187"/>
-            <Rotation X="-0" Y="-179.99998" Z="0"/>
-            <Scale X="1.3863608" Y="1.3863608" Z="1.3863608"/>
         </Entity>
         <Entity Type="GameObject" Name="newnewnewnewnewMossy Embarkment">
             <Geometry ID="Mossy Embankment_tlnvecpfa_3D Assembly/Mossy Embankment_LOD0_.fbx"/>
@@ -144,8 +42,8 @@
         <Entity Type="GameObject" Name="Stone Wall L 1">
             <Geometry ID="Broken Castle Stone Wall_scuhi_3D Asset/Broken Castle Stone Wall_LOD0_.fbx"/>
             <Position X="76.486023" Y="44.306587" Z="54.007465"/>
-            <Rotation X="-0" Y="0" Z="24.662197"/>
-            <Scale X="0.69000047" Y="0.69000047" Z="0.69000036"/>
+            <Rotation X="-0" Y="0" Z="24.662199"/>
+            <Scale X="0.69000107" Y="0.69000107" Z="0.69000107"/>
         </Entity>
         <Entity Type="GameObject" Name="Stone Wall R">
             <Geometry ID="Broken Castle Stone Wall_scuhi_3D Asset/Broken Castle Stone Wall_LOD0_.fbx"/>
@@ -161,7 +59,7 @@
         </Entity>
         <Entity Type="Light" Name="Light">
             <Geometry Mesh="Light.x" Diffuse="Flare.jpg"/>
-            <Position X="-7.7954111" Y="165.28354" Z="-47.750946"/>
+            <Position X="-7.7954121" Y="246.97824" Z="-26.087753"/>
             <Rotation X="-0" Y="0" Z="0"/>
             <Scale X="10" Y="10" Z="10"/>
             <Colour X="1" Y="0.99998999" Z="0.99998999"/>
@@ -169,7 +67,7 @@
         </Entity>
         <Entity Type="Light" Name="newLight">
             <Geometry Mesh="Light.x" Diffuse="Flare.jpg"/>
-            <Position X="-247.01059" Y="146.86006" Z="-47.750946"/>
+            <Position X="-220.89259" Y="130.4592" Z="-47.750946"/>
             <Rotation X="-0" Y="0" Z="0"/>
             <Scale X="10" Y="10" Z="10"/>
             <Colour X="1" Y="0.99998999" Z="0.99998999"/>
@@ -184,14 +82,14 @@
             <Strength S="10000"/>
         </Entity>
         <Entity Type="Camera">
-            <Position X="-32.247852" Y="39.802818" Z="-76.005013"/>
-            <Rotation X="-383.34836" Y="-14328.181" Z="0"/>
+            <Position X="-327.85596" Y="44.744167" Z="-319.09293"/>
+            <Rotation X="-30.606348" Y="46.813923" Z="0"/>
         </Entity>
     </Entities>
     <PostProcessingEffects>
         <Effect Type="SSAO" Mode="FullScreen"/>
         <Effect Type="ChromaticAberration" Mode="FullScreen"/>
         <Effect Type="GodRays" Mode="FullScreen"/>
-        <Settings setting0="0" setting1="0" setting2="1" setting3="1" setting4="0" setting5="0" setting6="0" setting7="0" setting8="0" setting9="0" setting10="0" setting11="0" setting12="0" setting13="0" setting14="0" setting15="0" setting16="0" setting17="0" setting18="0" setting19="0" setting20="0" setting21="0" setting22="0" setting23="0" setting24="1" setting25="1" setting26="1" setting27="0.5" setting28="0" setting29="0" setting30="0" setting31="0" setting32="0" setting33="0" setting34="0" setting35="0" setting36="0.93396002" setting37="0" setting38="0" setting39="0" setting40="0.029999999" setting41="0" setting42="0" setting43="0" setting44="0.11305022" setting45="0" setting46="0" setting47="0" setting48="14774.626" setting49="0.0049999999" setting50="0.125" setting51="0" setting52="0.0020000001" setting53="0.361" setting54="0.48100001" setting55="0" setting56="8.9683102e-44" setting57="3.3" setting58="2" setting59="0" setting60="0.50400001" setting61="0" setting62="0" setting63="0" setting64="1.6" setting65="1" setting66="2.4450001e-06" setting67="0.0074999998" setting68="-0.015567183" setting69="-4.0178118" setting70="0.377" setting71="1.007" setting72="0.38499999" setting73="0.26899999" setting74="6.2638041e-43" setting75="0"/>
+        <Settings setting0="0" setting1="0" setting2="1" setting3="1" setting4="0" setting5="0" setting6="0" setting7="0" setting8="0" setting9="0" setting10="0" setting11="0" setting12="0" setting13="0" setting14="0" setting15="0" setting16="0" setting17="0" setting18="0" setting19="0" setting20="0" setting21="0" setting22="0" setting23="0" setting24="1" setting25="1" setting26="1" setting27="0.5" setting28="0" setting29="0" setting30="0" setting31="0" setting32="0" setting33="0" setting34="0" setting35="0" setting36="0.80148017" setting37="0" setting38="0" setting39="0" setting40="0.029999999" setting41="0" setting42="0" setting43="0" setting44="0.028424263" setting45="0" setting46="0" setting47="0" setting48="260588.23" setting49="0.0049999999" setting50="0.125" setting51="0" setting52="0.0020000001" setting53="0.361" setting54="0.48100001" setting55="0" setting56="5.8854536e-44" setting57="3.3" setting58="2" setting59="0" setting60="0.50400001" setting61="0" setting62="0" setting63="0" setting64="1" setting65="0.48500001" setting66="2.7819999e-06" setting67="0.00291" setting68="0.67932487" setting69="0.38894212" setting70="0.377" setting71="1.007" setting72="0.38499999" setting73="0.26899999" setting74="6.2638041e-43" setting75="0"/>
     </PostProcessingEffects>
 </Scene>

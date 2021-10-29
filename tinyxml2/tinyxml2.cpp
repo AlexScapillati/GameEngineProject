@@ -234,13 +234,13 @@ char* StrPair::ParseName( char* p )
     if ( !p || !(*p) ) {
         return 0;
     }
-    if ( !XMLUtil::IsNameStartChar( (unsigned char) *p ) ) {
+    if ( !XMLUtil::IsNameStartChar( static_cast<unsigned char>(*p) ) ) {
         return 0;
     }
 
     const auto start = p;
     ++p;
-    while ( *p && XMLUtil::IsNameChar( (unsigned char) *p ) ) {
+    while ( *p && XMLUtil::IsNameChar( static_cast<unsigned char>(*p) ) ) {
         ++p;
     }
 
@@ -605,7 +605,7 @@ void XMLUtil::ToStr( int64_t v, char* buffer, int bufferSize )
 void XMLUtil::ToStr( uint64_t v, char* buffer, int bufferSize )
 {
     // horrible syntax trick to make the compiler happy about %llu
-    TIXML_SNPRINTF(buffer, bufferSize, "%llu", (long long)v);
+    TIXML_SNPRINTF(buffer, bufferSize, "%llu", static_cast<long long>(v));
 }
 
 bool XMLUtil::ToInt(const char* str, int* value)
@@ -682,7 +682,7 @@ bool XMLUtil::ToInt64(const char* str, int64_t* value)
 bool XMLUtil::ToUnsigned64(const char* str, uint64_t* value) {
     unsigned long long v = 0;	// horrible syntax trick to make the compiler happy about %llu
     if(TIXML_SSCANF(str, IsPrefixHex(str) ? "%llx" : "%llu", &v) == 1) {
-        *value = (uint64_t)v;
+        *value = static_cast<uint64_t>(v);
         return true;
     }
     return false;
@@ -1909,7 +1909,7 @@ char* XMLElement::ParseAttributes( char* p, int* curLineNumPtr )
         }
 
         // attribute.
-        if (XMLUtil::IsNameStartChar( (unsigned char) *p ) ) {
+        if (XMLUtil::IsNameStartChar( static_cast<unsigned char>(*p) ) ) {
 	        auto attrib = CreateAttribute();
             TIXMLASSERT( attrib );
             attrib->_parseLineNum = _document->_parseCurLineNum;
@@ -2437,7 +2437,7 @@ void XMLDocument::SetError( XMLError error, int lineNum, const char* format, ...
     auto buffer = new char[BUFFER_SIZE];
 
     TIXMLASSERT(sizeof(error) <= sizeof(int));
-    TIXML_SNPRINTF(buffer, BUFFER_SIZE, "Error=%s ErrorID=%d (0x%x) Line number=%d", ErrorIDToName(error), int(error), int(error), lineNum);
+    TIXML_SNPRINTF(buffer, BUFFER_SIZE, "Error=%s ErrorID=%d (0x%x) Line number=%d", ErrorIDToName(error), static_cast<int>(error), static_cast<int>(error), lineNum);
 
 	if (format) {
 		auto len = strlen(buffer);

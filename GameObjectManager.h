@@ -1,9 +1,9 @@
 #pragma once
 
 #include <deque>
-#include <memory>
 #include <vector>
-#include "Common.h"
+#include <d3d11_1.h>
+
 
 class CLight;
 class CGameObject;
@@ -11,12 +11,13 @@ class CSpotLight;
 class CDirLight;
 class CPointLight;
 class CSky;
+class CDX11Engine;
 
 class CGameObjectManager
 {
 public:
 
-	CGameObjectManager();
+	CGameObjectManager(CDX11Engine* engine);
 
 	void AddObject(CGameObject* obj);
 
@@ -79,6 +80,8 @@ public:
 	std::vector<ID3D11ShaderResourceView*> mShadowsMaps;
 
 private:
+
+	CDX11Engine* mEngine;
 
 	int mMaxSize;
 

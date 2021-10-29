@@ -283,7 +283,7 @@ namespace imgui_addons
                 {
                     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.0f, 1.0f, 1.0f, 0.01f));
                     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
-                    ImGui::ArrowButtonEx("##Right", ImGuiDir_Right, ImVec2(frame_height, frame_height), ImGuiButtonFlags_Disabled);
+                    ImGui::ArrowButtonEx("##Right", ImGuiDir_Right, ImVec2(frame_height, frame_height));
                     ImGui::SameLine(0, 0);
                     ImGui::PopStyleColor(2);
                 }
@@ -1173,8 +1173,8 @@ namespace imgui_addons
         int ca, cb;
         do
         {
-            ca = (unsigned char)*str1++;
-            cb = (unsigned char)*str2++;
+            ca = static_cast<unsigned char>(*str1++);
+            cb = static_cast<unsigned char>(*str2++);
             ca = std::tolower(std::toupper(ca));
             cb = std::tolower(std::toupper(cb));
         } while (ca == cb && ca != '\0');
