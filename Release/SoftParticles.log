@@ -1,0 +1,4 @@
+﻿C:\Users\alexs\OneDrive - UCLan\UNI\3rd Year\GameEngineProject\Source\DX11\Shaders\Common.hlsli(73,15-18): error X4502: invalid vs_2_0 output semantic 'uv'
+C:\Users\alexs\OneDrive - UCLan\UNI\3rd Year\GameEngineProject\Source\DX11\Shaders\Common.hlsli(16,21-24): error X4502: invalid vs_2_0 input semantic 'uv'
+  
+  compilation failed; no code produced
