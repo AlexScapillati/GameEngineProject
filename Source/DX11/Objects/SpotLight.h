@@ -39,9 +39,9 @@ public:
 		CDX11GameObject::SetRotation(rotation);
 	}
 
-	~CSpotLight();
+	~CSpotLight() override;
 
-	void Release();
+	void Release() const;
 
 private:
 

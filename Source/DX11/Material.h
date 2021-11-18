@@ -13,15 +13,13 @@ public:
 	//-------------------------------------
 	// Construction / Usage
 	//-------------------------------------
-
-	// Main Constructor
+	
 	// Requires a vector of filemaps
 	// Formats: NAME_RESOLUTION_TYPE.EXTENTION
 	// Types supported: Albedo,AmbientOccusion,Displacement,Roughness,Metallness
 	// It will set automatically the correct shaders depending on the use (Normals = PBR / No Normals = PBRNoNormals)
 	CMaterial(std::vector<std::string> fileMaps, CDX11Engine* engine);
-
-	// Copy Constuctor
+	
 	// Deep Copy
 	CMaterial(CMaterial& m);
 
@@ -63,20 +61,21 @@ private:
 	// All the pbr related maps that a model can have
 	struct sPbrMaps
 	{
-		ComPtr<ID3D11Resource> Albedo;
+		ComPtr<ID3D11Resource>           Albedo;
 		ComPtr<ID3D11ShaderResourceView> AlbedoSRV;
-		ComPtr<ID3D11Resource> AO;
+		ComPtr<ID3D11Resource>           AO;
 		ComPtr<ID3D11ShaderResourceView> AoSRV;
-		ComPtr<ID3D11Resource> Displacement;
+		ComPtr<ID3D11Resource>           Displacement;
 		ComPtr<ID3D11ShaderResourceView> DisplacementSRV;
-		ComPtr<ID3D11Resource> Normal;
+		ComPtr<ID3D11Resource>           Normal;
 		ComPtr<ID3D11ShaderResourceView> NormalSRV;
-		ComPtr<ID3D11Resource> Roughness;
+		ComPtr<ID3D11Resource>           Roughness;
 		ComPtr<ID3D11ShaderResourceView> RoughnessSRV;
-		ComPtr<ID3D11Resource> Metalness;
+		ComPtr<ID3D11Resource>           Metalness;
 		ComPtr<ID3D11ShaderResourceView> MetalnessSRV;
+	};
 
-	} mPbrMaps;
+	sPbrMaps mPbrMaps;
 
 	void LoadMaps(std::vector<std::string>& maps);
 };

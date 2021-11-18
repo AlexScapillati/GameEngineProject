@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "Scene.h"
+#include "DX11Scene.h"
 #include <dxgidebug.h>
 #include <utility>
 #include <sstream>
@@ -32,30 +32,30 @@ float MOVEMENT_SPEED = 50.0f;
 // IMPORTANT: Any new data you add in C++ code (CPU-side) is not automatically available to the GPU
 //            Anything the shaders need (per-frame or per-model) needs to be sent via a constant buffer
 
-PerFrameConstants gPerFrameConstants;      // The constants that need to be sent to the GPU each frame (see common.h for structure)
+PerFrameConstants gPerFrameConstants;
+// The constants that need to be sent to the GPU each frame (see common.h for structure)
 ComPtr<ID3D11Buffer> gPerFrameConstantBuffer; // The GPU buffer that will recieve the constants above
 
-PerModelConstants gPerModelConstants;      // As above, but constant that change per-model (e.g. world matrix)
+PerModelConstants    gPerModelConstants;      // As above, but constant that change per-model (e.g. world matrix)
 ComPtr<ID3D11Buffer> gPerModelConstantBuffer; // --"--
 
-PerFrameLights gPerFrameLightsConstants;
+PerFrameLights       gPerFrameLightsConstants;
 ComPtr<ID3D11Buffer> gPerFrameLightsConstBuffer;
 
-PerFrameSpotLights gPerFrameSpotLightsConstants;
+PerFrameSpotLights   gPerFrameSpotLightsConstants;
 ComPtr<ID3D11Buffer> gPerFrameSpotLightsConstBuffer;
 
-PerFrameDirLights gPerFrameDirLightsConstants;
+PerFrameDirLights    gPerFrameDirLightsConstants;
 ComPtr<ID3D11Buffer> gPerFrameDirLightsConstBuffer;
 
-PerFramePointLights gPerFramePointLightsConstants;
+PerFramePointLights  gPerFramePointLightsConstants;
 ComPtr<ID3D11Buffer> gPerFramePointLightsConstBuffer;
 
 PostProcessingConstants gPostProcessingConstants;
-ComPtr<ID3D11Buffer> gPostProcessingConstBuffer;
+ComPtr<ID3D11Buffer>    gPostProcessingConstBuffer;
 
 CDX11Scene::CDX11Scene(CDX11Engine* engine, std::string fileName)
 {
-
 	mWindow = engine->GetWindow();
 	mEngine = engine;
 
@@ -65,7 +65,7 @@ CDX11Scene::CDX11Scene(CDX11Engine* engine, std::string fileName)
 	// Scene Geometry and Layout
 	//--------------------------------------------------------------------------------------
 
-	mCamera = nullptr;
+	mCamera      = nullptr;
 	mSelectedObj = nullptr;
 
 	mViewportX = 1024;
@@ -73,12 +73,12 @@ CDX11Scene::CDX11Scene(CDX11Engine* engine, std::string fileName)
 
 	mPcfSamples = 4;
 
-	mObjManager = std::make_unique<CGameObjectManager>(mEngine);
+	mObjManager = std::make_unique<CDX11GameObjectManager>(mEngine);
 
-	gAmbientColour = { 0.03f, 0.03f, 0.04f };
-	gSpecularPower = 256; // Specular power //will be removed since it will be dependent on the material
-	mLockFPS = true;
-	mBackgroundColor = { 0.3f, 0.3f, 0.4f, 1.0f };
+	gAmbientColour   = {0.03f, 0.03f, 0.04f};
+	gSpecularPower   = 256; // Specular power //will be removed since it will be dependent on the material
+	mLockFPS         = true;
+	mBackgroundColor = {0.3f, 0.3f, 0.4f, 1.0f};
 
 	try
 	{
@@ -140,7 +140,6 @@ CDX11Scene::CDX11Scene(CDX11Engine* engine, std::string fileName)
 	gPostProcessingConstBuffer.Attach(mEngine->CreateConstantBuffer(sizeof(gPostProcessingConstants)));
 
 
-
 	if (!gPerFrameConstantBuffer ||
 		!gPerModelConstantBuffer ||
 		!gPerFrameDirLightsConstBuffer ||
@@ -161,9 +160,9 @@ CDX11Scene::CDX11Scene(CDX11Engine* engine, std::string fileName)
 void CDX11Scene::RenderSceneFromCamera(CCamera* camera)
 {
 	// Set camera matrices in the constant buffer and send over to GPU
-	gPerFrameConstants.cameraMatrix = camera->WorldMatrix();
-	gPerFrameConstants.viewMatrix = camera->ViewMatrix();
-	gPerFrameConstants.projectionMatrix = camera->ProjectionMatrix();
+	gPerFrameConstants.cameraMatrix         = camera->WorldMatrix();
+	gPerFrameConstants.viewMatrix           = camera->ViewMatrix();
+	gPerFrameConstants.projectionMatrix     = camera->ProjectionMatrix();
 	gPerFrameConstants.viewProjectionMatrix = camera->ViewProjectionMatrix();
 
 	// Update the frame constant buffer
@@ -176,12 +175,13 @@ void CDX11Scene::RenderSceneFromCamera(CCamera* camera)
 	////--------------- Render ordinary models ---------------///
 
 	// Select which shaders to use next
-	mEngine->GetContext()->GSSetShader(nullptr, nullptr, 0);  ////// Switch off geometry shader when not using it (pass nullptr for first parameter)
+	mEngine->GetContext()->GSSetShader(nullptr, nullptr, 0);
+	////// Switch off geometry shader when not using it (pass nullptr for first parameter)
 
 	// States - no blending, normal depth buffer and back-face culling (standard set-up for opaque models)
-	mEngine->GetContext()->OMSetBlendState(			mEngine->mNoBlendingState.Get()		, nullptr, 0xffffff);
-	mEngine->GetContext()->OMSetDepthStencilState(	mEngine->mUseDepthBufferState.Get()	, 0);
-	mEngine->GetContext()->RSSetState(				mEngine->mCullBackState.Get()		);
+	mEngine->GetContext()->OMSetBlendState(mEngine->mNoBlendingState.Get(), nullptr, 0xffffff);
+	mEngine->GetContext()->OMSetDepthStencilState(mEngine->mUseDepthBufferState.Get(), 0);
+	mEngine->GetContext()->RSSetState(mEngine->mCullBackState.Get());
 
 	mEngine->GetContext()->PSSetSamplers(0, 1, &mEngine->mAnisotropic4XSampler);
 
@@ -202,17 +202,25 @@ void CDX11Scene::RenderScene(float& frameTime)
 
 	mObjManager->UpdateAllBuffers();
 
-	gPerFrameConstants.ambientColour = gAmbientColour;
-	gPerFrameConstants.specularPower = gSpecularPower;
+	gPerFrameConstants.ambientColour  = gAmbientColour;
+	gPerFrameConstants.specularPower  = gSpecularPower;
 	gPerFrameConstants.cameraPosition = mCamera->Position();
-	gPerFrameConstants.frameTime = frameTime;
-	gPerFrameConstants.nPcfSamples = mPcfSamples;
+	gPerFrameConstants.frameTime      = frameTime;
+	gPerFrameConstants.nPcfSamples    = mPcfSamples;
 
-	// Update constant buffest
-	mEngine->UpdateLightConstantBuffer(gPerFrameLightsConstBuffer.Get(), gPerFrameLightsConstants, mObjManager->mLights.size());
-	mEngine->UpdateDirLightsConstantBuffer(gPerFrameDirLightsConstBuffer.Get(), gPerFrameDirLightsConstants, mObjManager->mDirLights.size());
-	mEngine->UpdateSpotLightsConstantBuffer(gPerFrameSpotLightsConstBuffer.Get(), gPerFrameSpotLightsConstants, mObjManager->mSpotLights.size());
-	mEngine->UpdatePointLightsConstantBuffer(gPerFramePointLightsConstBuffer.Get(), gPerFramePointLightsConstants, mObjManager->mPointLights.size());
+	// Update constant buffers
+	mEngine->UpdateLightConstantBuffer(gPerFrameLightsConstBuffer.Get(),
+	                                   gPerFrameLightsConstants,
+	                                   mObjManager->mLights.size());
+	mEngine->UpdateDirLightsConstantBuffer(gPerFrameDirLightsConstBuffer.Get(),
+	                                       gPerFrameDirLightsConstants,
+	                                       mObjManager->mDirLights.size());
+	mEngine->UpdateSpotLightsConstantBuffer(gPerFrameSpotLightsConstBuffer.Get(),
+	                                        gPerFrameSpotLightsConstants,
+	                                        mObjManager->mSpotLights.size());
+	mEngine->UpdatePointLightsConstantBuffer(gPerFramePointLightsConstBuffer.Get(),
+	                                         gPerFramePointLightsConstants,
+	                                         mObjManager->mPointLights.size());
 
 	// Set them to the GPU
 	ID3D11Buffer* frameCBuffers[] =
@@ -261,8 +269,8 @@ void CDX11Scene::RenderScene(float& frameTime)
 
 	// Setup the viewport to the size of the main window
 	D3D11_VIEWPORT vp;
-	vp.Width = static_cast<FLOAT>(mViewportX);
-	vp.Height = static_cast<FLOAT>(mViewportY);
+	vp.Width    = static_cast<FLOAT>(mViewportX);
+	vp.Height   = static_cast<FLOAT>(mViewportY);
 	vp.MinDepth = 0.0f;
 	vp.MaxDepth = 1.0f;
 	vp.TopLeftX = 0;
@@ -291,12 +299,12 @@ void CDX11Scene::UpdateScene(float& frameTime)
 	// Post processing settings - all data for post-processes is updated every frame whether in use or not (minimal cost)
 
 	// Set and increase the burn level (cycling back to 0 when it reaches 1.0f)
-	const float burnSpeed = 0.2f;
+	const float burnSpeed               = 0.2f;
 	gPostProcessingConstants.burnHeight = fmod(gPostProcessingConstants.burnHeight + burnSpeed * frameTime, 1.0f);
 
 	// Set and increase the amount of spiral - use a tweaked cos wave to animate
-	static float wiggle = 0.0f;
-	const float wiggleSpeed = 1.0f;
+	static float wiggle                  = 0.0f;
+	const float  wiggleSpeed             = 1.0f;
 	gPostProcessingConstants.spiralLevel = ((1.0f - cos(wiggle)) * 4.0f);
 	wiggle += wiggleSpeed * frameTime;
 
@@ -311,15 +319,15 @@ void CDX11Scene::UpdateScene(float& frameTime)
 	}
 
 	// Show frame time / FPS in the window title //
-	const auto fpsUpdateTime = 0.5f; // How long between updates (in seconds)
+	const auto   fpsUpdateTime  = 0.5f; // How long between updates (in seconds)
 	static float totalFrameTime = 0;
-	static auto frameCount = 0;
+	static auto  frameCount     = 0;
 	totalFrameTime += frameTime;
 	++frameCount;
 	if (totalFrameTime > fpsUpdateTime)
 	{
 		// Displays FPS rounded to nearest int, and frame time (more useful for developers) in milliseconds to 2 decimal places
-		const auto avgFrameTime = totalFrameTime / frameCount;
+		const auto         avgFrameTime = totalFrameTime / frameCount;
 		std::ostringstream frameTimeMs;
 		frameTimeMs.precision(2);
 		frameTimeMs << std::fixed << avgFrameTime * 1000;
@@ -327,14 +335,13 @@ void CDX11Scene::UpdateScene(float& frameTime)
 			"ms, FPS: " + std::to_string(static_cast<int>(1 / avgFrameTime + 0.5f));
 		SetWindowTextA(mEngine->GetWindow()->GetHandle(), windowTitle.c_str());
 		totalFrameTime = 0;
-		frameCount = 0;
+		frameCount     = 0;
 	}
 }
 
 void CDX11Scene::Save(std::string fileName)
 {
-	if (fileName.empty())
-		fileName = mFileName;
+	if (fileName.empty()) fileName = mFileName;
 
 	CLevelImporter importer(mEngine);
 	importer.SaveScene(fileName, this);
@@ -356,43 +363,45 @@ void CDX11Scene::Resize(UINT newX, UINT newY)
 
 void CDX11Scene::InitTextures()
 {
-	mTextrue = nullptr;
+	mTextrue      = nullptr;
 	mFinalTextrue = nullptr;
 	mLuminanceMap = nullptr;
-	mSsaoMap = nullptr;
+	mSsaoMap      = nullptr;
 
-	mSceneRTV = nullptr;
-	mFinalRTV = nullptr;
+	mSceneRTV     = nullptr;
+	mFinalRTV     = nullptr;
 	mLuminanceRTV = nullptr;
-	mSsaoMapRTV = nullptr;
+	mSsaoMapRTV   = nullptr;
 
-	mSceneSRV = nullptr;
+	mSceneSRV        = nullptr;
 	mFinalTextureSRV = nullptr;
 	mLuminanceMapSRV = nullptr;
-	mSsaoMapSRV = nullptr;
+	mSsaoMapSRV      = nullptr;
 
-	mDepthStencil = nullptr;
+	mDepthStencil      = nullptr;
 	mFinalDepthStencil = nullptr;
 
-	mDepthStencilRTV = nullptr;
+	mDepthStencilRTV      = nullptr;
 	mFinalDepthStencilRTV = nullptr;
 
-	mDepthStencilSRV = nullptr;
+	mDepthStencilSRV      = nullptr;
 	mFinalDepthStencilSRV = nullptr;
 
 	// We create a new texture for the scene with new size
 	D3D11_TEXTURE2D_DESC textureDesc = {};
-	textureDesc.Width = mViewportX; // Size of the "screen"
-	textureDesc.Height = mViewportY;
-	textureDesc.MipLevels = 1; // 1 level, means just the main texture, no additional mip-maps. Usually don't use mip-maps when rendering to textures (or we would have to render every level)
-	textureDesc.ArraySize = 1;
-	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	textureDesc.SampleDesc.Count = 1;
+	textureDesc.Width                = mViewportX; // Size of the "screen"
+	textureDesc.Height               = mViewportY;
+	textureDesc.MipLevels            = 1;
+	// 1 level, means just the main texture, no additional mip-maps. Usually don't use mip-maps when rendering to textures (or we would have to render every level)
+	textureDesc.ArraySize          = 1;
+	textureDesc.Format             = DXGI_FORMAT_R8G8B8A8_UNORM;
+	textureDesc.SampleDesc.Count   = 1;
 	textureDesc.SampleDesc.Quality = 0;
-	textureDesc.Usage = D3D11_USAGE_DEFAULT;
-	textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE; // Indicate we will use texture as a depth buffer and also pass it to shaders
+	textureDesc.Usage              = D3D11_USAGE_DEFAULT;
+	textureDesc.BindFlags          = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	// Indicate we will use texture as a depth buffer and also pass it to shaders
 	textureDesc.CPUAccessFlags = 0;
-	textureDesc.MiscFlags = 0;
+	textureDesc.MiscFlags      = 0;
 	if (FAILED(mEngine->GetDevice()->CreateTexture2D(&textureDesc, NULL, mTextrue.GetAddressOf())))
 	{
 		throw std::runtime_error("Error creating scene texture");
@@ -415,8 +424,8 @@ void CDX11Scene::InitTextures()
 
 
 	D3D11_RENDER_TARGET_VIEW_DESC rtvDesc;
-	rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+	rtvDesc.Format             = DXGI_FORMAT_R8G8B8A8_UNORM;
+	rtvDesc.ViewDimension      = D3D11_RTV_DIMENSION_TEXTURE2D;
 	rtvDesc.Texture2D.MipSlice = 0;
 
 	// We created the scene texture above, now we get a "view" of it as a render target, i.e. get a special pointer to the texture that
@@ -431,7 +440,8 @@ void CDX11Scene::InitTextures()
 		throw std::runtime_error("Error creating scene render target view");
 	}
 
-	if (FAILED(mEngine->GetDevice()->CreateRenderTargetView(mLuminanceMap.Get(), &rtvDesc, mLuminanceRTV.GetAddressOf())))
+	if (FAILED(mEngine->GetDevice()->CreateRenderTargetView(mLuminanceMap.Get(), &rtvDesc, mLuminanceRTV.GetAddressOf()
+	           )))
 	{
 		throw std::runtime_error("Error creating luminance render target view");
 	}
@@ -442,26 +452,26 @@ void CDX11Scene::InitTextures()
 	}
 
 
-
-
 	// We also need to send this texture (resource) to the shaders. To do that we must create a shader-resource "view"
 	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MostDetailedMip = 0;
-	srvDesc.Texture2D.MipLevels = 1;
+	srvDesc.Format                          = DXGI_FORMAT_R8G8B8A8_UNORM;
+	srvDesc.ViewDimension                   = D3D11_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MostDetailedMip       = 0;
+	srvDesc.Texture2D.MipLevels             = 1;
 
 	if (FAILED(mEngine->GetDevice()->CreateShaderResourceView(mTextrue.Get(), &srvDesc, mSceneSRV.GetAddressOf())))
 	{
 		throw std::runtime_error("Error creating scene texture shader resource view");
 	}
 
-	if (FAILED(mEngine->GetDevice()->CreateShaderResourceView(mFinalTextrue.Get(), &srvDesc, mFinalTextureSRV.GetAddressOf())))
+	if (FAILED(mEngine->GetDevice()->CreateShaderResourceView(mFinalTextrue.Get(), &srvDesc, mFinalTextureSRV.
+		           GetAddressOf())))
 	{
 		throw std::runtime_error("Error creating scene texture shader resource view");
 	}
 
-	if (FAILED(mEngine->GetDevice()->CreateShaderResourceView(mLuminanceMap.Get(), &srvDesc, mLuminanceMapSRV.GetAddressOf())))
+	if (FAILED(mEngine->GetDevice()->CreateShaderResourceView(mLuminanceMap.Get(), &srvDesc, mLuminanceMapSRV.
+		           GetAddressOf())))
 	{
 		throw std::runtime_error("Error creating luminance shader resource view");
 	}
@@ -472,20 +482,19 @@ void CDX11Scene::InitTextures()
 	}
 
 
-
 	//create depth stencil
 	D3D11_TEXTURE2D_DESC dsDesc = {};
-	dsDesc.Width = textureDesc.Width;
-	dsDesc.Height = textureDesc.Height;
-	dsDesc.MipLevels = 1;
-	dsDesc.ArraySize = 1;
-	dsDesc.Format = DXGI_FORMAT_R32_TYPELESS;
-	dsDesc.SampleDesc.Count = 1;
-	dsDesc.SampleDesc.Quality = 0;
-	dsDesc.Usage = D3D11_USAGE_DEFAULT;
-	dsDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
-	dsDesc.CPUAccessFlags = 0;
-	dsDesc.MiscFlags = 0;
+	dsDesc.Width                = textureDesc.Width;
+	dsDesc.Height               = textureDesc.Height;
+	dsDesc.MipLevels            = 1;
+	dsDesc.ArraySize            = 1;
+	dsDesc.Format               = DXGI_FORMAT_R32_TYPELESS;
+	dsDesc.SampleDesc.Count     = 1;
+	dsDesc.SampleDesc.Quality   = 0;
+	dsDesc.Usage                = D3D11_USAGE_DEFAULT;
+	dsDesc.BindFlags            = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+	dsDesc.CPUAccessFlags       = 0;
+	dsDesc.MiscFlags            = 0;
 
 	if (FAILED(mEngine->GetDevice()->CreateTexture2D(&dsDesc, NULL, mDepthStencil.GetAddressOf())))
 	{
@@ -498,34 +507,38 @@ void CDX11Scene::InitTextures()
 	}
 	//create depth stencil view
 	D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-	dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
-	dsvDesc.Flags = 0;
-	dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-	dsvDesc.Texture2D.MipSlice = 0;
+	dsvDesc.Format                        = DXGI_FORMAT_D32_FLOAT;
+	dsvDesc.Flags                         = 0;
+	dsvDesc.ViewDimension                 = D3D11_DSV_DIMENSION_TEXTURE2D;
+	dsvDesc.Texture2D.MipSlice            = 0;
 
-	if (FAILED(mEngine->GetDevice()->CreateDepthStencilView(mDepthStencil.Get(), &dsvDesc, mDepthStencilRTV.GetAddressOf())))
+	if (FAILED(mEngine->GetDevice()->CreateDepthStencilView(mDepthStencil.Get(), &dsvDesc, mDepthStencilRTV.GetAddressOf
+		           ())))
 	{
 		throw std::runtime_error("Error creating depth stencil view ");
 	}
 
-	if (FAILED(mEngine->GetDevice()->CreateDepthStencilView(mFinalDepthStencil.Get(), &dsvDesc, mFinalDepthStencilRTV.GetAddressOf())))
+	if (FAILED(mEngine->GetDevice()->CreateDepthStencilView(mFinalDepthStencil.Get(), &dsvDesc, mFinalDepthStencilRTV.
+		           GetAddressOf())))
 	{
 		throw std::runtime_error("Error creating depth stencil view ");
 	}
 
 	//create the depth stencil shader view
 	D3D11_SHADER_RESOURCE_VIEW_DESC dsSrvDesc = {};
-	dsSrvDesc.Format = DXGI_FORMAT_R32_FLOAT;
-	dsSrvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-	dsSrvDesc.Texture2D.MostDetailedMip = 0;
-	dsSrvDesc.Texture2D.MipLevels = -1;
+	dsSrvDesc.Format                          = DXGI_FORMAT_R32_FLOAT;
+	dsSrvDesc.ViewDimension                   = D3D11_SRV_DIMENSION_TEXTURE2D;
+	dsSrvDesc.Texture2D.MostDetailedMip       = 0;
+	dsSrvDesc.Texture2D.MipLevels             = -1;
 
-	if (FAILED(mEngine->GetDevice()->CreateShaderResourceView(mDepthStencil.Get(), &dsSrvDesc, mDepthStencilSRV.GetAddressOf())))
+	if (FAILED(mEngine->GetDevice()->CreateShaderResourceView(mDepthStencil.Get(), &dsSrvDesc, mDepthStencilSRV.
+		           GetAddressOf())))
 	{
 		throw std::runtime_error("Error creating depth stencil shader resource view");
 	}
 
-	if (FAILED(mEngine->GetDevice()->CreateShaderResourceView(mFinalDepthStencil.Get(), &dsSrvDesc, mFinalDepthStencilSRV.GetAddressOf())))
+	if (FAILED(mEngine->GetDevice()->CreateShaderResourceView(mFinalDepthStencil.Get(), &dsSrvDesc,
+		           mFinalDepthStencilSRV.GetAddressOf())))
 	{
 		throw std::runtime_error("Error creating depth stencil shader resource view");
 	}

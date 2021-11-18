@@ -1,4 +1,3 @@
-
 #include "DX11Gui.h"
 #include <sstream>
 
@@ -7,13 +6,12 @@
 #include <imgui.h>
 #include <imgui_impl_win32.h>
 #include <ImGuizmo.h>
-#include <imgui_impl_dx11.h>
 #include <ImGuiFileBrowser.h>
 
 #include "Objects/GameObject.h"
 #include "..\Window.h"
 
-#include "Scene.h"
+#include "DX11Scene.h"
 
 #include "Objects/GameObjectManager.h"
 #include "Objects/SpotLight.h"
@@ -25,12 +23,14 @@
 #include "GraphicsHelpers.h"
 #include "../Utility/Input.h"
 
+#include "backends/imgui_impl_dx11.h"
+
 
 CDX11Gui::CDX11Gui(CDX11Engine* engine)
 {
 
 	mEngine = engine;
-	mScene = engine->GetScene();
+	mScene  = engine->GetScene();
 
 	//initialize ImGui
 	IMGUI_CHECKVERSION();
@@ -39,10 +39,10 @@ CDX11Gui::CDX11Gui(CDX11Engine* engine)
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable Docking
 	//io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows //super broken
 
-	io.ConfigDockingWithShift = false;
+	io.ConfigDockingWithShift            = false;
 	io.ConfigWindowsMoveFromTitleBarOnly = true;
 	io.Fonts->AddFontFromFileTTF("External\\imgui\\misc\\fonts\\Roboto-Light.ttf", 15);
 
@@ -51,6 +51,7 @@ CDX11Gui::CDX11Gui(CDX11Engine* engine)
 	ImGui_ImplWin32_Init(engine->GetWindow()->GetHandle());
 	// Setup Dear ImGui style
 	ImGui::StyleColorsDark();
+
 }
 
 void CDX11Gui::Begin(float& frameTime)
@@ -66,10 +67,10 @@ void CDX11Gui::Show(float& frameTime)
 	
 	if (ImGui::BeginMainMenuBar())
 	{
-		static bool open = false;
-		static bool save = false;
-		static bool themeWindow = false;
-		static bool sceneProperties = false;
+		static bool                           open            = false;
+		static bool                           save            = false;
+		static bool                           themeWindow     = false;
+		static bool                           sceneProperties = false;
 		static imgui_addons::ImGuiFileBrowser fileDialog;
 
 		if (ImGui::MenuItem("Open"))
@@ -137,9 +138,9 @@ void CDX11Gui::Show(float& frameTime)
 	if (ImGui::Begin("Engine", 0, ImGuiWindowFlags_NoBringToFrontOnFocus))
 	{
 		if (ImGui::Begin("Viewport", 0,
-			ImGuiWindowFlags_NoScrollbar |
-			ImGuiWindowFlags_NoCollapse |
-			ImGuiWindowFlags_MenuBar))
+						 ImGuiWindowFlags_NoScrollbar |
+						 ImGuiWindowFlags_NoCollapse |
+						 ImGuiWindowFlags_MenuBar))
 		{
 			
 			// Camera control 
@@ -256,10 +257,15 @@ void CDX11Gui::DisplayShadowMaps() const
 	ImGui::End();
 }
 
+bool CDX11Gui::IsSceneFullscreen() const
+{
+	return mViewportFullscreen;
+}
+
 void CDX11Gui::AddObjectsMenu() const
 {
 	static imgui_addons::ImGuiFileBrowser fileDialog;
-	static bool addObj = false;
+	static bool                           addObj = false;
 
 	enum EAddType
 	{
@@ -321,13 +327,13 @@ void CDX11Gui::AddObjectsMenu() const
 		ImGui::EndMenuBar();
 	}
 
-	static bool selectMesh = false;
+	static bool        selectMesh = false;
 	static std::string mesh;
 	static std::string tex;
 	static std::string name;
-	static bool selectTexture = false;
-	static bool selectNormal = false;
-	static bool selectFolder = false;
+	static bool        selectTexture = false;
+	static bool        selectNormal  = false;
+	static bool        selectFolder  = false;
 
 	if (addType != None)
 	{
@@ -388,7 +394,7 @@ void CDX11Gui::AddObjectsMenu() const
 
 			// colour button for the light objects
 			static CVector3 col;
-			static float strenght;
+			static float    strenght;
 
 			//if the model is a light (hence not a simple object or pbr)
 			if (addType == SimpleLight || addType == DirLight || addType == OmniLight || addType == SpotLight)
@@ -534,19 +540,19 @@ void CDX11Gui::AddObjectsMenu() const
 	if (fileDialog.showFileDialog("Select Mesh", imgui_addons::ImGuiFileBrowser::DialogMode::OPEN, ImVec2(700, 310), ".x,.fbx"))
 	{
 		selectMesh = false;
-		mesh = fileDialog.selected_fn;
+		mesh       = fileDialog.selected_fn;
 	}
 
 	if (fileDialog.showFileDialog("Select Texture", imgui_addons::ImGuiFileBrowser::DialogMode::OPEN, ImVec2(700, 310), ".jpg,.dds,.png"))
 	{
 		selectTexture = false;
-		tex = fileDialog.selected_fn;
+		tex           = fileDialog.selected_fn;
 	}
 
 	if (fileDialog.showFileDialog("Select Folder", imgui_addons::ImGuiFileBrowser::DialogMode::SELECT, ImVec2(700, 310)))
 	{
 		selectFolder = false;
-		mesh = fileDialog.selected_fn;
+		mesh         = fileDialog.selected_fn;
 	}
 }
 
@@ -563,9 +569,9 @@ std::string ChooseTexture(bool& selected, imgui_addons::ImGuiFileBrowser fileDia
 void CDX11Gui::DisplayPropertiesWindow() const
 {
 	static auto mCurrentGizmoOperation = ImGuizmo::OPERATION::TRANSLATE;
-	static bool showBounds = false;
-	static bool bRename = false;
-	static bool show = mSelectedObj != nullptr;
+	static bool showBounds             = false;
+	static bool bRename                = false;
+	static bool show                   = mSelectedObj != nullptr;
 
 	if (ImGui::Begin("Properties", &show))
 	{
@@ -741,7 +747,7 @@ void CDX11Gui::DisplayPropertiesWindow() const
 				static int size = (int)std::log2(spotLight->GetShadowMapSize());
 				if (ImGui::DragInt("ShadowMapsSize", &size, 1, 1, 14))
 				{
-					spotLight->SetShadowMapsSize(pow<int,int>(2, size));
+					spotLight->SetShadowMapsSize((int)pow<int,int>(2, size));
 				}
 			}
 			else if (const auto dirLight = dynamic_cast<CDirLight*>(mSelectedObj))
@@ -751,12 +757,12 @@ void CDX11Gui::DisplayPropertiesWindow() const
 				static int size = (int)std::log2(dirLight->GetShadowMapSize());
 				if (ImGui::DragInt("ShadowMapsSize", &size, 1, 1, 14))
 				{
-					dirLight->SetShadowMapSize(pow(2, size));
+					dirLight->SetShadowMapSize((int)pow(2, size));
 				}
 
 				//modify near clip and far clip
 				static auto nearClip = dirLight->GetNearClip();
-				static auto farClip = dirLight->GetFarClip();
+				static auto farClip  = dirLight->GetFarClip();
 
 				if (ImGui::DragFloat("NearClip", &nearClip, 0.01f, 0.0f, 10.0f))
 				{
@@ -770,7 +776,7 @@ void CDX11Gui::DisplayPropertiesWindow() const
 
 				//modify the size of the matrix
 
-				static auto width = dirLight->GetWidth();
+				static auto width  = dirLight->GetWidth();
 				static auto height = dirLight->GetHeight();
 
 				if (ImGui::DragFloat("Height", &height, 10.0f, 1.0f, D3D11_FLOAT32_MAX))
@@ -789,7 +795,7 @@ void CDX11Gui::DisplayPropertiesWindow() const
 				static int size = (int)std::log2(point->GetShadowMapSize());
 				if (ImGui::DragInt("ShadowMapsSize", &size, 1, 1, 12))
 				{
-					point->SetShadowMapSize(pow<int,int>(2, size));
+					point->SetShadowMapSize((int)pow<int,int>(2, size));
 				}
 			}
 		}
@@ -873,11 +879,11 @@ void CDX11Gui::DisplayPropertiesWindow() const
 	static float bounds[] =
 	{
 		0.0f,0.0f,0.0f,
-		 1.f, 1.f, 1.f
+		1.f, 1.f, 1.f
 	};
 
 	ImGuizmo::Manipulate(mScene->GetCamera()->ViewMatrix().GetArray(), mScene->GetCamera()->ProjectionMatrix().GetArray(),
-		mCurrentGizmoOperation, ImGuizmo::WORLD, mSelectedObj->WorldMatrix().GetArray(), 0, 0, showBounds ? bounds : 0);
+						 mCurrentGizmoOperation, ImGuizmo::WORLD, mSelectedObj->WorldMatrix().GetArray(), 0, 0, showBounds ? bounds : 0);
 }
 
 void CDX11Gui::DisplayObjects()
@@ -950,7 +956,6 @@ void CDX11Gui::DisplayDeque(std::deque<T*>& deque)
 		if (ImGui::Button(deleteLabel.c_str()))
 		{
 			//delete the current iterator from the container
-			deque[i]->Release();
 			deque.erase(deque.begin() + i);
 			mSelectedObj = nullptr;
 			i--;

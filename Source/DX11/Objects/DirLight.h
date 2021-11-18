@@ -26,20 +26,20 @@ public:
 
 	ID3D11ShaderResourceView* RenderFromThis();
 
-	auto GetNearClip() { return mNearClip; }
-	auto GetFarClip() { return mFarClip; }
+	auto GetNearClip() const { return mNearClip; }
+	auto GetFarClip() const { return mFarClip; }
 	auto SetNearClip(float n) { mNearClip = n; }
 	auto SetFarClip(float n) { mFarClip = n; }
-	auto GetWidth() { return mWidth; }
-	auto GetHeight() { return mHeight; }
+	auto GetWidth() const { return mWidth; }
+	auto GetHeight() const { return mHeight; }
 	auto SetWidth(float n) { mWidth = n; }
 	auto SetHeight(float n) { mHeight = n; }
 	void SetShadowMapSize(int s);
-	auto GetShadowMapSize() { return mShadowMapSize; }
+	auto GetShadowMapSize() const { return mShadowMapSize; }
 
-	~CDirLight();
+	~CDirLight() override;
 
-	void Release();
+	void Release() const;
 
 	void InitTextures();
 

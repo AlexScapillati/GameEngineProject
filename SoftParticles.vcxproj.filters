@@ -1,153 +1,202 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="Main.cpp" />
-    <ClCompile Include="Source\Window.cpp" />
     <ClCompile Include="Source\DX12\DX12Engine.cpp">
-      <Filter>Engine\DX12</Filter>
+      <Filter>Source Files\Engine\DX12</Filter>
     </ClCompile>
     <ClCompile Include="Source\DX12\DX12Gui.cpp">
-      <Filter>Engine\DX12</Filter>
+      <Filter>Source Files\Engine\DX12</Filter>
     </ClCompile>
     <ClCompile Include="Source\Math\CMatrix4x4.cpp">
-      <Filter>Engine\Math</Filter>
+      <Filter>Math</Filter>
     </ClCompile>
     <ClCompile Include="Source\Math\CVector2.cpp">
-      <Filter>Engine\Math</Filter>
+      <Filter>Math</Filter>
     </ClCompile>
     <ClCompile Include="Source\Math\CVector3.cpp">
-      <Filter>Engine\Math</Filter>
+      <Filter>Math</Filter>
     </ClCompile>
     <ClCompile Include="Source\DX11\DX11Engine.cpp">
-      <Filter>Engine\DX11</Filter>
+      <Filter>Source Files\Engine\DX11</Filter>
     </ClCompile>
     <ClCompile Include="Source\DX11\DX11Gui.cpp">
-      <Filter>Engine\DX11</Filter>
+      <Filter>Source Files\Engine\DX11</Filter>
     </ClCompile>
     <ClCompile Include="Source\Utility\Input.cpp">
-      <Filter>Engine\Utility</Filter>
+      <Filter>Utility</Filter>
     </ClCompile>
     <ClCompile Include="Source\Utility\Timer.cpp">
-      <Filter>Engine\Utility</Filter>
+      <Filter>Utility</Filter>
     </ClCompile>
-    <ClCompile Include="Source\DX11\Scene.cpp">
-      <Filter>Engine\DX11</Filter>
+    <ClCompile Include="Source\DX11\DX11Scene.cpp">
+      <Filter>Source Files\Engine\DX11</Filter>
     </ClCompile>
     <ClCompile Include="Source\DX11\Material.cpp">
-      <Filter>Engine\DX11</Filter>
+      <Filter>Source Files\Engine\DX11</Filter>
     </ClCompile>
     <ClCompile Include="Source\DX11\Mesh.cpp">
-      <Filter>Engine\DX11</Filter>
+      <Filter>Source Files\Engine\DX11</Filter>
     </ClCompile>
     <ClCompile Include="Source\DX11\LevelImporter.cpp">
-      <Filter>Engine\DX11</Filter>
+      <Filter>Source Files\Engine\DX11</Filter>
     </ClCompile>
     <ClCompile Include="Source\DX11\PostProcessing.cpp">
-      <Filter>Engine\DX11</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\DX11\Objects\DirLight.cpp">
-      <Filter>Engine\DX11\Objects</Filter>
+      <Filter>Source Files\Engine\DX11</Filter>
     </ClCompile>
     <ClCompile Include="Source\DX11\Objects\Light.cpp">
-      <Filter>Engine\DX11\Objects</Filter>
+      <Filter>Source Files\Engine\DX11\Objects</Filter>
     </ClCompile>
     <ClCompile Include="Source\DX11\Objects\Plant.cpp">
-      <Filter>Engine\DX11\Objects</Filter>
+      <Filter>Source Files\Engine\DX11\Objects</Filter>
     </ClCompile>
     <ClCompile Include="Source\DX11\Objects\PointLight.cpp">
-      <Filter>Engine\DX11\Objects</Filter>
+      <Filter>Source Files\Engine\DX11\Objects</Filter>
     </ClCompile>
     <ClCompile Include="Source\DX11\Objects\SpotLight.cpp">
-      <Filter>Engine\DX11\Objects</Filter>
+      <Filter>Source Files\Engine\DX11\Objects</Filter>
     </ClCompile>
     <ClCompile Include="Source\DX11\Objects\GameObjectManager.cpp">
-      <Filter>Engine\DX11\Objects</Filter>
+      <Filter>Source Files\Engine\DX11\Objects</Filter>
     </ClCompile>
     <ClCompile Include="Source\DX11\Objects\GameObject.cpp">
-      <Filter>Engine\DX11\Objects</Filter>
+      <Filter>Source Files\Engine\DX11\Objects</Filter>
     </ClCompile>
     <ClCompile Include="Source\DX11\Shader.cpp">
-      <Filter>Engine\DX11</Filter>
+      <Filter>Source Files\Engine\DX11</Filter>
     </ClCompile>
     <ClCompile Include="Source\DX11\State.cpp">
-      <Filter>Engine\DX11</Filter>
+      <Filter>Source Files\Engine\DX11</Filter>
     </ClCompile>
     <ClCompile Include="Source\DX11\GraphicsHelpers.cpp">
-      <Filter>Engine\DX11</Filter>
+      <Filter>Source Files\Engine\DX11</Filter>
     </ClCompile>
     <ClCompile Include="Source\External\imgui\imgui.cpp">
-      <Filter>Engine\External\Imgui</Filter>
+      <Filter>External\Imgui</Filter>
     </ClCompile>
     <ClCompile Include="Source\External\imgui\imgui_draw.cpp">
-      <Filter>Engine\External\Imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\External\imgui\imgui_impl_dx11.cpp">
-      <Filter>Engine\External\Imgui</Filter>
+      <Filter>External\Imgui</Filter>
     </ClCompile>
     <ClCompile Include="Source\External\imgui\imgui_impl_win32.cpp">
-      <Filter>Engine\External\Imgui</Filter>
+      <Filter>External\Imgui</Filter>
     </ClCompile>
     <ClCompile Include="Source\External\imgui\imgui_tables.cpp">
-      <Filter>Engine\External\Imgui</Filter>
+      <Filter>External\Imgui</Filter>
     </ClCompile>
     <ClCompile Include="Source\External\imgui\imgui_widgets.cpp">
-      <Filter>Engine\External\Imgui</Filter>
+      <Filter>External\Imgui</Filter>
     </ClCompile>
     <ClCompile Include="Source\External\imgui\ImGuizmo.cpp">
-      <Filter>Engine\External\Imgui</Filter>
+      <Filter>External\Imgui</Filter>
     </ClCompile>
     <ClCompile Include="Source\External\tinyxml2\tinyxml2.cpp">
-      <Filter>Engine\External\TinyXml2</Filter>
+      <Filter>External\TinyXml2</Filter>
     </ClCompile>
     <ClCompile Include="Source\External\imgui\backends\imgui_impl_dx11.cpp">
-      <Filter>Engine\External\Imgui</Filter>
+      <Filter>External\Imgui</Filter>
     </ClCompile>
     <ClCompile Include="Source\External\imgui\backends\imgui_impl_win32.cpp">
-      <Filter>Engine\External\Imgui</Filter>
+      <Filter>External\Imgui</Filter>
     </ClCompile>
     <ClCompile Include="Source\External\imgui\misc\cpp\imgui_stdlib.cpp">
-      <Filter>Engine\External\Imgui</Filter>
+      <Filter>External\Imgui</Filter>
     </ClCompile>
     <ClCompile Include="Source\External\imgui\FileBrowser\ImGuiFileBrowser.cpp">
-      <Filter>Engine\External\Imgui</Filter>
+      <Filter>External\Imgui</Filter>
     </ClCompile>
     <ClCompile Include="Source\Common\Camera.cpp">
-      <Filter>Engine\DX11\Objects</Filter>
+      <Filter>Source Files\Engine\DX11\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Window.cpp">
+      <Filter>Source Files\Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\DX12\DX12Scene.cpp">
+      <Filter>Source Files\Engine\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\DX12\DX12GameObjectManager.cpp">
+      <Filter>Source Files\Engine\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\External\imgui\backends\imgui_impl_dx12.cpp">
+      <Filter>External\Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\DX12\Objects\CDX12Sky.cpp">
+      <Filter>Source Files\Engine\DX12\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\DX12\Objects\DX12GameObject.cpp">
+      <Filter>Source Files\Engine\DX12\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\DX12\CDX12Material.cpp">
+      <Filter>Source Files\Engine\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\DX12\DX12Mesh.cpp">
+      <Filter>Source Files\Engine\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\DX11\Objects\DirLight.cpp">
+      <Filter>Source Files\Engine\DX11\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\DX12\CDX12Common.h">
+      <Filter>Header Files\Engine\DX12</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="Engine">
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{a1151f5f-340f-4a4f-9914-5a17d82413d4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Engine">
       <UniqueIdentifier>{496e2a74-d04d-4f73-b7cf-d0439d961ae0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\DX11">
+    <Filter Include="Source Files\Engine\DX11">
       <UniqueIdentifier>{7e89034e-4a29-41bb-9040-c077bf8ca547}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\DX12">
-      <UniqueIdentifier>{1e73e3ad-5a94-4070-a40b-302172734ddf}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Math">
-      <UniqueIdentifier>{36f2af60-c136-43d6-995f-89e70d791dc7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Utility">
-      <UniqueIdentifier>{20ce9e6a-cb4c-4931-9d67-a4e0330e79da}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\DX11\Objects">
+    <Filter Include="Source Files\Engine\DX11\Objects">
       <UniqueIdentifier>{4d91b4aa-7dc9-45cc-a8b5-a70e53a35d12}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\External">
+    <Filter Include="Source Files\Engine\DX12">
+      <UniqueIdentifier>{1e73e3ad-5a94-4070-a40b-302172734ddf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Engine\DX12\Objects">
+      <UniqueIdentifier>{0fed0319-7768-4bd3-bccc-b591eab53a54}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{ad8f50d8-7e30-42ab-a81c-16db1cdbd7cc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="External">
       <UniqueIdentifier>{f96b57d5-216a-41f7-979c-47b424d1a3df}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\External\Imgui">
+    <Filter Include="External\Imgui">
       <UniqueIdentifier>{fce194f9-ad73-450d-bd39-233face187d6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\External\TinyXml2">
+    <Filter Include="External\TinyXml2">
       <UniqueIdentifier>{ab0d4041-1681-4e69-a24b-b61419b9cab0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\DX11\Shaders">
+    <Filter Include="Shaders">
       <UniqueIdentifier>{e821eed1-f426-418f-992d-9cd77b730107}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\DX11\Shaders\PP">
+    <Filter Include="Shaders\PP">
       <UniqueIdentifier>{61066c0d-7a80-414e-abe0-fea62f0520f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility">
+      <UniqueIdentifier>{20ce9e6a-cb4c-4931-9d67-a4e0330e79da}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Math">
+      <UniqueIdentifier>{36f2af60-c136-43d6-995f-89e70d791dc7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Engine">
+      <UniqueIdentifier>{bbac4364-7903-48b3-9da6-a01c89178505}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Engine\DX11">
+      <UniqueIdentifier>{4fab5d7f-56cd-46fb-9936-05ef4d417aec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Engine\DX12">
+      <UniqueIdentifier>{da659294-d576-4837-b48e-2bc7b78658a4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Engine\DX11\Objects">
+      <UniqueIdentifier>{bdbd795e-8307-4dc1-b4dd-96b5b6404c92}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Engine\DX12\Objects">
+      <UniqueIdentifier>{ca067fa1-906f-4694-90e3-fab29b6f14cf}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -155,224 +204,248 @@
     <Xml Include="Scene2.xml" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Source\Engine.h" />
-    <ClInclude Include="Source\FactoryEngine.h" />
-    <ClInclude Include="Source\FactoryGui.h" />
-    <ClInclude Include="Source\IGUI.h" />
-    <ClInclude Include="Source\Window.h" />
-    <ClInclude Include="Source\DX12\DX12Engine.h">
-      <Filter>Engine\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\DX12\DX12Gui.h">
-      <Filter>Engine\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Math\CMatrix4x4.h">
-      <Filter>Engine\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Utility\ColourRGBA.h">
-      <Filter>Engine\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Math\CVector2.h">
-      <Filter>Engine\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Math\CVector3.h">
-      <Filter>Engine\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Math\CVector4.h">
-      <Filter>Engine\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Math\MathHelpers.h">
-      <Filter>Engine\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\DX11\DX11Gui.h">
-      <Filter>Engine\DX11</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\DX11\CDX11Common.h">
-      <Filter>Engine\DX11</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\DX11\DX11Engine.h">
-      <Filter>Engine\DX11</Filter>
-    </ClInclude>
     <ClInclude Include="Source\Utility\Input.h">
-      <Filter>Engine\Utility</Filter>
+      <Filter>Utility</Filter>
     </ClInclude>
     <ClInclude Include="Source\Utility\Timer.h">
-      <Filter>Engine\Utility</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\DX11\Scene.h">
-      <Filter>Engine\DX11</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\DX11\Material.h">
-      <Filter>Engine\DX11</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\DX11\Mesh.h">
-      <Filter>Engine\DX11</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\DX11\LevelImporter.h">
-      <Filter>Engine\DX11</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\DX11\Objects\DirLight.h">
-      <Filter>Engine\DX11\Objects</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\DX11\Objects\Light.h">
-      <Filter>Engine\DX11\Objects</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\DX11\Objects\Plant.h">
-      <Filter>Engine\DX11\Objects</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\DX11\Objects\PointLight.h">
-      <Filter>Engine\DX11\Objects</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\DX11\Objects\SpotLight.h">
-      <Filter>Engine\DX11\Objects</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\DX11\Objects\Sky.h">
-      <Filter>Engine\DX11\Objects</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\DX11\Objects\GameObjectManager.h">
-      <Filter>Engine\DX11\Objects</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\DX11\Objects\GameObject.h">
-      <Filter>Engine\DX11\Objects</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\IGameObject.h" />
-    <ClInclude Include="Source\DX11\GraphicsHelpers.h">
-      <Filter>Engine\DX11</Filter>
+      <Filter>Utility</Filter>
     </ClInclude>
     <ClInclude Include="Source\External\imgui\imconfig.h">
-      <Filter>Engine\External\Imgui</Filter>
+      <Filter>External\Imgui</Filter>
     </ClInclude>
     <ClInclude Include="Source\External\imgui\imgui.h">
-      <Filter>Engine\External\Imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\External\imgui\imgui_impl_dx11.h">
-      <Filter>Engine\External\Imgui</Filter>
+      <Filter>External\Imgui</Filter>
     </ClInclude>
     <ClInclude Include="Source\External\imgui\imgui_impl_win32.h">
-      <Filter>Engine\External\Imgui</Filter>
+      <Filter>External\Imgui</Filter>
     </ClInclude>
     <ClInclude Include="Source\External\imgui\imgui_internal.h">
-      <Filter>Engine\External\Imgui</Filter>
+      <Filter>External\Imgui</Filter>
     </ClInclude>
     <ClInclude Include="Source\External\imgui\ImGuizmo.h">
-      <Filter>Engine\External\Imgui</Filter>
+      <Filter>External\Imgui</Filter>
     </ClInclude>
     <ClInclude Include="Source\External\imgui\imstb_rectpack.h">
-      <Filter>Engine\External\Imgui</Filter>
+      <Filter>External\Imgui</Filter>
     </ClInclude>
     <ClInclude Include="Source\External\imgui\imstb_textedit.h">
-      <Filter>Engine\External\Imgui</Filter>
+      <Filter>External\Imgui</Filter>
     </ClInclude>
     <ClInclude Include="Source\External\imgui\imstb_truetype.h">
-      <Filter>Engine\External\Imgui</Filter>
+      <Filter>External\Imgui</Filter>
     </ClInclude>
     <ClInclude Include="Source\External\imgui\stb_image.h">
-      <Filter>Engine\External\Imgui</Filter>
+      <Filter>External\Imgui</Filter>
     </ClInclude>
     <ClInclude Include="Source\External\tinyxml2\tinyxml2.h">
-      <Filter>Engine\External\TinyXml2</Filter>
+      <Filter>External\TinyXml2</Filter>
     </ClInclude>
     <ClInclude Include="Source\External\imgui\backends\imgui_impl_dx11.h">
-      <Filter>Engine\External\Imgui</Filter>
+      <Filter>External\Imgui</Filter>
     </ClInclude>
     <ClInclude Include="Source\External\imgui\backends\imgui_impl_win32.h">
-      <Filter>Engine\External\Imgui</Filter>
+      <Filter>External\Imgui</Filter>
     </ClInclude>
     <ClInclude Include="Source\External\imgui\misc\cpp\imgui_stdlib.h">
-      <Filter>Engine\External\Imgui</Filter>
+      <Filter>External\Imgui</Filter>
     </ClInclude>
     <ClInclude Include="Source\External\imgui\FileBrowser\ImGuiFileBrowser.h">
-      <Filter>Engine\External\Imgui</Filter>
+      <Filter>External\Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Window.h">
+      <Filter>Source Files\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\External\imgui\backends\imgui_impl_dx12.h">
+      <Filter>External\Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Utility\HelperFunctions.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine.h">
+      <Filter>Header Files\Engine</Filter>
     </ClInclude>
     <ClInclude Include="Source\Common\Camera.h">
-      <Filter>Engine\DX11\Objects</Filter>
+      <Filter>Header Files\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DX11\CDX11Common.h">
+      <Filter>Header Files\Engine\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DX12\CDX12Material.h">
+      <Filter>Header Files\Engine\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DX12\DX12Engine.h">
+      <Filter>Header Files\Engine\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DX12\DX12GameObjectManager.h">
+      <Filter>Header Files\Engine\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DX12\DX12Gui.h">
+      <Filter>Header Files\Engine\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DX12\DX12Mesh.h">
+      <Filter>Header Files\Engine\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DX12\DX12Scene.h">
+      <Filter>Header Files\Engine\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DX12\Objects\CDX12Sky.h">
+      <Filter>Header Files\Engine\DX12\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Math\CVector2.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Math\CVector3.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Math\CVector4.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Math\CMatrix4x4.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DX11\DX11Scene.h">
+      <Filter>Header Files\Engine\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DX11\DX11Engine.h">
+      <Filter>Header Files\Engine\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DX11\DX11Gui.h">
+      <Filter>Header Files\Engine\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\FactoryEngine.h">
+      <Filter>Header Files\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DX11\Objects\GameObject.h">
+      <Filter>Header Files\Engine\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DX11\Objects\GameObjectManager.h">
+      <Filter>Header Files\Engine\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DX11\GraphicsHelpers.h">
+      <Filter>Header Files\Engine\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DX11\LevelImporter.h">
+      <Filter>Header Files\Engine\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DX11\Mesh.h">
+      <Filter>Header Files\Engine\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DX11\Objects\DirLight.h">
+      <Filter>Header Files\Engine\DX11\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DX11\Objects\Plant.h">
+      <Filter>Header Files\Engine\DX11\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Utility\ColourRGBA.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DX11\Objects\Light.h">
+      <Filter>Header Files\Engine\DX11\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DX11\Material.h">
+      <Filter>Header Files\Engine\DX11\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Math\MathHelpers.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DX11\Objects\PointLight.h">
+      <Filter>Header Files\Engine\DX11\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DX11\Objects\Sky.h">
+      <Filter>Header Files\Engine\DX11\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DX11\Objects\SpotLight.h">
+      <Filter>Header Files\Engine\DX11\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DX12\Objects\DX12GameObject.h">
+      <Filter>Header Files\Engine\DX12\Objects</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Source\DX11\Shaders\BasicTransform_vs.hlsl">
-      <Filter>Engine\DX11\Shaders</Filter>
+      <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Source\DX11\Shaders\DepthOnlyNormal_ps.hlsl">
-      <Filter>Engine\DX11\Shaders</Filter>
+      <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Source\DX11\Shaders\DepthOnly_ps.hlsl">
-      <Filter>Engine\DX11\Shaders</Filter>
+      <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Source\DX11\Shaders\PBRNoNormals_vs.hlsl">
-      <Filter>Engine\DX11\Shaders</Filter>
+      <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Source\DX11\Shaders\PBRNoNormals_ps.hlsl">
-      <Filter>Engine\DX11\Shaders</Filter>
+      <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Source\DX11\Shaders\PBR_vs.hlsl">
-      <Filter>Engine\DX11\Shaders</Filter>
+      <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Source\DX11\Shaders\PBR_ps.hlsl">
-      <Filter>Engine\DX11\Shaders</Filter>
+      <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Source\DX11\Shaders\TintedTexture_ps.hlsl">
-      <Filter>Engine\DX11\Shaders</Filter>
+      <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Source\DX11\Shaders\Sky_ps.hlsl">
-      <Filter>Engine\DX11\Shaders</Filter>
+      <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Source\DX11\Shaders\Sky_vs.hlsl">
-      <Filter>Engine\DX11\Shaders</Filter>
+      <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Source\DX11\Shaders\Common.hlsli">
-      <Filter>Engine\DX11\Shaders</Filter>
+      <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
     <HLSL Include="Source\DX11\PostProcessing\2DPolygon_pp.hlsl">
-      <Filter>Engine\DX11\Shaders\PP</Filter>
+      <Filter>Shaders\PP</Filter>
     </HLSL>
     <HLSL Include="Source\DX11\PostProcessing\2DQuad_pp.hlsl">
-      <Filter>Engine\DX11\Shaders\PP</Filter>
+      <Filter>Shaders\PP</Filter>
     </HLSL>
     <HLSL Include="Source\DX11\PostProcessing\Bloom_pp.hlsl">
-      <Filter>Engine\DX11\Shaders\PP</Filter>
+      <Filter>Shaders\PP</Filter>
     </HLSL>
     <HLSL Include="Source\DX11\PostProcessing\BloomLast_pp.hlsl">
-      <Filter>Engine\DX11\Shaders\PP</Filter>
+      <Filter>Shaders\PP</Filter>
     </HLSL>
     <HLSL Include="Source\DX11\PostProcessing\Burn_pp.hlsl">
-      <Filter>Engine\DX11\Shaders\PP</Filter>
+      <Filter>Shaders\PP</Filter>
     </HLSL>
     <HLSL Include="Source\DX11\PostProcessing\ChromaticAberration_pp.hlsl">
-      <Filter>Engine\DX11\Shaders\PP</Filter>
+      <Filter>Shaders\PP</Filter>
     </HLSL>
     <HLSL Include="Source\DX11\PostProcessing\Copy_pp.hlsl">
-      <Filter>Engine\DX11\Shaders\PP</Filter>
+      <Filter>Shaders\PP</Filter>
     </HLSL>
     <HLSL Include="Source\DX11\PostProcessing\Distort_pp.hlsl">
-      <Filter>Engine\DX11\Shaders\PP</Filter>
+      <Filter>Shaders\PP</Filter>
     </HLSL>
     <HLSL Include="Source\DX11\PostProcessing\GaussionBlur_pp.hlsl">
-      <Filter>Engine\DX11\Shaders\PP</Filter>
+      <Filter>Shaders\PP</Filter>
     </HLSL>
     <HLSL Include="Source\DX11\PostProcessing\GreyNoise_pp.hlsl">
-      <Filter>Engine\DX11\Shaders\PP</Filter>
+      <Filter>Shaders\PP</Filter>
     </HLSL>
     <HLSL Include="Source\DX11\PostProcessing\GodRays_pp.hlsl">
-      <Filter>Engine\DX11\Shaders\PP</Filter>
+      <Filter>Shaders\PP</Filter>
     </HLSL>
     <HLSL Include="Source\DX11\PostProcessing\HeatHaze_pp.hlsl">
-      <Filter>Engine\DX11\Shaders\PP</Filter>
+      <Filter>Shaders\PP</Filter>
     </HLSL>
     <HLSL Include="Source\DX11\PostProcessing\Spiral_pp.hlsl">
-      <Filter>Engine\DX11\Shaders\PP</Filter>
+      <Filter>Shaders\PP</Filter>
     </HLSL>
     <HLSL Include="Source\DX11\PostProcessing\SSAO_pp.hlsl">
-      <Filter>Engine\DX11\Shaders\PP</Filter>
+      <Filter>Shaders\PP</Filter>
     </HLSL>
     <HLSL Include="Source\DX11\PostProcessing\SSAOLast_pp.hlsl">
-      <Filter>Engine\DX11\Shaders\PP</Filter>
+      <Filter>Shaders\PP</Filter>
     </HLSL>
     <HLSL Include="Source\DX11\PostProcessing\Tint_pp.hlsl">
-      <Filter>Engine\DX11\Shaders\PP</Filter>
+      <Filter>Shaders\PP</Filter>
     </HLSL>
   </ItemGroup>
 </Project>

@@ -7,9 +7,9 @@
 #include "Sky.h"
 #include "../CDX11Common.h"
 #include "../GraphicsHelpers.h"
-#include "..\..\IGUI.h"
+#include "../DX11Gui.h"
 
-CGameObjectManager::CGameObjectManager(CDX11Engine* engine)
+CDX11GameObjectManager::CDX11GameObjectManager(CDX11Engine* engine)
 {
 	mSky = nullptr;
 	mEngine = engine;
@@ -17,7 +17,7 @@ CGameObjectManager::CGameObjectManager(CDX11Engine* engine)
 	mMaxShadowMaps = 10;
 }
 
-void CGameObjectManager::AddObject(CDX11GameObject* obj)
+void CDX11GameObjectManager::AddObject(CDX11GameObject* obj)
 {
 	if (mObjects.size() < mMaxSize)
 	{
@@ -35,7 +35,7 @@ void CGameObjectManager::AddObject(CDX11GameObject* obj)
 	}
 }
 
-void CGameObjectManager::AddLight(CLight* obj)
+void CDX11GameObjectManager::AddLight(CLight* obj)
 {
 	if (mLights.size() < mMaxSize)
 	{
@@ -47,7 +47,7 @@ void CGameObjectManager::AddLight(CLight* obj)
 	}
 }
 
-void CGameObjectManager::AddPointLight(CPointLight* obj)
+void CDX11GameObjectManager::AddPointLight(CPointLight* obj)
 {
 	if (mShadowsMaps.size() < mMaxShadowMaps)
 	{
@@ -57,7 +57,7 @@ void CGameObjectManager::AddPointLight(CPointLight* obj)
 		throw std::exception("Not enough space to store more objects");
 }
 
-void CGameObjectManager::AddSpotLight(CSpotLight* obj)
+void CDX11GameObjectManager::AddSpotLight(CSpotLight* obj)
 {
 	if (mShadowsMaps.size() < mMaxShadowMaps)
 	{
@@ -67,7 +67,7 @@ void CGameObjectManager::AddSpotLight(CSpotLight* obj)
 		throw std::exception("Not enough space to store more objects");
 }
 
-void CGameObjectManager::AddDirLight(CDirLight* obj)
+void CDX11GameObjectManager::AddDirLight(CDirLight* obj)
 {
 	if (mShadowsMaps.size() < mMaxShadowMaps)
 	{
@@ -75,7 +75,7 @@ void CGameObjectManager::AddDirLight(CDirLight* obj)
 	}
 }
 
-void CGameObjectManager::UpdateLightsBuffer()
+void CDX11GameObjectManager::UpdateLightsBuffer()
 {
 	const auto FCB = &gPerFrameLightsConstants;
 
@@ -95,7 +95,7 @@ void CGameObjectManager::UpdateLightsBuffer()
 	}
 }
 
-void CGameObjectManager::UpdateSpotLightsBuffer()
+void CDX11GameObjectManager::UpdateSpotLightsBuffer()
 {
 	const auto FLB = &gPerFrameSpotLightsConstants;
 
@@ -119,7 +119,7 @@ void CGameObjectManager::UpdateSpotLightsBuffer()
 	}
 }
 
-void CGameObjectManager::UpdateDirLightsBuffer()
+void CDX11GameObjectManager::UpdateDirLightsBuffer()
 {
 	const auto FLB = &gPerFrameDirLightsConstants;
 
@@ -141,7 +141,7 @@ void CGameObjectManager::UpdateDirLightsBuffer()
 	}
 }
 
-void CGameObjectManager::UpdatePointLightsBuffer()
+void CDX11GameObjectManager::UpdatePointLightsBuffer()
 {
 	for (unsigned long long i = 0; i < mPointLights.size(); ++i)
 	{
@@ -170,7 +170,7 @@ void CGameObjectManager::UpdatePointLightsBuffer()
 	}
 }
 
-void CGameObjectManager::UpdateAllBuffers()
+void CDX11GameObjectManager::UpdateAllBuffers()
 {
 	UpdateLightsBuffer();
 	UpdateSpotLightsBuffer();
@@ -184,7 +184,7 @@ void CGameObjectManager::UpdateAllBuffers()
 	gPerFrameConstants.nPointLights =	(float)mPointLights.size();
 }
 
-bool CGameObjectManager::RemoveObject(int pos)
+bool CDX11GameObjectManager::RemoveObject(int pos)
 {
 	if (!mObjects.empty())
 	{
@@ -195,7 +195,7 @@ bool CGameObjectManager::RemoveObject(int pos)
 	return false;
 }
 
-bool CGameObjectManager::RemoveLight(int pos)
+bool CDX11GameObjectManager::RemoveLight(int pos)
 {
 	if (!mLights.empty())
 	{
@@ -206,7 +206,7 @@ bool CGameObjectManager::RemoveLight(int pos)
 	return false;
 }
 
-bool CGameObjectManager::RemovePointLight(int pos)
+bool CDX11GameObjectManager::RemovePointLight(int pos)
 {
 	if (!mPointLights.empty())
 	{
@@ -217,7 +217,7 @@ bool CGameObjectManager::RemovePointLight(int pos)
 	return false;
 }
 
-bool CGameObjectManager::RemoveSpotLight(int pos)
+bool CDX11GameObjectManager::RemoveSpotLight(int pos)
 {
 	if (!mSpotLights.empty())
 	{
@@ -228,7 +228,7 @@ bool CGameObjectManager::RemoveSpotLight(int pos)
 	return false;
 }
 
-bool CGameObjectManager::RemoveDirLight(int pos)
+bool CDX11GameObjectManager::RemoveDirLight(int pos)
 {
 	if (!mDirLights.empty())
 	{
@@ -238,7 +238,7 @@ bool CGameObjectManager::RemoveDirLight(int pos)
 	return false;
 }
 
-void CGameObjectManager::RenderAmbientMaps()
+void CDX11GameObjectManager::RenderAmbientMaps()
 {
 	for (const auto it : mObjects)
 	{
@@ -246,7 +246,7 @@ void CGameObjectManager::RenderAmbientMaps()
 	}
 }
 
-bool CGameObjectManager::RenderAllObjects()
+bool CDX11GameObjectManager::RenderAllObjects()
 {
 	// Firstly render the sky (if any)
 	if (mSky) mSky->Render();
@@ -300,7 +300,7 @@ bool CGameObjectManager::RenderAllObjects()
 	return true;
 }
 
-void CGameObjectManager::RenderFromSpotLights()
+void CDX11GameObjectManager::RenderFromSpotLights()
 {
 	for (const auto it : mSpotLights)
 	{
@@ -315,7 +315,7 @@ void CGameObjectManager::RenderFromSpotLights()
 	}
 }
 
-void CGameObjectManager::RenderFromPointLights()
+void CDX11GameObjectManager::RenderFromPointLights()
 {
 	for (const auto it : mPointLights)
 	{
@@ -331,7 +331,7 @@ void CGameObjectManager::RenderFromPointLights()
 	}
 }
 
-void CGameObjectManager::RenderFromDirLights()
+void CDX11GameObjectManager::RenderFromDirLights()
 {
 	for (const auto it : mDirLights)
 	{
@@ -344,14 +344,14 @@ void CGameObjectManager::RenderFromDirLights()
 	}
 }
 
-void CGameObjectManager::RenderFromAllLights()
+void CDX11GameObjectManager::RenderFromAllLights()
 {
 	RenderFromSpotLights();
 	RenderFromDirLights();
 	RenderFromPointLights();
 }
 
-void CGameObjectManager::UpdateObjects(float updateTime)
+void CDX11GameObjectManager::UpdateObjects(float updateTime)
 {
 	auto pos = 0;
 
@@ -365,7 +365,7 @@ void CGameObjectManager::UpdateObjects(float updateTime)
 	}
 }
 
-CGameObjectManager::~CGameObjectManager()
+CDX11GameObjectManager::~CDX11GameObjectManager()
 {
 	for (const auto& it : mObjects)
 	{

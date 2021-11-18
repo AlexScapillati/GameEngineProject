@@ -26,7 +26,7 @@ public:
 		CVector3 rotation = { 0,0,0 }, 
 		float scale = 1);
 
-	void Render(bool basicGeometry = false);
+	void Render(bool basicGeometry = false) override;
 
 	void SetColour(CVector3 colour) { mColour = colour; }
 

@@ -4,7 +4,7 @@
 //--------------------------------------------------------------------------------------
 
 #pragma once
-#include "Scene.h"
+#include "DX11Scene.h"
 #include "CDX11Common.h"
 #include "Objects\GameObject.h"
 #include "Objects\DirLight.h"
@@ -31,14 +31,14 @@ void CDX11Scene::LoadPostProcessingImages()
 void CDX11Scene::ReleasePostProcessingShaders()
 {
 	if (mBurnMap)				mBurnMap->Release();		mBurnMap = nullptr;
-	if (mNoiseMap)				mNoiseMap->Release();		mNoiseMap = nullptr;
+	if (mNoiseMap)			mNoiseMap->Release();		mNoiseMap = nullptr;
 	if (mBurnMapSRV)			mBurnMapSRV->Release();		mBurnMapSRV = nullptr;
 	if (mDistortMap)			mDistortMap->Release();		mDistortMap = nullptr;
 	if (mNoiseMapSRV)			mNoiseMapSRV->Release();	mNoiseMapSRV = nullptr;
-	if (mRandomMapSRV)			mRandomMapSRV->Release();   mRandomMapSRV = nullptr;
-	if (mLuminanceMap)			mLuminanceMap->Release();   mLuminanceMap = nullptr;
-	if (mDistortMapSRV)			mDistortMapSRV->Release();  mDistortMapSRV = nullptr;
-	if (mRandomMap)				mRandomMap->Release();		mRandomMap = nullptr;
+	if (mRandomMapSRV)		mRandomMapSRV->Release();   mRandomMapSRV = nullptr;
+	if (mLuminanceMap)		mLuminanceMap->Release();   mLuminanceMap = nullptr;
+	if (mDistortMapSRV)		mDistortMapSRV->Release();  mDistortMapSRV = nullptr;
+	if (mRandomMap)			mRandomMap->Release();		mRandomMap = nullptr;
 }
 
 // Select the appropriate shader plus any additional textures required for a given post-process
@@ -888,7 +888,7 @@ void CDX11Scene::DisplayPostProcessingEffects()
 				case CDX11Scene::PostProcess::GaussionBlur:
 
 					ImGui::DragFloat("Directions", &gPostProcessingConstants.blurDirections, 0.1f, 0.01f, 64.0f);
-					ImGui::DragFloat("Quality", &gPostProcessingConstants.blurQuality, 0.1, 1.0f, 64.0f);
+					ImGui::DragFloat("Quality", &gPostProcessingConstants.blurQuality, 0.1f, 1.0f, 64.0f);
 					ImGui::DragFloat("Size", &gPostProcessingConstants.blurSize, 0.1f);
 
 					break;
@@ -910,7 +910,7 @@ void CDX11Scene::DisplayPostProcessingEffects()
 					if (mSsaoBlur)
 					{
 						ImGui::DragFloat("Directions", &gPostProcessingConstants.blurDirections, 1.0f, 1.0f, 64.0f);
-						ImGui::DragFloat("Quality", &gPostProcessingConstants.blurQuality, 0.1, 1.0f, 64.0f);
+						ImGui::DragFloat("Quality", &gPostProcessingConstants.blurQuality, 0.1f, 1.0f, 64.0f);
 						ImGui::DragFloat("Size", &gPostProcessingConstants.blurSize, 0.1f);
 					}
 
@@ -941,7 +941,7 @@ void CDX11Scene::DisplayPostProcessingEffects()
 
 					//for the blur part of the bloom
 					ImGui::DragFloat("Directions", &gPostProcessingConstants.blurDirections, 1.0f, 1.0f, 64.0f);
-					ImGui::DragFloat("Quality", &gPostProcessingConstants.blurQuality, 0.1, 1.0f, 64.0f);
+					ImGui::DragFloat("Quality", &gPostProcessingConstants.blurQuality, 0.1f, 1.0f, 64.0f);
 					ImGui::DragFloat("Size", &gPostProcessingConstants.blurSize, 0.1f);
 
 					break;
@@ -956,7 +956,7 @@ void CDX11Scene::DisplayPostProcessingEffects()
 					ImGui::DragFloat("Decay", &gPostProcessingConstants.decay, 0.001f);
 					ImGui::DragFloat("Exposure", &gPostProcessingConstants.exposure, 0.001f);
 					ImGui::DragFloat("Density", &gPostProcessingConstants.density, 0.001f);
-					ImGui::DragInt("Samples", &gPostProcessingConstants.numSamples, 1, 0.0f);
+					ImGui::DragInt("Samples", &gPostProcessingConstants.numSamples, 1, 0);
 
 					break;
 				}

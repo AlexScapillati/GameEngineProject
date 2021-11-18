@@ -2,8 +2,8 @@
 
 #include <deque>
 #include <vector>
-#include <d3d11_1.h>
 
+#include <d3d11_1.h>
 
 class CLight;
 class CDX11GameObject;
@@ -13,11 +13,11 @@ class CPointLight;
 class CSky;
 class CDX11Engine;
 
-class CGameObjectManager
+class CDX11GameObjectManager
 {
 public:
 
-	CGameObjectManager(CDX11Engine* engine);
+	CDX11GameObjectManager(CDX11Engine* engine);
 
 	void AddObject(CDX11GameObject* obj);
 
@@ -63,9 +63,9 @@ public:
 
 	void UpdateObjects(float updateTime);
 
-	CDX11GameObject* GetSky() { return (CDX11GameObject*)mSky; }
+	CDX11GameObject* GetSky() const { return (CDX11GameObject*)mSky; }
 
-	~CGameObjectManager();
+	~CDX11GameObjectManager();
 
 	std::deque<CDX11GameObject*> mObjects;
 

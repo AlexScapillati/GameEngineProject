@@ -2,7 +2,7 @@
 
 #include "Engine.h"
 #include "DX11/DX11Engine.h"
-//#include "DX12Engine.h"
+#include "DX12/DX12Engine.h"
 
 
 
@@ -21,8 +21,7 @@ inline std::unique_ptr<IEngine> NewEngine(EApiType type, HINSTANCE hInstance, in
 	case DX11:
 		return std::make_unique<CDX11Engine>(hInstance, nCmdShow);
 	case DX12:
-		//return std::make_unique<CDX12Engine>(hInstance, nCmdShow);
-		return nullptr;
+		return std::make_unique<CDX12Engine>(hInstance, nCmdShow);
 	default:
 		return nullptr;
 	}

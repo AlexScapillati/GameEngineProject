@@ -10,20 +10,21 @@
 #include <string>
 #include <vector>
 
-#include "..\..\IGameObject.h"
 #include "..\..\Math/CVector3.h"
 #include "..\Material.h"
+#include "..\Mesh.h"
 
 class CMaterial;
 class CMatrix4x4;
 class CDX11Engine;
-class CDX11Mesh;
-class CGameObjectManager;
+class CDX11GameObjectManager;
+enum KeyCode;
 
-
-class CDX11GameObject : IGameObject
+class CDX11GameObject
 {
 public:
+
+		virtual ~CDX11GameObject() = default;
 
 	//-------------------------------------
 	// Construction / Usage
@@ -36,8 +37,9 @@ public:
 	// Simple object contructor
 	// A mesh and a diffuse map are compulsory to render a model
 	CDX11GameObject(CDX11Engine* engine, std::string mesh, std::string name, std::string& diffuseMap, CVector3 position = { 0,0,0 }, CVector3 rotation = { 0,0,0 }, float scale = 1);
+	
 
-	void GetFilesInFolder(std::string& dirPath, std::vector<std::string>& fileNames);
+	void GetFilesInFolder(std::string& dirPath, std::vector<std::string>& fileNames) const;
 
 	// "Smart" Constructor
 	// Given an ID (That could be a file or a directory) this constructor will import all the files in that folder or the files that will contain that id
@@ -48,11 +50,8 @@ public:
 	// Textures: ID_RESOLUTION_TYPE.EXTENTION
 	CDX11GameObject(CDX11Engine* engine,std::string id, std::string name, CVector3 position = { 0,0,0 }, CVector3 rotation = { 0,0,0 }, float scale = 1);
 
-	~CDX11GameObject();
 
-	void Release() override;
-
-	void Control(int node, float frameTime, KeyCode turnUp, KeyCode turnDown, KeyCode turnLeft, KeyCode turnRight, KeyCode turnCW, KeyCode turnCCW, KeyCode moveForward, KeyCode moveBackward) override;
+	void Control(int node, float frameTime, KeyCode turnUp, KeyCode turnDown, KeyCode turnLeft, KeyCode turnRight, KeyCode turnCW, KeyCode turnCCW, KeyCode moveForward, KeyCode moveBackward);
 
 	//-------------------------------------
 	// Data access
@@ -76,12 +75,12 @@ public:
 
 	float* DirectPosition();
 
-	bool* Enabled();
+	bool*       Enabled();
 	std::string TextrueFileName() const;
-	CMaterial* Material();
-	float& Roughness();
-	float& Metalness();
-	void SetRoughness(float r);
+	CMaterial*  Material() const;
+	float&      Roughness();
+	float&      Metalness();
+	void        SetRoughness(float r);
 
 
 	// Setters - model only stores matricies , so if user sets position, rotation or scale, just update those aspects of the matrix
@@ -99,7 +98,7 @@ public:
 	// This function will set the model world matrix
 	void SetWorldMatrix(CMatrix4x4 matrix, int node = 0);
 
-	void Render(bool basicGeometry = false) override;
+	virtual void Render(bool basicGeometry = false);
 
 	// WIP, This will handle all the scripts and update the model's behaviour (similar to unity)
 	bool Update(float updateTime);
@@ -153,19 +152,17 @@ public:
 		void Init(CDX11Engine* engine);
 
 		bool enabled;
-		ID3D11Texture2D* map;	// The actual texture stored on the GPU side (cubemap)
-		ID3D11ShaderResourceView* mapSRV;	// The texture in the shader resource view format, to send it to the shader
-		ID3D11Texture2D* depthStencilMap;	// The depth stencil texture 
-		ID3D11DepthStencilView* depthStencilView;	// The depth stencil view to set it as the render target
-		ID3D11RenderTargetView* RTV[6];	// The 6 different render targets, one for each face, to bind to the render target
+		ComPtr<ID3D11Texture2D> map;	// The actual texture stored on the GPU side (cubemap)
+		ComPtr<ID3D11ShaderResourceView> mapSRV;	// The texture in the shader resource view format, to send it to the shader
+		ComPtr<ID3D11Texture2D> depthStencilMap;	// The depth stencil texture 
+		ComPtr<ID3D11DepthStencilView> depthStencilView;	// The depth stencil view to set it as the render target
+		ComPtr<ID3D11RenderTargetView> RTV[6];	// The 6 different render targets, one for each face, to bind to the render target
 		UINT size;	// Size of each face of the cubemap
 
 		// Getters and Setters for the size
 		UINT Size() const;
 		void SetSize(UINT s);
-
-		// It releases the textures
-		void Release();
+		
 	} mAmbientMap;
 
 	// Returns if the ambient map is enabled
@@ -178,6 +175,7 @@ public:
 	ID3D11ShaderResourceView* AmbientMapSRV() const;
 
 	std::string MeshFileNames();
+
 	ID3D11ShaderResourceView* TextureSRV() const;
 
 	// Render the whole scene from the model perspective. Very expensive, needs optimization
@@ -191,9 +189,12 @@ protected:
 
 	CDX11Engine* mEngine;
 
+	// The actual mesh
+	std::unique_ptr<CDX11Mesh> mMesh;
+
 	// The material
 	// It will hold all the textures and send them to the shader with RenderMaterial()
-	CMaterial* mMaterial;
+	std::unique_ptr<CMaterial> mMaterial;
 
 	//the meshes that a model has (all the LODS that a model has)
 	std::vector<std::string> mMeshFiles;
@@ -204,9 +205,6 @@ protected:
 	// Store the current LOD and mesh variation rendered
 	int mCurrentLOD = 0;
 	int mCurrentVar = 0;
-
-	// The acutual mesh class
-	CDX11Mesh* mMesh;
 
 	// Each model has a parallax depth value 
 	// For the models that have a displacement and a normal map this will modify the bumpyness of those textures

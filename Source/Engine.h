@@ -6,14 +6,9 @@
 
 #include "Utility/Timer.h"
 
-class IScene;
-using namespace Microsoft::WRL;
-
 // Forward declarations
 
-class CDX11Scene;
 class CWindow;
-class IGui;
 
 class IEngine
 {
@@ -31,7 +26,7 @@ public:
 
 	//*******************************
 	//**** Setters / Getters
-
+	
 	auto GetTimer() const
 	{
 		return mTimer;
@@ -42,22 +37,12 @@ public:
 		return mWindow.get();
 	}
 
-	auto GetScene() const
-	{
-		return mMainScene.get();
-	}
 
 	auto& GetMediaFolder()
 	{
 		return mMediaFolder;
 	}
-
-	auto GetGui() const
-	{
-		return mGui.get();
-	}
-
-
+	
 	virtual ~IEngine() = default;
 
 protected:
@@ -65,14 +50,9 @@ protected:
 	//*******************************
 	//**** Data
 
-
-	std::unique_ptr<CDX11Scene> mMainScene;
-
 	Timer mTimer;
 
 	std::unique_ptr<CWindow> mWindow;
-
-	std::unique_ptr<IGui> mGui;
 
 	std::string mMediaFolder;
 

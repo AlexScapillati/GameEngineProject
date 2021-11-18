@@ -1,18 +1,20 @@
 #pragma once
+
 #include <deque>
 
-#include "..\IGUI.h"
+#include "DX11Engine.h"
+#include "Objects/GameObject.h"
 
 
-class CDX11Gui final : public IGui
+class CDX11Gui
 {
 public:
 	
 	CDX11Gui(CDX11Engine* engine);
 
-	void Begin(float& frameTime) override;
+	void Begin(float& frameTime);
 
-	void Show(float& frameTime) override;
+	void Show(float& frameTime);
 
 	void AddObjectsMenu() const;
 
@@ -24,18 +26,17 @@ public:
 
 	void DisplayShadowMaps() const;
 
+	bool IsSceneFullscreen() const;
 
 	template<class T>
 	void DisplayDeque(std::deque<T*>& deque);
-	
 
-	~CDX11Gui() override;
+	~CDX11Gui();
 
 private:
-
-	CDX11Engine* mEngine;
-
-	CDX11Scene* mScene;
-
-	CDX11GameObject* mSelectedObj = nullptr;
+	CDX11Engine*              mEngine             = nullptr;
+	CDX11Scene*               mScene              = nullptr;
+	CDX11GameObject*          mSelectedObj        = nullptr;
+	bool                      mViewportFullscreen = false;
+	CVector2                  mViewportWindowPos  = {};
 };

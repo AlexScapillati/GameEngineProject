@@ -13,13 +13,13 @@ public:
 
 	void SetShadowMapSize(int size);
 
-	int GetShadowMapSize() { return mShadowMapSize; }
+	int GetShadowMapSize() const { return mShadowMapSize; }
 
-	void Render(bool basicGeometry = false);
+	void Render(bool basicGeometry = false) override;
 
 	ID3D11ShaderResourceView** RenderFromThis();
 
-	~CPointLight();
+	~CPointLight() override;
 
 	void Release();
 

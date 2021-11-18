@@ -66,10 +66,10 @@ public:
     // Optionally request tangents to be calculated (for normal and parallax mapping - see later lab)
     // Will throw a std::runtime_error exception on failure (since constructors can't return errors).
     CDX11Mesh(CDX11Engine* engine, const std::string& fileName, bool requireTangents = false);
-    ~CDX11Mesh();
 
 	CDX11Mesh(const CDX11Mesh&);
 
+    ~CDX11Mesh();
 
 	// How many nodes are in the hierarchy for this mesh. Nodes can control individual parts (rigid body animation),
 	// or bones (skinned animation), or they can be dummy nodes to create child parts in a more convenient way

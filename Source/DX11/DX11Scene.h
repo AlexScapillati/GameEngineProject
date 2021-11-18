@@ -53,7 +53,7 @@ public:
 	std::string mDefaultVs;
 	std::string mDefaultPs;
 
-	std::unique_ptr<CGameObjectManager> mObjManager;
+	std::unique_ptr<CDX11GameObjectManager> mObjManager;
 
 	std::unique_ptr<CCamera> mCamera;
 

@@ -15,7 +15,7 @@
 using namespace Microsoft::WRL;
 
 
-class CGameObjectManager;
+class CDX11GameObjectManager;
 
 //--------------------------------------------------------------------------------------
 // Global Variables
@@ -36,41 +36,41 @@ extern float MOVEMENT_SPEED;
 struct sLight
 {
 	CVector3 position;
-	float enabled;
+	float    enabled;
 	CVector3 colour;
-	float intensity;
+	float    intensity;
 };
 
 struct sSpotLight
 {
-	CVector3 colour;
-	float enabled;
-	CVector3 pos;
-	float intensity;
-	CVector3 facing;          //the direction facing of the light
-	float cosHalfAngle;       //pre calculate this in the c++ side, for performance reasons
-	CMatrix4x4 viewMatrix;    //the light view matrix (as it was a camera)
-	CMatrix4x4 projMatrix;    //--"--
+	CVector3   colour;
+	float      enabled;
+	CVector3   pos;
+	float      intensity;
+	CVector3   facing;       //the direction facing of the light
+	float      cosHalfAngle; //pre calculate this in the c++ side, for performance reasons
+	CMatrix4x4 viewMatrix;   //the light view matrix (as it was a camera)
+	CMatrix4x4 projMatrix;   //--"--
 };
 
 struct sDirLights
 {
-	CVector3 colour;
-	float enabled;
-	CVector3 facing;
-	float intensity;
-	CMatrix4x4 viewMatrix;    //the light view matrix (as it was a camera)
-	CMatrix4x4 projMatrix;    //--"--
+	CVector3   colour;
+	float      enabled;
+	CVector3   facing;
+	float      intensity;
+	CMatrix4x4 viewMatrix; //the light view matrix (as it was a camera)
+	CMatrix4x4 projMatrix; //--"--
 };
 
 struct sPointLights
 {
-	CVector3 colour;
-	float enabled;
-	CVector3 position;
-	float intensity;
-	CMatrix4x4 viewMatrices[6];    //the light view matrix (as it was a camera)
-	CMatrix4x4 projMatrix;    //--"--
+	CVector3   colour;
+	float      enabled;
+	CVector3   position;
+	float      intensity;
+	CMatrix4x4 viewMatrices[6]; //the light view matrix (as it was a camera)
+	CMatrix4x4 projMatrix;      //--"--
 };
 
 //--------------------------------------------------------------------------------------
@@ -91,25 +91,25 @@ struct PerFrameConstants
 	CMatrix4x4 projectionMatrix;
 	CMatrix4x4 viewProjectionMatrix; // The above two matrices multiplied together to combine their effects
 
-	CVector3   ambientColour;
-	float      specularPower;
+	CVector3 ambientColour;
+	float    specularPower;
 
-	float		parallaxMinSamples = 5;
-	float		parallaxMaxSamples = 20;
-	float	parallaxPadding;
+	float parallaxMinSamples = 5;
+	float parallaxMaxSamples = 20;
+	float parallaxPadding;
 
-	float		gDepthAdjust = 0.00005f;
+	float gDepthAdjust = 0.00005f;
 
-	float		nLights;
-	float		nDirLight;
-	float		nSpotLights;
-	float		nPointLights;
+	float nLights;
+	float nDirLight;
+	float nSpotLights;
+	float nPointLights;
 
-	uint32_t	nPcfSamples;
-	CVector3	padding2;
+	uint32_t nPcfSamples;
+	CVector3 padding2;
 
-	CVector3   cameraPosition;
-	float      frameTime;      // This app does updates on the GPU so we pass over the frame update time
+	CVector3 cameraPosition;
+	float    frameTime; // This app does updates on the GPU so we pass over the frame update time
 };
 
 extern PerFrameConstants gPerFrameConstants;      // This variable holds the CPU-side constant buffer described above
@@ -120,7 +120,7 @@ struct PerFrameLights
 	sLight lights[MAX_LIGHTS];
 };
 
-extern PerFrameLights gPerFrameLightsConstants;
+extern PerFrameLights         gPerFrameLightsConstants;
 extern ComPtr < ID3D11Buffer> gPerFrameLightsConstBuffer;
 
 struct PerFrameSpotLights
@@ -128,7 +128,7 @@ struct PerFrameSpotLights
 	sSpotLight spotLights[MAX_LIGHTS];
 };
 
-extern PerFrameSpotLights gPerFrameSpotLightsConstants;
+extern PerFrameSpotLights     gPerFrameSpotLightsConstants;
 extern ComPtr < ID3D11Buffer> gPerFrameSpotLightsConstBuffer;
 
 struct PerFrameDirLights
@@ -136,7 +136,7 @@ struct PerFrameDirLights
 	sDirLights dirLights[MAX_LIGHTS];
 };
 
-extern PerFrameDirLights gPerFrameDirLightsConstants;
+extern PerFrameDirLights      gPerFrameDirLightsConstants;
 extern ComPtr < ID3D11Buffer> gPerFrameDirLightsConstBuffer;
 
 struct PerFramePointLights
@@ -144,7 +144,7 @@ struct PerFramePointLights
 	sPointLights pointLights[MAX_LIGHTS];
 };
 
-extern PerFramePointLights gPerFramePointLightsConstants;
+extern PerFramePointLights    gPerFramePointLightsConstants;
 extern ComPtr < ID3D11Buffer> gPerFramePointLightsConstBuffer;
 
 static const int MAX_BONES = 64;
@@ -155,18 +155,18 @@ struct PerModelConstants
 {
 	CMatrix4x4 worldMatrix;
 
-	CVector3   objectColour;  // Allows each light model to be tinted to match the light colour they cast
-	float      parallaxDepth; // Used in the geometry shader to control how much the polygons are exploded outwards
+	CVector3 objectColour;  // Allows each light model to be tinted to match the light colour they cast
+	float    parallaxDepth; // Used in the geometry shader to control how much the polygons are exploded outwards
 
-	float		hasOpacityMap;
-	float		hasAoMap;
-	float		hasRoughnessMap;
-	float		hasAmbientMap;
-	float		hasMetallnessMap;
+	float hasOpacityMap;
+	float hasAoMap;
+	float hasRoughnessMap;
+	float hasAmbientMap;
+	float hasMetallnessMap;
 
-	float       roughness;
-	float		metalness;
-	float		padding;
+	float roughness;
+	float metalness;
+	float padding;
 
 	CMatrix4x4 boneMatrices[MAX_BONES];
 };
@@ -190,22 +190,22 @@ struct PostProcessingConstants
 	CVector3 tintColour = { 1,1,1 };
 
 	// Grey noise post-process settings
-	float noiseStrength = 0.5;
+	float    noiseStrength = 0.5;
 	CVector2 noiseScale;
 	CVector2 noiseOffset;
-	float noiseEdge;
+	float    noiseEdge;
 	CVector3 paddingB;
 
 	// Burn post-process settings
-	float burnHeight;
+	float    burnHeight;
 	CVector3 paddingC;
 
 	// Distort post-process settings
-	float distortLevel = 0.03f; //distorsion level for the dirstorsion effect
+	float    distortLevel = 0.03f; //distorsion level for the dirstorsion effect
 	CVector3 paddingD;
 
 	// Spiral post-process settings
-	float spiralLevel;
+	float    spiralLevel;
 	CVector3 paddingE;
 
 	// Heat haze post-process settings
@@ -215,36 +215,35 @@ struct PostProcessingConstants
 	float paddingF;
 
 	// Chromatic Aberration settings
-	float caAmount = 0.01f;
-	float   caEdge = 0.5f;
-	float   caFalloff = 0.01f;
+	float caAmount  = 0.01f;
+	float caEdge    = 0.5f;
+	float caFalloff = 0.01f;
 	float paddingG;
 
 	//gaussian blur settings
-	float blurDirections = 16; // BLUR DIRECTIONS (Default 16.0 - More is better but slower)
-	float blurQuality = 3.0; // BLUR QUALITY (Default 4.0 - More is better but slower)
-	float blurSize = 8.0; // BLUR SIZE (Radius)
+	float blurDirections = 16;  // BLUR DIRECTIONS (Default 16.0 - More is better but slower)
+	float blurQuality    = 3.0; // BLUR QUALITY (Default 4.0 - More is better but slower)
+	float blurSize       = 8.0; // BLUR SIZE (Radius)
 	float paddingH;
 
 	// Bloom settings
-	float bloomThreshold = 0.5f;
+	float    bloomThreshold = 0.5f;
 	CVector3 paddingI;
 
 	// SSAO settings
 	float ssaoStrenght = 1.0f;
-	float ssaoArea = 0.2f;
-	float ssaoFalloff = 0.000001f;
-	float ssaoRadius = 0.1f;
+	float ssaoArea     = 0.2f;
+	float ssaoFalloff  = 0.000001f;
+	float ssaoRadius   = 0.1f;
 
 	// God Rays Settings
 	CVector2 lightScreenPos;
-	float	 weight = 0.58767f;
-	float	 decay = 0.97815f;
-	float	 exposure = 0.2f;
-	float	 density = 0.926f;
-	int		 numSamples = 4;
-	float	 paddingJ;
+	float    weight     = 0.58767f;
+	float    decay      = 0.97815f;
+	float    exposure   = 0.2f;
+	float    density    = 0.926f;
+	int      numSamples = 4;
+	float    paddingJ;
 };
 extern PostProcessingConstants gPostProcessingConstants; // This variable holds the CPU-side constant buffer described above
 extern ComPtr<ID3D11Buffer> gPostProcessingConstBuffer; // This variable controls the GPU-side constant buffer related to the above structure
-

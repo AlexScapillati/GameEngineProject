@@ -106,7 +106,7 @@ bool CDX11Engine::CreateStates()
 	// This is the usual mode - don't show inside faces of objects
 	rasterizerDesc.FillMode = D3D11_FILL_SOLID; // Can also set this to wireframe - experiment if you wish
 	rasterizerDesc.CullMode = D3D11_CULL_BACK;  // Setting that decides whether the "front" and "back" side of each
-															 // triangle is drawn or not. Culling back faces is the norm
+	// triangle is drawn or not. Culling back faces is the norm
 	rasterizerDesc.DepthClipEnable = TRUE; // Advanced setting - only used in rare cases
 
 	// Create a DirectX object for the description above that can be used by a shader
@@ -118,9 +118,9 @@ bool CDX11Engine::CreateStates()
 
 	////-------- Front face culling --------////
 	// This is an unusual mode - it shows inside faces only so the model looks inside-out
-	rasterizerDesc.FillMode = D3D11_FILL_SOLID;
-	rasterizerDesc.CullMode = D3D11_CULL_FRONT; // Remove front faces
-	rasterizerDesc.DepthClipEnable = TRUE; // Advanced setting - only used in rare cases
+	rasterizerDesc.FillMode        = D3D11_FILL_SOLID;
+	rasterizerDesc.CullMode        = D3D11_CULL_FRONT; // Remove front faces
+	rasterizerDesc.DepthClipEnable = TRUE;             // Advanced setting - only used in rare cases
 
 	// Create a DirectX object for the description above that can be used by a shader
 	if (FAILED(mD3DDevice->CreateRasterizerState(&rasterizerDesc, &mCullFrontState)))
@@ -131,9 +131,9 @@ bool CDX11Engine::CreateStates()
 
 	////-------- No culling --------////
 	// Used for transparent or flat objects - show both sides of faces
-	rasterizerDesc.FillMode = D3D11_FILL_SOLID;
-	rasterizerDesc.CullMode = D3D11_CULL_NONE;  // Don't cull any faces
-	rasterizerDesc.DepthClipEnable = TRUE; // Advanced setting - only used in rare cases
+	rasterizerDesc.FillMode        = D3D11_FILL_SOLID;
+	rasterizerDesc.CullMode        = D3D11_CULL_NONE; // Don't cull any faces
+	rasterizerDesc.DepthClipEnable = TRUE;            // Advanced setting - only used in rare cases
 
 	// Create a DirectX object for the description above that can be used by a shader
 	if (FAILED(mD3DDevice->CreateRasterizerState(&rasterizerDesc, &mCullNoneState)))
@@ -156,9 +156,9 @@ bool CDX11Engine::CreateStates()
 
 	//** Leave the following settings alone, they are used only in highly unusual cases
 	//** Despite the word "Alpha" in the variable names, these are not the settings used for alpha blending
-	blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
-	blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
-	blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	blendDesc.RenderTarget[0].SrcBlendAlpha         = D3D11_BLEND_ONE;
+	blendDesc.RenderTarget[0].DestBlendAlpha        = D3D11_BLEND_ZERO;
+	blendDesc.RenderTarget[0].BlendOpAlpha          = D3D11_BLEND_OP_ADD;
 	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
 	// Then create a DirectX object for the description that can be used by a shader
@@ -176,9 +176,9 @@ bool CDX11Engine::CreateStates()
 
 	//** Leave the following settings alone, they are used only in highly unusual cases
 	//** Despite the word "Alpha" in the variable names, these are not the settings used for alpha blending
-	blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
-	blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
-	blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	blendDesc.RenderTarget[0].SrcBlendAlpha         = D3D11_BLEND_ONE;
+	blendDesc.RenderTarget[0].DestBlendAlpha        = D3D11_BLEND_ZERO;
+	blendDesc.RenderTarget[0].BlendOpAlpha          = D3D11_BLEND_OP_ADD;
 	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
 	// Then create a DirectX object for the description that can be used by a shader
@@ -196,9 +196,9 @@ bool CDX11Engine::CreateStates()
 
 	//** Leave the following settings alone, they are used only in highly unusual cases
 	//** Despite the word "Alpha" in the variable names, these are not the settings used for alpha blending
-	blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
-	blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
-	blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	blendDesc.RenderTarget[0].SrcBlendAlpha         = D3D11_BLEND_ONE;
+	blendDesc.RenderTarget[0].DestBlendAlpha        = D3D11_BLEND_ZERO;
+	blendDesc.RenderTarget[0].BlendOpAlpha          = D3D11_BLEND_OP_ADD;
 	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
 	// Then create a DirectX object for the description that can be used by a shader
@@ -217,10 +217,10 @@ bool CDX11Engine::CreateStates()
 	D3D11_DEPTH_STENCIL_DESC depthStencilDesc = {};
 
 	////-------- Enable depth buffer --------////
-	depthStencilDesc.DepthEnable = TRUE;
+	depthStencilDesc.DepthEnable    = TRUE;
 	depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-	depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS;
-	depthStencilDesc.StencilEnable = FALSE;
+	depthStencilDesc.DepthFunc      = D3D11_COMPARISON_LESS;
+	depthStencilDesc.StencilEnable  = FALSE;
 
 	// Create a DirectX object for the description above that can be used by a shader
 	if (FAILED(mD3DDevice->CreateDepthStencilState(&depthStencilDesc, &mUseDepthBufferState)))
@@ -231,10 +231,10 @@ bool CDX11Engine::CreateStates()
 
 	////-------- Enable depth buffer reads only --------////
 	// Disables writing to depth buffer - used for transparent objects because they should not be entered in the buffer but do need to check if they are behind something
-	depthStencilDesc.DepthEnable = TRUE;
+	depthStencilDesc.DepthEnable    = TRUE;
 	depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO; // Disable writing to depth buffer
-	depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS;
-	depthStencilDesc.StencilEnable = FALSE;
+	depthStencilDesc.DepthFunc      = D3D11_COMPARISON_LESS;
+	depthStencilDesc.StencilEnable  = FALSE;
 
 	// Create a DirectX object for the description above that can be used by a shader
 	if (FAILED(mD3DDevice->CreateDepthStencilState(&depthStencilDesc, &mDepthReadOnlyState)))
@@ -244,10 +244,10 @@ bool CDX11Engine::CreateStates()
 	}
 
 	////-------- Disable depth buffer --------////
-	depthStencilDesc.DepthEnable = FALSE;
+	depthStencilDesc.DepthEnable    = FALSE;
 	depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-	depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS;
-	depthStencilDesc.StencilEnable = FALSE;
+	depthStencilDesc.DepthFunc      = D3D11_COMPARISON_LESS;
+	depthStencilDesc.StencilEnable  = FALSE;
 
 	// Create a DirectX object for the description above that can be used by a shader
 	if (FAILED(mD3DDevice->CreateDepthStencilState(&depthStencilDesc, &mNoDepthBufferState)))

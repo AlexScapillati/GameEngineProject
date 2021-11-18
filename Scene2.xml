@@ -5,7 +5,7 @@
     <Entities>
         <Entity Type="Sky" Name="Stars">
             <Geometry Mesh="Stars.x" Diffuse="lauter_waterfall.jpg"/>
-            <Position X="-283.39328" Y="111.88131" Z="-140.79147"/>
+            <Position X="-226.44913" Y="47.771252" Z="-87.44754"/>
             <Rotation X="-0" Y="0" Z="0"/>
             <Scale X="1" Y="1" Z="1"/>
         </Entity>
@@ -82,14 +82,14 @@
             <Strength S="10000"/>
         </Entity>
         <Entity Type="Camera">
-            <Position X="-283.39328" Y="111.88131" Z="-140.79147"/>
-            <Rotation X="25.562803" Y="59.715805" Z="0"/>
+            <Position X="-226.44913" Y="47.771252" Z="-87.44754"/>
+            <Rotation X="4.1931434" Y="77.619041" Z="0"/>
         </Entity>
     </Entities>
     <PostProcessingEffects>
         <Effect Type="SSAO" Mode="FullScreen"/>
         <Effect Type="ChromaticAberration" Mode="FullScreen"/>
         <Effect Type="GodRays" Mode="FullScreen"/>
-        <Settings setting0="0" setting1="0" setting2="1" setting3="1" setting4="0" setting5="0" setting6="0" setting7="0" setting8="0" setting9="0" setting10="0" setting11="0" setting12="0" setting13="0" setting14="0" setting15="0" setting16="0" setting17="0" setting18="0" setting19="0" setting20="0" setting21="0" setting22="0" setting23="0" setting24="1" setting25="1" setting26="1" setting27="0.5" setting28="0" setting29="0" setting30="0" setting31="0" setting32="0" setting33="0" setting34="0" setting35="0" setting36="0.23511858" setting37="0" setting38="0" setting39="0" setting40="0.029999999" setting41="0" setting42="0" setting43="0" setting44="3.6418068" setting45="0" setting46="0" setting47="0" setting48="260677.02" setting49="0.0049999999" setting50="0.125" setting51="0" setting52="0.0020000001" setting53="0.361" setting54="0.48100001" setting55="0" setting56="5.8854536e-44" setting57="3.3" setting58="2" setting59="0" setting60="0.50400001" setting61="0" setting62="0" setting63="0" setting64="1" setting65="0.48500001" setting66="2.7819999e-06" setting67="0.00291" setting68="0.99180913" setting69="-3.2284284" setting70="0.377" setting71="1.007" setting72="0.38499999" setting73="0.26899999" setting74="6.2638041e-43" setting75="0"/>
+        <Settings setting0="0" setting1="0" setting2="1" setting3="1" setting4="0" setting5="0" setting6="0" setting7="0" setting8="0" setting9="0" setting10="0" setting11="0" setting12="0" setting13="0" setting14="0" setting15="0" setting16="0" setting17="0" setting18="0" setting19="0" setting20="0" setting21="0" setting22="0" setting23="0" setting24="1" setting25="1" setting26="1" setting27="0.5" setting28="0" setting29="0" setting30="0" setting31="0" setting32="0" setting33="0" setting34="0" setting35="0" setting36="0.05242021" setting37="0" setting38="0" setting39="0" setting40="0.029999999" setting41="0" setting42="0" setting43="0" setting44="0.4024992" setting45="0" setting46="0" setting47="0" setting48="260712.97" setting49="0.0049999999" setting50="0.125" setting51="0" setting52="0.0020000001" setting53="0.361" setting54="0.48100001" setting55="0" setting56="5.8854536e-44" setting57="3.3" setting58="2" setting59="0" setting60="0.50400001" setting61="0" setting62="0" setting63="0" setting64="1" setting65="0.48500001" setting66="2.7819999e-06" setting67="0.00291" setting68="0.55337143" setting69="-2.7100081" setting70="0.377" setting71="1.007" setting72="0.38499999" setting73="0.26899999" setting74="6.2638041e-43" setting75="0"/>
     </PostProcessingEffects>
 </Scene>

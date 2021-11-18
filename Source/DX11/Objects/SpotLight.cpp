@@ -1,10 +1,10 @@
 #include "SpotLight.h"
 #include "..\GraphicsHelpers.h"
-#include "..\Scene.h"
+#include "..\DX11Scene.h"
 
 CSpotLight::CSpotLight(CDX11Engine* engine, std::string mesh, std::string name, std::string& diffuse,
-                       CVector3 colour, float strength, CVector3 position, CVector3 rotation,
-                       float scale)
+					   CVector3 colour, float strength, CVector3 position, CVector3 rotation,
+					   float scale)
 	: CLight(engine, std::move(mesh), std::move(name), diffuse, colour, strength, position,
 		rotation, scale)
 {
@@ -153,7 +153,7 @@ CSpotLight::~CSpotLight()
 	Release();
 }
 
-void CSpotLight::Release()
+void CSpotLight::Release() const
 {
 	if (mShadowMap) mShadowMap->Release();
 	if (mShadowMapDepthStencil) mShadowMapDepthStencil->Release();

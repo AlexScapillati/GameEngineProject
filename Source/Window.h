@@ -1,6 +1,6 @@
 #pragma once
-
 #include "DX11/CDX11Common.h"
+
 
 class CWindow
 {

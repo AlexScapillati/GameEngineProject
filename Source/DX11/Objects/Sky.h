@@ -124,7 +124,7 @@ public:
 		}
 	}
 
-	bool HasCubeMap() { return mIsCubeMap; }
+	bool HasCubeMap() const { return mIsCubeMap; }
 
 private:
 	

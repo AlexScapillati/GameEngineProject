@@ -1,7 +1,7 @@
 #include "DirLight.h"
 
 #include "../../Math/CVector3.h"
-#include "../Scene.h"
+#include "../DX11Scene.h"
 #include "../DX11Engine.h"
 #include "../GraphicsHelpers.h"
 
@@ -108,7 +108,7 @@ CDirLight::~CDirLight()
 	Release();
 }
 
-void CDirLight::Release()
+void CDirLight::Release() const
 {
 	mShadowMap->Release();
 	mShadowMapDepthStencil->Release();

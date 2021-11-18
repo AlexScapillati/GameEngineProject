@@ -2,7 +2,7 @@
 
 #include "..\External/tinyxml2/tinyxml2.h"
 #include <string>
-#include "Scene.h"
+#include "DX11Scene.h"
 #include "Objects/GameObject.h"
 
 class CVector3;

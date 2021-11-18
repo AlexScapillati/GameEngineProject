@@ -1,5 +1,5 @@
 #include "PointLight.h"
-#include "..\Scene.h"
+#include "..\DX11Scene.h"
 
 CPointLight::CPointLight(CDX11Engine* engine, std::string mesh, std::string name, std::string& diffuse, CVector3 colour, float strength, CVector3 position, CVector3 rotation, float scale) :
 	CLight(engine, std::move(mesh), std::move(name), diffuse, colour, strength, position,
